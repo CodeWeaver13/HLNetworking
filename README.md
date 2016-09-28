@@ -4,6 +4,13 @@
 [![CocoaPods](https://img.shields.io/badge/platform-iOS-lightgrey.svg)](http://cocoapods.org/?q= HLQRCodeScanner)
 [![Support](https://img.shields.io/badge/support-iOS%208%2B-blue.svg)](https://www.apple.com/nl/ios/)
 #### 基于AFNetworking的多范式网络请求管理器
+##特点
+1. 请求方法链式调用，方便快速
+2. 接口请求默认使用统一Session，加快网络访问速度
+3. 提供Block和Delegate两种回调方式
+4. 请求接口与回调接口分离，方便程序解耦
+5. 提供多种参数预设值、拼接表单方便简单
+6. 提供断点续传下载API
 
 ====
 
