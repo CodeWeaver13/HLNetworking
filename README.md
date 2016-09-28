@@ -15,8 +15,8 @@
 
 ```objective-c
 HLNetworkConfig *config = [HLNetworkConfig config];
-config.baseURL = @"https://api.lovek12.com";
-config.apiVersion = @"v193";
+config.baseURL = @"https://httpbin.org";
+config.apiVersion = @"v100";
 [[HLAPIManager shared] setConfig:config];
 ```
 
@@ -24,8 +24,8 @@ config.apiVersion = @"v193";
 
 ```objective-c
 HLAPI *myAPI = [[HLAPI API].setMethod(GET)
-    							.setPath(@"index.php?r=user/get-textbook")
-    							.setParams(@{@"user_id": @194})
+    							.setPath(@"get")
+    							.setParams(@{@"user_id": @1})
     							.setDelegate(self)
     							.success(^(id  _Nonnull responseObject) {
         							NSLog(@"\napi 1 --- 已回调 \n----");
@@ -159,8 +159,10 @@ api.objReformerDelegate = self;
 
 ```objective-c
 HLNetworkConfig *config = [HLNetworkConfig config];
-config.baseURL = @"https://api.lovek12.com";
+config.baseURL = @"https://httpbin.org";
+config.isBackgroundSession = YES;
 [[HLTaskManager shared] setConfig:config];
+[HLTaskManager shared].responseDelegate = self;
 ```
 
 2) 链式调用设置Task
