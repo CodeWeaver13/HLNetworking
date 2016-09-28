@@ -219,23 +219,23 @@ HLTask *task = [[HLTask task].setDelegate(self)
 }
 ```
 
-## Requirements
+## 环境要求
 
-This library requires iOS 8.0+ and Xcode 7.0+.
+该库需运行在 iOS 8.0 和 Xcode 7.0以上环境.
 
-## Installation
+## 集成方法
 
-HLQRCodeScanner is available through [CocoaPods](http://cocoapods.org). To install
+HLNetworking is available through [CocoaPods](http://cocoapods.org). To install
 it, simply add the following line to your Podfile:
 
 ```ruby
-pod "HLQRCodeScanner"
+pod "HLNetworking"
 ```
 
-## Author
+## 作者
 
 wangshiyu13, wangshiyu13@163.com
 
-## License
+## 开源协议
 
-HLQRCodeScanner is available under the MIT license. See the LICENSE file for more info.
+HLNetworking is available under the MIT license. See the LICENSE file for more info.
