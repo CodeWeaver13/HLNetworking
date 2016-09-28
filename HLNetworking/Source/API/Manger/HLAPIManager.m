@@ -237,14 +237,8 @@ static HLAPIManager *shared = nil;
  @return AFHTTPSessionManager
  */
 - (AFHTTPSessionManager *)newSessionManagerWithBaseUrlStr:(NSString *)baseUrlStr {
-    NSURLSessionConfiguration *sessionConfig;
+    NSURLSessionConfiguration *sessionConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
     if (self.config) {
-        if (self.config.isBackgroundSession) {
-            NSString *kBackgroundSessionID = [NSString stringWithFormat:@"com.wangshiyu13.backgroundSession.api.%@", baseUrlStr];
-            sessionConfig = [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:kBackgroundSessionID];
-        } else {
-            sessionConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
-        }
         sessionConfig.HTTPMaximumConnectionsPerHost = self.config.maxHttpConnectionPerHost;
     } else {
         sessionConfig.HTTPMaximumConnectionsPerHost = MAX_HTTP_CONNECTION_PER_HOST;

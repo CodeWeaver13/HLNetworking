@@ -18,7 +18,11 @@ FOUNDATION_EXPORT NSString *HLDefaultNetworkNotReachableString;
 
 
 /**
- 是否为后台模式
+ 是否为后台模式所用的GroupID，该选项只对Task有影响
+ */
+@property (nonatomic, copy) NSString *AppGroup;
+/**
+ 是否为后台模式，该选项只对Task有影响
  */
 @property (nonatomic, assign) BOOL isBackgroundSession;
 /**

@@ -82,7 +82,9 @@ static HLTaskManager *shared = nil;
     if (self.config) {
         if (self.config.isBackgroundSession) {
             NSString *kBackgroundSessionID = [NSString stringWithFormat:@"com.wangshiyu13.backgroundSession.task.%@", [self requestBaseURLStringWithTask:task]];
+            NSString *kSharedContainerIdentifier = self.config.AppGroup ?: [NSString stringWithFormat:@"com.wangshiyu13.testApp"];
             sessionConfig = [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:kBackgroundSessionID];
+            sessionConfig.sharedContainerIdentifier = kSharedContainerIdentifier;
         } else {
             sessionConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
         }

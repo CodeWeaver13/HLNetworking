@@ -51,6 +51,7 @@
 - (void)setupTaskNetworkConfig {
     HLNetworkConfig *config = [HLNetworkConfig config];
     config.baseURL = @"https://httpbin.org";
+    config.isBackgroundSession = YES;
     [[HLTaskManager shared] setConfig:config];
     [HLTaskManager shared].responseDelegate = self;
 }
