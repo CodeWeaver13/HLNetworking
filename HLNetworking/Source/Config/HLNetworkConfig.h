@@ -16,6 +16,11 @@ FOUNDATION_EXPORT NSString *HLDefaultNetworkNotReachableString;
 
 @interface HLNetworkConfig : NSObject<NSCopying>
 
+
+/**
+ 是否为后台模式
+ */
+@property (nonatomic, assign) BOOL isBackgroundSession;
 /**
  *  出现网络请求时，为了给用户比较好的用户体验，而使用的错误提示文字
  *  默认为：HLDefaultGeneralErrorString

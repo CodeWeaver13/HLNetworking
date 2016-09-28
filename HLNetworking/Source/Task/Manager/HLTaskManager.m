@@ -78,9 +78,14 @@ static HLTaskManager *shared = nil;
  @return AFHTTPSessionManager
  */
 - (AFURLSessionManager *)newSessionManagerWithTask:(HLTask *)task {
-    NSString *kBackgroundSessionID = [NSString stringWithFormat:@"com.wangshiyu13.backgroundSession.%@", [self requestBaseURLStringWithTask:task]];
-    NSURLSessionConfiguration *sessionConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
+    NSURLSessionConfiguration *sessionConfig;
     if (self.config) {
+        if (self.config.isBackgroundSession) {
+            NSString *kBackgroundSessionID = [NSString stringWithFormat:@"com.wangshiyu13.backgroundSession.task.%@", [self requestBaseURLStringWithTask:task]];
+            sessionConfig = [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:kBackgroundSessionID];
+        } else {
+            sessionConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
+        }
         sessionConfig.HTTPMaximumConnectionsPerHost = self.config.maxHttpConnectionPerHost;
     } else {
         sessionConfig.HTTPMaximumConnectionsPerHost = MAX_HTTP_CONNECTION_PER_HOST;

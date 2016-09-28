@@ -25,8 +25,8 @@
     [super viewDidLoad];
     [self setupAPINetworkConfig];
     [self testAPI];
-//    [self setupTaskNetworkConfig];
-//    [self testTask];
+    [self setupTaskNetworkConfig];
+    [self testTask];
 }
 
 - (void)pause {
