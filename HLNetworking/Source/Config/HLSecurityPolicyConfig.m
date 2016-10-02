@@ -24,4 +24,14 @@
     }
     return securityPolicy;
 }
+
+- (NSString *)description {
+    NSString *desc;
+#if DEBUG
+    desc = [NSString stringWithFormat:@"\n----HLSecurityPolicyConfig----\nSSLPinningMode: %lu\nAllowInvalidCertificates: %@\nValidatesDomainName: %@\n--------ConfigEnd--------", self.SSLPinningMode, self.allowInvalidCertificates ? @"YES" : @"NO", self.validatesDomainName ? @"YES" : @"NO"];
+#else
+    desc = @"";
+#endif
+    return desc;
+}
 @end

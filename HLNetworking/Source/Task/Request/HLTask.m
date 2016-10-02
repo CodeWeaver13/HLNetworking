@@ -7,22 +7,10 @@
 //
 
 #import "HLTask.h"
+#import "HLTask_InternalParams.h"
 #import "HLTaskManager.h"
 #import "HLSecurityPolicyConfig.h"
 #import "HLNetworkConfig.h"
-
-@interface HLTask ()
-@property (nonatomic, weak, nullable) id<HLTaskRequestDelegate> delegate;
-@property (nonatomic, copy) NSString *taskURL;
-@property (nonatomic, copy) NSString *baseURL;
-@property (nonatomic, copy) NSString *path;
-@property (nonatomic, copy) NSString *filePath;
-@property (nonatomic, copy) NSString *resumePath;
-@property (nonatomic, assign)NSTimeInterval timeoutInterval;
-@property (nonatomic, assign)NSURLRequestCachePolicy cachePolicy;
-@property (nonatomic, strong)HLSecurityPolicyConfig *securityPolicy;
-@property (nonatomic, assign)HLRequestTaskType requestTaskType;
-@end
 
 @implementation HLTask
 
@@ -76,7 +64,13 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"\n===============HLTask===============\nClass: %@\nBaseURL: %@\nPath: %@\nTaskURL: %@\nTimeoutInterval: %f\nSecurityPolicy: %@\nRequestTaskType: %lu\nCachePolicy: %lu\n===============end===============\n\n", self.class, self.baseURL ?: [HLTaskManager shared].config.baseURL, self.path, self.taskURL ?: @"未设置", self.timeoutInterval, self.securityPolicy, self.requestTaskType, self.cachePolicy];
+    NSString *desc;
+#if DEBUG
+    desc = [NSString stringWithFormat:@"\n===============HLTask===============\nClass: %@\nBaseURL: %@\nPath: %@\nTaskURL: %@\nResumePath: %@\nCachePath: %@\nTimeoutInterval: %f\nSecurityPolicy: %@\nRequestTaskType: %lu\nCachePolicy: %lu\n===============end===============\n\n", self.class, self.baseURL ?: [HLTaskManager shared].config.baseURL, self.path ?: @"未设置", self.taskURL ?: @"未设置", self.resumePath, self.filePath, self.timeoutInterval, self.securityPolicy, self.requestTaskType, self.cachePolicy];
+#else
+    desc = @"";
+#endif
+    return desc;
 }
 
 #pragma mark - setter

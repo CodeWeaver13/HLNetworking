@@ -8,10 +8,10 @@
 
 #import <Foundation/Foundation.h>
 #import "HLAPIType.h"
-#import "simd/internal.h" 
 @class HLAPI;
 @class HLSecurityPolicyConfig;
 @protocol HLMultipartFormDataProtocol;
+@protocol HLAPIRequestDelegate;
 NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - HLObjReformerProtocol
@@ -29,14 +29,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable id)apiResponseObjReformerWithAPI:(HLAPI *)api andResponseObject:(id)responseObject andError:(NSError * _Nullable)error;
 @end
 
-@protocol HLRequestDelegate <NSObject>
-@optional
-// 请求将要发出
-- (void)requestWillBeSentWithAPI:(HLAPI *)api;
-// 请求已经发出
-- (void)requestDidSentWithAPI:(HLAPI *)api;
-@end
-
 #pragma mark - HLAPI
 
 // 定义的Block
@@ -50,31 +42,17 @@ typedef void(^ProgressBlock)(NSProgress * __nullable progress);
 typedef void(^RequestConstructingBodyBlock)(id<HLMultipartFormDataProtocol> __nullable formData);
 
 @interface HLAPI : NSObject
-
-// readOnly property
-@property (nonatomic, weak, nullable, readonly) id<HLRequestDelegate> delegate;
-@property (nonatomic, weak, nullable, readonly) id<HLObjReformerProtocol> objReformerDelegate;
 @property (nonatomic, copy, readonly) NSString *baseURL;
 @property (nonatomic, copy, readonly) NSString *path;
-@property (nonatomic, strong, readonly)HLSecurityPolicyConfig *securityPolicy;
-@property (nonatomic, assign, readonly)HLRequestMethodType requestMethodType;
-@property (nonatomic, assign, readonly)HLRequestSerializerType requestSerializerType;
-@property (nonatomic, assign, readonly)HLResponseSerializerType responseSerializerType;
-@property (nonatomic, assign, readonly)NSURLRequestCachePolicy cachePolicy;
-@property (nonatomic, assign, readonly)NSTimeInterval timeoutInterval;
+@property (nonatomic, assign, readonly) NSTimeInterval timeoutInterval;
 @property (nonatomic, copy, readonly) NSDictionary<NSString *, NSObject *> *parameters;
-@property (nonatomic, copy, readonly) NSDictionary<NSString *, NSObject *> *header;
+@property (nonatomic, copy, readonly) NSDictionary<NSString *, NSString *> *header;
 @property (nonatomic, copy, readonly) NSSet *contentTypes;
 @property (nonatomic, copy, readonly) NSString *cURL;
-@property (nonatomic, copy, nullable, readonly) void (^apiSuccessHandler)(__nonnull id responseObject);
-@property (nonatomic, copy, nullable, readonly) void (^apiFailureHandler)(NSError * _Nullable error);
-@property (nonatomic, copy, nullable, readonly) void (^apiProgressHandler)(NSProgress * _Nullable progress);
-@property (nonatomic, copy, nullable, readonly) void (^apiRequestConstructingBodyBlock)(__nonnull id<HLMultipartFormDataProtocol> formData);
-
 /**
  设置HLAPI的requestDelegate
  */
-- (HLAPI *(^)(id<HLRequestDelegate> delegate))setDelegate;
+- (HLAPI *(^)(id<HLAPIRequestDelegate> delegate))setDelegate;
 
 /**
  进行JSON -> Model 数据的转换工作的Delegate

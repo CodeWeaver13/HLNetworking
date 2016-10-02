@@ -20,16 +20,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)requestDidSentWithTask:(HLTask *)task;
 @end
 @interface HLTask : NSObject
-@property (nonatomic, copy, readonly) NSString *resumePath;
-@property (nonatomic, weak, nullable, readonly) id<HLTaskRequestDelegate> delegate;
 @property (nonatomic, copy, readonly) NSString *taskURL;
 @property (nonatomic, copy, readonly) NSString *baseURL;
 @property (nonatomic, copy, readonly) NSString *path;
 @property (nonatomic, copy, readonly) NSString *filePath;
-@property (nonatomic, assign, readonly)NSTimeInterval timeoutInterval;
-@property (nonatomic, assign, readonly)NSURLRequestCachePolicy cachePolicy;
-@property (nonatomic, strong, readonly)HLSecurityPolicyConfig *securityPolicy;
-@property (nonatomic, assign, readonly)HLRequestTaskType requestTaskType;
+@property (nonatomic, copy, readonly) NSString *resumePath;
 
 /**
  设置HLAPI的requestDelegate

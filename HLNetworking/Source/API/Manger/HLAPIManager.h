@@ -12,7 +12,7 @@
 extern void HLJudgeVersionSwitch(BOOL isR);
 
 @protocol HLNetworkErrorProtocol;
-@protocol HLResponseDelegate;
+@protocol HLAPIResponseDelegate;
 @class HLNetworkConfig;
 @class HLAPI;
 @class HLAPIBatchRequests;
@@ -22,7 +22,7 @@ extern void HLJudgeVersionSwitch(BOOL isR);
 
 @property (nonatomic, strong, nonnull) HLNetworkConfig *config;
 
-@property (nonatomic, weak, nullable) id<HLResponseDelegate> responseDelegate;
+@property (nonatomic, weak, nullable) id<HLAPIResponseDelegate> responseDelegate;
 
 // 单例
 + (nullable HLAPIManager *)shared;

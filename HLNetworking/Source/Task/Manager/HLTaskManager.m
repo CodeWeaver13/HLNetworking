@@ -9,6 +9,7 @@
 #import "HLTaskManager.h"
 #import "HLTaskResponseProtocol.h"
 #import "HLTask.h"
+#import "HLTask_InternalParams.h"
 #import "HLNetworkConfig.h"
 #import "HLSecurityPolicyConfig.h"
 #import "HLAPIType.h"
@@ -452,7 +453,7 @@ static HLTaskManager *shared = nil;
 
 - (void)cancelTaskRequest:(HLTask *)task {
     dispatch_async(qkhl_task_session_creation_queue(), ^{
-        NSString *hashKey = [NSString stringWithFormat:@"%lu", (unsigned long)[task hash]];
+        NSString *hashKey = [NSString stringWithFormat:@"%lu", (unsigned long)task.hash];
         if (task.requestTaskType == Download) {
             NSURLSessionDownloadTask *downloadTask = [self.sessionTasksCache objectForKey:hashKey];
             if (downloadTask) {
@@ -472,7 +473,7 @@ static HLTaskManager *shared = nil;
 
 - (void)resumeTaskRequest:(HLTask *)task {
     dispatch_async(qkhl_task_session_creation_queue(), ^{
-        NSString *hashKey = [NSString stringWithFormat:@"%lu", (unsigned long)[task hash]];
+        NSString *hashKey = [NSString stringWithFormat:@"%lu", task.hash];
         if (task.requestTaskType == Download) {
             NSURLSessionDownloadTask *downloadTask = [self.sessionTasksCache objectForKey:hashKey];
             if (downloadTask) {

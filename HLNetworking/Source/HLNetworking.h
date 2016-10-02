@@ -22,7 +22,8 @@
 // API protocol
 #import "HLMultipartFormDataProtocol.h"
 #import "HLHttpHeaderDelegate.h"
-#import "HLResponseDelegate.h"
+#import "HLAPIRequestDelegate.h"
+#import "HLAPIResponseDelegate.h"
 #import "HLNetworkErrorProtocol.h"
 // Task
 #import "HLTaskManager.h"

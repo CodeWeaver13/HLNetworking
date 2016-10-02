@@ -7,34 +7,11 @@
 //
 
 #import "HLAPI.h"
+#import "HLAPI_InternalParams.h"
 #import "HLNetworkConfig.h"
 #import "HLAPIManager.h"
 #import "HLSecurityPolicyConfig.h"
-
-
-
-@interface HLAPI ()
-
-@property (nonatomic, weak, nullable) id<HLRequestDelegate> delegate;
-@property (nonatomic, weak, nullable) id<HLObjReformerProtocol> objReformerDelegate;
-@property (nonatomic, copy) NSString *baseURL;
-@property (nonatomic, copy) NSString *path;
-@property (nonatomic, strong)HLSecurityPolicyConfig *securityPolicy;
-@property (nonatomic, assign)HLRequestMethodType requestMethodType;
-@property (nonatomic, assign)HLRequestSerializerType requestSerializerType;
-@property (nonatomic, assign)HLResponseSerializerType responseSerializerType;
-@property (nonatomic, assign)NSURLRequestCachePolicy cachePolicy;
-@property (nonatomic, assign)NSTimeInterval timeoutInterval;
-@property (nonatomic, copy) NSDictionary<NSString *, NSObject *> *parameters;
-@property (nonatomic, copy) NSDictionary<NSString *, NSString *> *header;
-@property (nonatomic, copy) NSSet *contentTypes;
-@property (nonatomic, copy) NSString *cURL;
-
-@property (nonatomic, copy, nullable) void (^apiSuccessHandler)(_Nonnull id responseObject);
-@property (nonatomic, copy, nullable) void (^apiFailureHandler)(NSError * _Nullable error);
-@property (nonatomic, copy, nullable) void (^apiProgressHandler)(NSProgress * _Nullable progress);
-@property (nonatomic, copy, nullable) void (^apiRequestConstructingBodyBlock)(id<HLMultipartFormDataProtocol> _Nonnull formData);
-@end
+#import "HLAPIRequestDelegate.h"
 
 @implementation HLAPI
 
@@ -44,8 +21,8 @@
     return api;
 }
 
-- (HLAPI *(^)(id<HLRequestDelegate> delegate))setDelegate {
-    return ^HLAPI* (id<HLRequestDelegate> delegate) {
+- (HLAPI *(^)(id<HLAPIRequestDelegate> delegate))setDelegate {
+    return ^HLAPI* (id<HLAPIRequestDelegate> delegate) {
         self.delegate = delegate;
         return self;
     };
@@ -212,7 +189,7 @@
 - (NSUInteger)hash {
     NSString *hashStr;
     if (self.cURL) {
-        hashStr = self.cURL;
+        hashStr = [NSString stringWithFormat:@"%@?%@", self.cURL, self.parameters];
     } else {
         hashStr = [NSString stringWithFormat:@"%@/%@?%@", self.path, self.baseURL, self.parameters];
     }
@@ -230,7 +207,24 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"\n===============HLAPI===============\nAPIVersion: %@\nClass: %@\nBaseURL: %@\nPath: %@\nCustomURL: %@\nParameters: %@\nHeader: %@\nContentTypes: %@\nTimeoutInterval: %f\nSecurityPolicy: %@\nRequestMethodType: %lu\nRequestSerializerType: %lu\nResponseSerializerType: %lu\nCachePolicy: %lu\n===============end===============\n\n", [HLAPIManager shared].config.apiVersion, self.class, self.baseURL ?: [HLAPIManager shared].config.baseURL, self.path, self.cURL ?: @"未设置", self.parameters, self.header, self.contentTypes, self.timeoutInterval, self.securityPolicy, self.apiRequestMethodType, self.apiRequestSerializerType, self.apiResponseSerializerType, self.cachePolicy];
+    NSString *desc;
+#if DEBUG
+    desc = [NSString stringWithFormat:@"\n===============HLAPI===============\nAPIVersion: %@\nClass: %@\nBaseURL: %@\nPath: %@\nCustomURL: %@\nParameters: %@\nHeader: %@\nContentTypes: %@\nTimeoutInterval: %f\nSecurityPolicy: %@\nRequestMethodType: %lu\nRequestSerializerType: %@\nResponseSerializerType: %@\nCachePolicy: %lu\n===============end===============\n\n",
+            [HLAPIManager shared].config.apiVersion ?: @"未设置",
+            self.class, self.baseURL ?: [HLAPIManager shared].config.baseURL,
+            self.path, self.cURL ?: @"未设置",
+            self.parameters ?: @"未设置", self.header,
+            self.contentTypes,
+            self.timeoutInterval,
+            self.securityPolicy,
+            self.requestMethodType,
+            self.requestSerializerType == 0 ? @"HTTP" : @"JSON",
+            self.responseSerializerType == 0 ? @"HTTP" : @"JSON",
+            self.cachePolicy];
+#else
+    desc = @"";
+#endif
+    return desc;
 }
 
 - (NSString *)debugDescription {
@@ -260,7 +254,7 @@
     }
 }
 
-- (HLRequestMethodType)apiRequestMethodType {
+- (HLRequestMethodType)requestMethodType {
     if (_requestMethodType) {
         return _requestMethodType;
     } else {
@@ -268,7 +262,7 @@
     }
 }
 
-- (HLRequestSerializerType)apiRequestSerializerType {
+- (HLRequestSerializerType)requestSerializerType {
     if (_requestSerializerType) {
         return _requestSerializerType;
     } else {
@@ -276,7 +270,7 @@
     }
 }
 
-- (HLResponseSerializerType)apiResponseSerializerType {
+- (HLResponseSerializerType)responseSerializerType {
     if (_responseSerializerType) {
         return _responseSerializerType;
     } else {

@@ -1,18 +1,16 @@
 //
-//  HLResponseDelegate.h
+//  HLAPIResponseDelegate.h
 //  HLNetworking
 //
-//  Created by wangshiyu13 on 2016/9/22.
+//  Created by wangshiyu13 on 2016/10/2.
 //  Copyright © 2016年 wangshiyu13. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
-
 @class HLAPI;
 
 NS_ASSUME_NONNULL_BEGIN
-
-@protocol HLResponseDelegate <NSObject>
+@protocol HLAPIResponseDelegate <NSObject>
 @required
 - (NSArray <HLAPI *>*)requestAPIs;
 
@@ -20,14 +18,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  请求成功的回调
-
+ 
  @param responseObject 回调对象
  */
 - (void)requestSucessWithResponseObject:(nonnull id)responseObject atAPI:(HLAPI *)api;
 
 /**
  请求失败的回调
-
+ 
  @param error 错误对象
  */
 - (void)requestFailureWithResponseError:(nullable NSError *)error atAPI:(HLAPI *)api;
@@ -37,7 +35,5 @@ NS_ASSUME_NONNULL_BEGIN
  *  NSProgress: 进度
  */
 - (void)requestProgress:(nullable NSProgress *)progress atAPI:(HLAPI *)api;
-
 @end
-
 NS_ASSUME_NONNULL_END

@@ -10,11 +10,12 @@
 #import "HLAPIManager.h"
 #import "HLHttpHeaderDelegate.h"
 #import "HLSecurityPolicyConfig.h"
-#import "HLResponseDelegate.h"
+#import "HLAPIResponseDelegate.h"
 #import "HLMultipartFormDataProtocol.h"
 #import "HLNetworkErrorProtocol.h"
 #import "HLNetworkConfig.h"
 #import "HLAPI.h"
+#import "HLAPI_InternalParams.h"
 #import "HLAPIBatchRequests.h"
 #import "HLAPISyncBatchRequests.h"
 
@@ -107,10 +108,10 @@ static HLAPIManager *shared = nil;
 - (AFHTTPResponseSerializer *)responseSerializerForAPI:(HLAPI *)api {
     NSParameterAssert(api);
     AFHTTPResponseSerializer *responseSerializer;
-    if (api.responseSerializerType == ResponseHTTP) {
-        responseSerializer = [AFHTTPResponseSerializer serializer];
-    } else {
+    if (api.responseSerializerType == ResponseJSON) {
         responseSerializer = [AFJSONResponseSerializer serializer];
+    } else {
+        responseSerializer = [AFHTTPResponseSerializer serializer];
     }
     responseSerializer.acceptableContentTypes = api.contentTypes;
     return responseSerializer;
@@ -159,22 +160,20 @@ static HLAPIManager *shared = nil;
     
     NSString *baseUrlStr = [self requestBaseUrlStringWithAPI:api];
     // 如果定义了自定义的cURL, 则直接使用
-    if ([api cURL]) {
-        return [[api cURL] stringByReplacingOccurrencesOfString:baseUrlStr
-                                                     withString:@""];;
+    if (api.cURL && ![api.cURL isEqualToString:@""]) {
+        return [NSURL URLWithString:api.cURL].absoluteString;
     }
     NSAssert(api.baseURL != nil || self.config.baseURL != nil,
              @"api baseURL 和 self.config.baseurl 两者必须有一个有值");
     
-    // 如果啥都没定义，则使用BaseUrl + requestMethod 组成 UrlString
-    // 即，直接返回requestMethod
-    NSURL *requestURL;
+    // 如果啥都没定义，则使用BaseUrl + apiversion(可选) + path 组成 UrlString
+    NSString *requestURLString;
     if (self.config.apiVersion && ![self.config.apiVersion isEqualToString:@""]) {
-        requestURL = [NSURL URLWithString:[NSString stringWithFormat:@"%@/%@/%@", api.baseURL ? : self.config.baseURL, self.config.apiVersion, api.path ? : @""]];
+        requestURLString = [NSString stringWithFormat:@"%@/%@/%@", baseUrlStr, self.config.apiVersion, api.path ? : @""];
     } else {
-        requestURL = [NSURL URLWithString:[NSString stringWithFormat:@"%@/%@", api.baseURL ? : self.config.baseURL, api.path ? : @""]];
+        requestURLString = [NSString stringWithFormat:@"%@/%@", baseUrlStr, api.path ? : @""];
     }
-    return requestURL.absoluteString;
+    return [NSURL URLWithString:requestURLString].absoluteString;
 }
 
 // Request Protocol
@@ -334,12 +333,22 @@ static HLAPIManager *shared = nil;
     if (self.responseDelegate) {
         if ([self.responseDelegate.requestAPIs containsObject:api]) {
             if (error) {
+                if ([api apiFailureHandler]) {
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        api.apiFailureHandler(error);
+                    });
+                }
                 if ([self.responseDelegate respondsToSelector:@selector(requestFailureWithResponseError:atAPI:)]) {
                     dispatch_async(dispatch_get_main_queue(), ^{
                         [self.responseDelegate requestFailureWithResponseError:error atAPI:api];
                     });
                 }
             } else {
+                if ([api apiSuccessHandler]) {
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        api.apiSuccessHandler(obj);
+                    });
+                }
                 if ([self.responseDelegate respondsToSelector:@selector(requestSucessWithResponseObject:atAPI:)]) {
                     dispatch_async(dispatch_get_main_queue(), ^{
                         [self.responseDelegate requestSucessWithResponseObject:obj atAPI:api];
@@ -347,16 +356,6 @@ static HLAPIManager *shared = nil;
                 }
             }
         }
-    }
-    if ([api apiSuccessHandler]) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            api.apiSuccessHandler(obj);
-        });
-    }
-    if ([api apiFailureHandler]) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            api.apiFailureHandler(error);
-        });
     }
     completion();
 }
@@ -692,10 +691,10 @@ static HLAPIManager *shared = nil;
         NSURLSessionDataTask *dataTask = [self.sessionTasksCache objectForKey:hashKey];
         [self.sessionTasksCache removeObjectForKey:hashKey];
         if (dataTask) {
-            [api setValue:nil forKey:@"apiSuccessHandler"];
-            [api setValue:nil forKey:@"apiFailureHandler"];
-            [api setValue:nil forKey:@"apiProgressHandler"];
-            [api setValue:nil forKey:@"apiRequestConstructingBodyBlock"];
+            api.apiSuccessHandler = nil;
+            api.apiFailureHandler = nil;
+            api.apiProgressHandler = nil;
+            api.apiRequestConstructingBodyBlock = nil;
             [dataTask cancel];
         }
     });

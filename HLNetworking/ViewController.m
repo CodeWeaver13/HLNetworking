@@ -9,7 +9,7 @@
 #import "HLNetworking.h"
 #import "AFNetworking.h"
 
-@interface ViewController ()<HLResponseDelegate, HLRequestDelegate, HLObjReformerProtocol, HLAPISyncBatchRequestsProtocol, HLAPIBatchRequestsProtocol, HLTaskRequestDelegate, HLTaskResponseProtocol>
+@interface ViewController ()<HLAPIResponseDelegate, HLAPIRequestDelegate, HLObjReformerProtocol, HLAPISyncBatchRequestsProtocol, HLAPIBatchRequestsProtocol, HLTaskRequestDelegate, HLTaskResponseProtocol>
 @property(nonatomic, strong)HLAPI *api1;
 @property(nonatomic, strong)HLAPI *api2;
 @property(nonatomic, strong)HLAPI *api3;
@@ -25,8 +25,8 @@
     [super viewDidLoad];
     [self setupAPINetworkConfig];
     [self testAPI];
-    [self setupTaskNetworkConfig];
-    [self testTask];
+//    [self setupTaskNetworkConfig];
+//    [self testTask];
 }
 
 - (void)pause {
@@ -51,7 +51,7 @@
 - (void)setupTaskNetworkConfig {
     HLNetworkConfig *config = [HLNetworkConfig config];
     config.baseURL = @"https://httpbin.org";
-    config.isBackgroundSession = YES;
+    config.isBackgroundSession = NO;
     [[HLTaskManager shared] setConfig:config];
     [HLTaskManager shared].responseDelegate = self;
 }
@@ -95,19 +95,13 @@
     self.api1 = [HLAPI API].setMethod(GET)
     .setPath(@"get")
     .setDelegate(self)
-    .success(^(id  _Nonnull responseObject) {
-        NSLog(@"\napi 1 --- 已回调 \n----");
-    })
-    .progress(^(NSProgress *proc){
-        NSLog(@"当前进度：%@", proc);
-    })
-    .failure(^(NSError *error){
-        NSLog(@"\napi1 --- 错误：%@", error);
-    })
-    .formData([HLFormDataConfig configWithData:[NSData data]
-                                          name:@"name"
-                                      fileName:@"fileName"
-                                      mimeType:@"mimeType"]);
+    .success(^(id obj) {
+        NSLog(@"\napi1 = %@ --- 已回调\n %@ \n----", self.api1, obj);
+    });
+//    .formData([HLFormDataConfig configWithData:[NSData data]
+//                                          name:@"name"
+//                                      fileName:@"fileName"
+//                                      mimeType:@"mimeType"]);
     
     self.api2 = [HLAPI API].setMethod(GET)
     .setPath(@"ip")
@@ -171,7 +165,7 @@
 
 #pragma mark - HLResponseDelegate
 - (NSArray<HLAPI *> *)requestAPIs {
-    return @[self.api1, self.api2, self.api3, self.api4];
+    return @[self.api1];
 }
 
 - (void)requestSucessWithResponseObject:(id)responseObject atAPI:(HLAPI *)api {
