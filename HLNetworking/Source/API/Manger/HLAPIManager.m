@@ -372,7 +372,7 @@ static HLAPIManager *shared = nil;
     
     NSAssert([[apis.apiRequestsArray valueForKeyPath:@"hash"] count] == [apis.apiRequestsArray count],
              @"不能在集合中加入相同的 API");
-    NSString *queueName = [NSString stringWithFormat:@"com.qkhl.pp.networking.wangshiyu13.%lu", apis.hash];
+    NSString *queueName = [NSString stringWithFormat:@"com.qkhl.pp.networking.wangshiyu13.%lu", (unsigned long)apis.hash];
     __block dispatch_semaphore_t semaphore = dispatch_semaphore_create(1);
     
     dispatch_group_t batch_api_group = dispatch_group_create();

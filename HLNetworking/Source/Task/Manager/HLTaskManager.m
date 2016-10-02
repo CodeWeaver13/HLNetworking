@@ -473,7 +473,7 @@ static HLTaskManager *shared = nil;
 
 - (void)resumeTaskRequest:(HLTask *)task {
     dispatch_async(qkhl_task_session_creation_queue(), ^{
-        NSString *hashKey = [NSString stringWithFormat:@"%lu", task.hash];
+        NSString *hashKey = [NSString stringWithFormat:@"%lu", (unsigned long)task.hash];
         if (task.requestTaskType == Download) {
             NSURLSessionDownloadTask *downloadTask = [self.sessionTasksCache objectForKey:hashKey];
             if (downloadTask) {

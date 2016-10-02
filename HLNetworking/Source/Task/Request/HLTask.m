@@ -149,7 +149,7 @@
         if (![[NSFileManager defaultManager] fileExistsAtPath:baseResumePath isDirectory:nil]) {
             [[NSFileManager defaultManager] createDirectoryAtPath:baseResumePath withIntermediateDirectories:YES attributes:nil error:nil];
         }
-        _resumePath = [baseResumePath stringByAppendingPathComponent:[NSString stringWithFormat:@"%lu.arc", self.hash]];
+        _resumePath = [baseResumePath stringByAppendingPathComponent:[NSString stringWithFormat:@"%lu.arc", (unsigned long)self.hash]];
         
     }
     return _resumePath;
