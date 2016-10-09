@@ -453,15 +453,10 @@ static HLAPIManager *shared = nil;
         if (!sessionManager) {
             return;
         }
-        [self _sendSingleAPIRequest:api withSessionManager:sessionManager];
+        [self _sendSingleAPIRequest:api withSessionManager:sessionManager andCompletionGroup:nil completionBlock:^{
+            
+        }];
     });
-}
-
-- (void)_sendSingleAPIRequest:(HLAPI *)api withSessionManager:(AFHTTPSessionManager *)sessionManager {
-    [self _sendSingleAPIRequest:api
-             withSessionManager:sessionManager
-             andCompletionGroup:nil
-                completionBlock:nil];
 }
 
 - (void)_sendSingleAPIRequest:(HLAPI *)api
