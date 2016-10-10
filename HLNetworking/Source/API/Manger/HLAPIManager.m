@@ -158,7 +158,7 @@ static HLAPIManager *shared = nil;
 - (NSString *)requestUrlStringWithAPI:(HLAPI *)api {
     NSParameterAssert(api);
     
-    NSString *baseUrlStr = [self requestBaseUrlStringWithAPI:api];
+    NSString *baseUrlStr = api.baseURL ?: self.config.baseURL;
     // 如果定义了自定义的cURL, 则直接使用
     if (api.cURL && ![api.cURL isEqualToString:@""]) {
         return [NSURL URLWithString:api.cURL].absoluteString;
