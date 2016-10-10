@@ -330,25 +330,25 @@ static HLAPIManager *shared = nil;
                                                      andResponseObject:obj
                                                               andError:error];
     }
+    if ([api apiFailureHandler]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            api.apiFailureHandler(error);
+        });
+    }
+    if ([api apiSuccessHandler]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            api.apiSuccessHandler(obj);
+        });
+    }
     if (self.responseDelegate) {
         if ([self.responseDelegate.requestAPIs containsObject:api]) {
             if (error) {
-                if ([api apiFailureHandler]) {
-                    dispatch_async(dispatch_get_main_queue(), ^{
-                        api.apiFailureHandler(error);
-                    });
-                }
                 if ([self.responseDelegate respondsToSelector:@selector(requestFailureWithResponseError:atAPI:)]) {
                     dispatch_async(dispatch_get_main_queue(), ^{
                         [self.responseDelegate requestFailureWithResponseError:error atAPI:api];
                     });
                 }
             } else {
-                if ([api apiSuccessHandler]) {
-                    dispatch_async(dispatch_get_main_queue(), ^{
-                        api.apiSuccessHandler(obj);
-                    });
-                }
                 if ([self.responseDelegate respondsToSelector:@selector(requestSucessWithResponseObject:atAPI:)]) {
                     dispatch_async(dispatch_get_main_queue(), ^{
                         [self.responseDelegate requestSucessWithResponseObject:obj atAPI:api];
@@ -357,7 +357,9 @@ static HLAPIManager *shared = nil;
             }
         }
     }
-    completion();
+    if (completion) {
+        completion();
+    }
 }
 
 #pragma mark - Send Sync Batch Requests
@@ -453,9 +455,7 @@ static HLAPIManager *shared = nil;
         if (!sessionManager) {
             return;
         }
-        [self _sendSingleAPIRequest:api withSessionManager:sessionManager andCompletionGroup:nil completionBlock:^{
-            
-        }];
+        [self _sendSingleAPIRequest:api withSessionManager:sessionManager andCompletionGroup:nil completionBlock:nil];
     });
 }
 
@@ -484,7 +484,9 @@ static HLAPIManager *shared = nil;
         if (completionGroup) {
             dispatch_group_leave(completionGroup);
         }
-        completion();
+        if (completion) {
+            completion();
+        }
         return;
     }
     
