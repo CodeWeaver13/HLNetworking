@@ -196,4 +196,9 @@
     }
     return apiName;
 }
+
+- (void)dealloc {
+    [[HLAPIManager shared] removeNetworkResponseObserver:self];
+    [[HLTaskManager shared] removeNetworkResponseObserver:self];
+}
 @end

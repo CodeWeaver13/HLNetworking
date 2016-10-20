@@ -63,6 +63,8 @@ HLAPI *myAPI = [[HLAPI API].setMethod(GET)
 4) 回调结果代理
 
 ```objective-c
+[[HLAPIManager shared] registerNetworkResponseObserver:self];
+
 // 设置监听的API
 - (NSArray<HLAPI *> *)requestAPIs {
     return @[self.api1, self.api2, self.api3, self.api4, self.api5];
@@ -95,6 +97,10 @@ HLAPI *myAPI = [[HLAPI API].setMethod(GET)
 - (void)requestProgress:(NSProgress *)progress atAPI:(HLAPI *)api {
     NSLog(@"\n%@------RequestProgress\n", [self getAPIName:api]);
     NSLog(@"%@", [NSThread currentThread]);
+}
+
+- (void)dealloc {
+    [[HLAPIManager shared] removeNetworkResponseObserver:self];
 }
 ```
 
@@ -169,7 +175,7 @@ HLNetworkConfig *config = [HLNetworkConfig config];
 config.baseURL = @"https://httpbin.org";
 config.isBackgroundSession = YES;
 [[HLTaskManager shared] setConfig:config];
-[HLTaskManager shared].responseDelegate = self;
+[[HLTaskManager shared] registerNetworkResponseObserver:self];
 ```
 
 2) 链式调用设置Task
