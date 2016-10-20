@@ -29,7 +29,7 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         qkhl_api_http_creation_queue =
-        dispatch_queue_create("com.qkhl.pp.networking.wangshiyu13.api.creation", DISPATCH_QUEUE_SERIAL);
+        dispatch_queue_create("com.qkhl.networking.wangshiyu13.api.creation", DISPATCH_QUEUE_SERIAL);
     });
     return qkhl_api_http_creation_queue;
 }
@@ -40,6 +40,7 @@ static HLAPIManager *shared = nil;
 
 @property (nonatomic, strong) NSCache *sessionManagerCache;
 @property (nonatomic, strong) NSCache *sessionTasksCache;
+@property (nonatomic, strong) NSMutableSet<id <HLAPIResponseDelegate>> *responseObservers;
 @property (nonatomic, strong) NSMutableSet<id <HLNetworkErrorProtocol>> *errorObservers;
 
 @end
@@ -58,8 +59,9 @@ static HLAPIManager *shared = nil;
 - (instancetype)init {
     if (!shared) {
         shared = [super init];
-        shared.config = [[HLNetworkConfig alloc]init];
-        shared.errorObservers = [[NSMutableSet alloc]init];
+        shared.config = [HLNetworkConfig config];
+        shared.errorObservers = [NSMutableSet set];
+        shared.responseObservers = [NSMutableSet set];
     }
     return shared;
 }
@@ -340,23 +342,21 @@ static HLAPIManager *shared = nil;
             api.apiSuccessHandler(obj);
         });
     }
-    if (self.responseDelegate) {
-        if ([self.responseDelegate.requestAPIs containsObject:api]) {
-            if (error) {
-                if ([self.responseDelegate respondsToSelector:@selector(requestFailureWithResponseError:atAPI:)]) {
-                    dispatch_async(dispatch_get_main_queue(), ^{
-                        [self.responseDelegate requestFailureWithResponseError:error atAPI:api];
-                    });
-                }
-            } else {
-                if ([self.responseDelegate respondsToSelector:@selector(requestSucessWithResponseObject:atAPI:)]) {
-                    dispatch_async(dispatch_get_main_queue(), ^{
-                        [self.responseDelegate requestSucessWithResponseObject:obj atAPI:api];
-                    });
+    [self.responseObservers enumerateObjectsUsingBlock:^(id<HLAPIResponseDelegate>  _Nonnull obj, BOOL * _Nonnull stop) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if ([obj.requestAPIs containsObject:api]) {
+                if (error) {
+                    if ([obj respondsToSelector:@selector(requestFailureWithResponseError:atAPI:)]) {
+                        [obj requestFailureWithResponseError:error atAPI:api];
+                    }
+                } else {
+                    if ([obj respondsToSelector:@selector(requestSucessWithResponseObject:atAPI:)]) {
+                        [obj requestSucessWithResponseObject:obj atAPI:api];
+                    }
                 }
             }
-        }
-    }
+        });
+    }];
     if (completion) {
         completion();
     }
@@ -374,7 +374,7 @@ static HLAPIManager *shared = nil;
     
     NSAssert([[apis.apiRequestsArray valueForKeyPath:@"hash"] count] == [apis.apiRequestsArray count],
              @"不能在集合中加入相同的 API");
-    NSString *queueName = [NSString stringWithFormat:@"com.qkhl.pp.networking.wangshiyu13.%lu", (unsigned long)apis.hash];
+    NSString *queueName = [NSString stringWithFormat:@"com.qkhl.networking.wangshiyu13.%lu", (unsigned long)apis.hash];
     __block dispatch_semaphore_t semaphore = dispatch_semaphore_create(1);
     
     dispatch_group_t batch_api_group = dispatch_group_create();
@@ -560,9 +560,11 @@ static HLAPIManager *shared = nil;
         }
         dispatch_async(dispatch_get_main_queue(), ^{
             api.apiProgressHandler(progress);
-            if ([self.responseDelegate respondsToSelector:@selector(requestProgress:atAPI:)]) {
-                [self.responseDelegate requestProgress:progress atAPI:api];
-            }
+            [self.responseObservers enumerateObjectsUsingBlock:^(id<HLAPIResponseDelegate>  _Nonnull obj, BOOL * _Nonnull stop) {
+                if ([obj respondsToSelector:@selector(requestProgress:atAPI:)]) {
+                    [obj requestProgress:progress atAPI:api];
+                }
+            }];
         });
     } : nil;
     
@@ -702,6 +704,18 @@ static HLAPIManager *shared = nil;
     NSString *hashKey = [NSString stringWithFormat:@"%lu", (unsigned long)name];
     NSURLSessionDataTask *task = [self.sessionTasksCache objectForKey:hashKey];
     return task;
+}
+
+#pragma mark - Network Response Observer
+- (void)registerNetworkResponseObserver:(nonnull id<HLAPIResponseDelegate>)observer {
+    [self.responseObservers addObject:observer];
+}
+
+
+- (void)removeNetworkResponseObserver:(nonnull id<HLAPIResponseDelegate>)observer {
+    if ([self.responseObservers containsObject:observer]) {
+        [self.responseObservers removeObject:observer];
+    }
 }
 
 #pragma mark - Network Error Observer

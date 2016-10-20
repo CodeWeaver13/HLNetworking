@@ -15,18 +15,16 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface HLTaskManager : NSObject
 
-@property (nonatomic, strong, nonnull) HLNetworkConfig *config;
+@property (nonatomic, strong) HLNetworkConfig *config;
 
 + (nonnull HLTaskManager *)shared;
-
-@property (nonatomic, weak, nullable) id<HLTaskResponseProtocol> responseDelegate;
 
 /**
  *  发送API请求
  *
  *  @param task 要发送的task
  */
-- (void)sendTaskRequest:(nonnull HLTask *)task;
+- (void)sendTaskRequest:(HLTask *)task;
 
 /**
  *  取消API请求
@@ -36,20 +34,34 @@ NS_ASSUME_NONNULL_BEGIN
  *
  *  @param task 要取消的task
  */
-- (void)cancelTaskRequest:(nonnull HLTask *)task;
+- (void)cancelTaskRequest:(HLTask *)task;
 
 /**
  暂停API请求
  
  @param task 要暂停的请求
  */
-- (void)resumeTaskRequest:(nonnull HLTask *)task;
+- (void)resumeTaskRequest:(HLTask *)task;
 
 /**
  暂停API请求
 
  @param task 要暂停的请求
  */
-- (void)pauseTaskRequest:(nonnull HLTask *)task;
+- (void)pauseTaskRequest:(HLTask *)task;
+
+/**
+ 移除网络请求监听者
+ 
+ @param observer 监听者
+ */
+- (void)registerNetworkResponseObserver:(id<HLTaskResponseProtocol>)observer;
+
+/**
+ 删除网络请求监听者
+ 
+ @param observer 监听者
+ */
+- (void)removeNetworkResponseObserver:(id<HLTaskResponseProtocol>)observer;
 @end
 NS_ASSUME_NONNULL_END

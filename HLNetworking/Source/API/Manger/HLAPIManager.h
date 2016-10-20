@@ -17,22 +17,22 @@ extern void HLJudgeVersionSwitch(BOOL isR);
 @class HLAPI;
 @class HLAPIBatchRequests;
 @class HLAPISyncBatchRequests;
-
+NS_ASSUME_NONNULL_BEGIN
 @interface HLAPIManager : NSObject
 
 @property (nonatomic, strong, nonnull) HLNetworkConfig *config;
 
-@property (nonatomic, weak, nullable) id<HLAPIResponseDelegate> responseDelegate;
+//@property (nonatomic, weak, nullable) id<HLAPIResponseDelegate> responseDelegate;
 
 // 单例
-+ (nullable HLAPIManager *)shared;
++ (HLAPIManager *)shared;
 
 /**
  *  发送API请求
  *
  *  @param api 要发送的api
  */
-- (void)sendAPIRequest:(nonnull HLAPI *)api;
+- (void)sendAPIRequest:(HLAPI *)api;
 
 /**
  *  取消API请求
@@ -42,14 +42,14 @@ extern void HLJudgeVersionSwitch(BOOL isR);
  *
  *  @param api 要取消的api
  */
-- (void)cancelAPIRequest:(nonnull HLAPI *)api;
+- (void)cancelAPIRequest:(HLAPI *)api;
 
 /**
  *  发送一系列API请求
  *
  *  @param apis 待发送的API请求集合
  */
-- (void)sendBatchAPIRequests:(nonnull HLAPIBatchRequests *)apis;
+- (void)sendBatchAPIRequests:(HLAPIBatchRequests *)apis;
 
 
 /**
@@ -57,20 +57,36 @@ extern void HLJudgeVersionSwitch(BOOL isR);
 
  @param apis 带发送的同步请求集合
  */
-- (void)sendSyncBatchAPIRequests:(nonnull HLAPISyncBatchRequests *)apis;
+- (void)sendSyncBatchAPIRequests:(HLAPISyncBatchRequests *)apis;
+
+
+/**
+ 移除网络请求监听者
+
+ @param observer 监听者
+ */
+- (void)registerNetworkResponseObserver:(id<HLAPIResponseDelegate>)observer;
+
+/**
+ 删除网络请求监听者
+ 
+ @param observer 监听者
+ */
+- (void)removeNetworkResponseObserver:(id<HLAPIResponseDelegate>)observer;
 
 /**
  *  添加网络传输错误时的监控observer
  *
  *  @param observer 遵循HLNetworkErrorProtocol的observer
  */
-- (void)registerNetworkErrorObserver:(nonnull id<HLNetworkErrorProtocol>)observer;
+- (void)registerNetworkErrorObserver:(id<HLNetworkErrorProtocol>)observer;
 
 /**
  *  删除网络传输错误时的监控observer
  *
  *  @param observer 遵循HLNetworkErrorProtocol的observer
  */
-- (void)removeNetworkErrorObserver:(nonnull id<HLNetworkErrorProtocol>)observer;
+- (void)removeNetworkErrorObserver:(id<HLNetworkErrorProtocol>)observer;
 
 @end
+NS_ASSUME_NONNULL_END

@@ -30,6 +30,7 @@ static HLTaskManager *shared = nil;
 @interface HLTaskManager ()
 @property (nonatomic, strong) NSCache *sessionManagerCache;
 @property (nonatomic, strong) NSCache *sessionTasksCache;
+@property (nonatomic, strong) NSMutableSet<id <HLTaskResponseProtocol>> *responseObservers;
 @end
 
 @implementation HLTaskManager
@@ -46,6 +47,7 @@ static HLTaskManager *shared = nil;
     if (!shared) {
         shared = [super init];
         shared.config = [HLNetworkConfig config];
+        shared.responseObservers = [NSMutableSet set];
     }
     return shared;
 }
@@ -183,23 +185,21 @@ static HLTaskManager *shared = nil;
  @param error 返回的错误
  */
 - (void)callTaskCompletion:(HLTask *)task obj:(id)obj error:(NSError *)error completion:(void (^)())completion {
-    if (self.responseDelegate) {
-        if ([[self.responseDelegate requestTasks] containsObject:task]) {
-            if (error) {
-                if ([self.responseDelegate respondsToSelector:@selector(requestFailureWithResponseError:atTask:)]) {
-                    dispatch_async(dispatch_get_main_queue(), ^{
-                        [self.responseDelegate requestFailureWithResponseError:error atTask:task];
-                    });
-                }
-            } else {
-                if ([self.responseDelegate respondsToSelector:@selector(requestSucessWithResponseObject:atTask:)]) {
-                    dispatch_async(dispatch_get_main_queue(), ^{
-                        [self.responseDelegate requestSucessWithResponseObject:obj atTask:task];
-                    });
+    [self.responseObservers enumerateObjectsUsingBlock:^(id<HLTaskResponseProtocol>  _Nonnull delegate, BOOL * _Nonnull stop) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if ([[delegate requestTasks] containsObject:task]) {
+                if (error) {
+                    if ([delegate respondsToSelector:@selector(requestFailureWithResponseError:atTask:)]) {
+                        [delegate requestFailureWithResponseError:error atTask:task];
+                    }
+                } else {
+                    if ([delegate respondsToSelector:@selector(requestSucessWithResponseObject:atTask:)]) {
+                        [delegate requestSucessWithResponseObject:obj atTask:task];
+                    }
                 }
             }
-        }
-    }
+        });
+    }];
 }
 
 /**
@@ -332,14 +332,16 @@ static HLTaskManager *shared = nil;
      进度Block
      */
     void (^progressBlock)(NSProgress *progress)
-    = self.responseDelegate ? ^(NSProgress *progress) {
+    = self.responseObservers.count != 0 ? ^(NSProgress *progress) {
         if (progress.totalUnitCount <= 0) {
             return;
         }
         dispatch_async(dispatch_get_main_queue(), ^{
-            if ([self.responseDelegate respondsToSelector:@selector(requestProgress:atTask:)]) {
-                [self.responseDelegate requestProgress:progress atTask:task];
-            }
+            [self.responseObservers enumerateObjectsUsingBlock:^(id<HLTaskResponseProtocol>  _Nonnull obj, BOOL * _Nonnull stop) {
+                if ([obj respondsToSelector:@selector(requestProgress:atTask:)]) {
+                    [obj requestProgress:progress atTask:task];
+                }
+            }];
         });
     } : nil;
     
@@ -508,6 +510,18 @@ static HLTaskManager *shared = nil;
             }
         }
     });
+}
+
+#pragma mark - Network Response Observer
+- (void)registerNetworkResponseObserver:(nonnull id<HLTaskResponseProtocol>)observer {
+    [self.responseObservers addObject:observer];
+}
+
+
+- (void)removeNetworkResponseObserver:(nonnull id<HLTaskResponseProtocol>)observer {
+    if ([self.responseObservers containsObject:observer]) {
+        [self.responseObservers removeObject:observer];
+    }
 }
 
 #pragma mark - lazy load getter

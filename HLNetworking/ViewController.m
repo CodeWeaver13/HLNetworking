@@ -53,7 +53,7 @@
     config.baseURL = @"https://httpbin.org";
     config.isBackgroundSession = NO;
     [[HLTaskManager shared] setConfig:config];
-    [HLTaskManager shared].responseDelegate = self;
+    [[HLTaskManager shared] registerNetworkResponseObserver:self];
 }
 
 #pragma mark - task reponse protocol
@@ -88,7 +88,7 @@
     config.baseURL = @"https://httpbin.org/";
     config.apiVersion = nil;
     [[HLAPIManager shared] setConfig:config];
-    [HLAPIManager shared].responseDelegate = self;
+    [[HLAPIManager shared] registerNetworkResponseObserver:self];
 }
 
 - (void)testAPI {
@@ -165,7 +165,7 @@
 
 #pragma mark - HLResponseDelegate
 - (NSArray<HLAPI *> *)requestAPIs {
-    return @[self.api1];
+    return @[self.api1, self.api2, self.api3, self.api4];
 }
 
 - (void)requestSucessWithResponseObject:(id)responseObject atAPI:(HLAPI *)api {
