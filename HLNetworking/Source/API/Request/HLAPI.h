@@ -47,7 +47,7 @@ typedef void(^RequestConstructingBodyBlock)(id<HLMultipartFormDataProtocol> __nu
 @property (nonatomic, assign, readonly) NSTimeInterval timeoutInterval;
 @property (nonatomic, copy, readonly) NSDictionary<NSString *, NSObject *> *parameters;
 @property (nonatomic, copy, readonly) NSDictionary<NSString *, NSString *> *header;
-@property (nonatomic, copy, readonly) NSSet *contentTypes;
+@property (nonatomic, copy, readonly) NSSet *accpetContentTypes;
 @property (nonatomic, copy, readonly) NSString *cURL;
 /**
  设置HLAPI的requestDelegate
@@ -131,10 +131,17 @@ typedef void(^RequestConstructingBodyBlock)(id<HLMultipartFormDataProtocol> __nu
 
 /**
  *  用户api请求中的参数列表
- *
+ *  每次设置都会覆盖
  *  @return 一般来说是NSDictionary
  */
 - (HLAPI* (^)(NSDictionary<NSString *, NSObject *> *parameters))setParams;
+
+/**
+ *  用户api请求中的参数列表
+ *  每次设置都是添加新参数
+ *  @return 一般来说是NSDictionary
+ */
+- (HLAPI* (^)(NSDictionary<NSString *, NSObject *> *parameters))addParams;
 
 /**
  *  HTTP 请求的头部区域自定义
@@ -158,7 +165,7 @@ typedef void(^RequestConstructingBodyBlock)(id<HLMultipartFormDataProtocol> __nu
  *
  *  @return NSSet
  */
-- (HLAPI* (^)(NSSet *contentTypes))setContentTypes;
+- (HLAPI* (^)(NSSet *contentTypes))setAccpetContentTypes;
 
 /**
  *  自定义的RequestUrl 请求

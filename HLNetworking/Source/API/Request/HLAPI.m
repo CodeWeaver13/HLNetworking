@@ -103,6 +103,14 @@
     };
 }
 
+- (HLAPI* (^)(NSDictionary<NSString *, NSObject *> *parameters))addParams {
+    return ^HLAPI* (NSDictionary<NSString *, NSObject *> *parameters) {
+        NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:self.parameters];
+        [dict addEntriesFromDictionary:parameters];
+        self.parameters = dict;
+        return self;
+    };
+}
 
 - (HLAPI* (^)(NSDictionary<NSString *, NSString *> *header))setHeader {
     return ^HLAPI* (NSDictionary<NSString *, NSString *> *header) {
@@ -111,14 +119,12 @@
     };
 }
 
-
-- (HLAPI* (^)(NSSet *contentTypes))setContentTypes {
+- (HLAPI* (^)(NSSet *contentTypes))setAccpetContentTypes {
     return ^HLAPI* (NSSet *contentTypes) {
-        self.contentTypes = contentTypes;
+        self.accpetContentTypes = contentTypes;
         return self;
     };
 }
-
 
 - (HLAPI* (^)(NSString *customURL))setCustomURL {
     return ^HLAPI* (NSString *customURL) {
@@ -209,18 +215,18 @@
 - (NSString *)description {
     NSString *desc;
 #if DEBUG
-    desc = [NSString stringWithFormat:@"\n===============HLAPI===============\nAPIVersion: %@\nClass: %@\nBaseURL: %@\nPath: %@\nCustomURL: %@\nParameters: %@\nHeader: %@\nContentTypes: %@\nTimeoutInterval: %f\nSecurityPolicy: %@\nRequestMethodType: %lu\nRequestSerializerType: %@\nResponseSerializerType: %@\nCachePolicy: %lu\n===============end===============\n\n",
+    desc = [NSString stringWithFormat:@"\n===============HLAPI===============\nAPIVersion: %@\nClass: %@\nBaseURL: %@\nPath: %@\nCustomURL: %@\nParameters: %@\nHeader: %@\nContentTypes: %@\nTimeoutInterval: %f\nSecurityPolicy: %@\nRequestMethodType: %@\nRequestSerializerType: %@\nResponseSerializerType: %@\nCachePolicy: %@\n===============end===============\n\n",
             [HLAPIManager shared].config.apiVersion ?: @"未设置",
             self.class, self.baseURL ?: [HLAPIManager shared].config.baseURL,
             self.path, self.cURL ?: @"未设置",
             self.parameters ?: @"未设置", self.header,
-            self.contentTypes,
+            self.accpetContentTypes,
             self.timeoutInterval,
             self.securityPolicy,
-            self.requestMethodType,
-            self.requestSerializerType == 0 ? @"HTTP" : @"JSON",
-            self.responseSerializerType == 0 ? @"HTTP" : @"JSON",
-            self.cachePolicy];
+            [self getRequestMethodString:self.requestMethodType],
+            self.requestSerializerType == RequestHTTP ? @"HTTP" : @"JSON",
+            self.responseSerializerType == ResponseHTTP ? @"HTTP" : @"JSON",
+            [self getCachePolicy:self.cachePolicy]];
 #else
     desc = @"";
 #endif
@@ -229,6 +235,58 @@
 
 - (NSString *)debugDescription {
     return self.description;
+}
+
+- (NSString *)getCachePolicy:(NSURLRequestCachePolicy)policy {
+    switch (policy) {
+        case NSURLRequestUseProtocolCachePolicy:
+            return @"NSURLRequestUseProtocolCachePolicy";
+            break;
+        case NSURLRequestReloadIgnoringLocalCacheData:
+            return @"NSURLRequestReloadIgnoringLocalCacheData";
+            break;
+        case NSURLRequestReloadIgnoringLocalAndRemoteCacheData:
+            return @"NSURLRequestReloadIgnoringLocalAndRemoteCacheData";
+            break;
+        case NSURLRequestReturnCacheDataElseLoad:
+            return @"NSURLRequestReturnCacheDataElseLoad";
+            break;
+        case NSURLRequestReturnCacheDataDontLoad:
+            return @"NSURLRequestReturnCacheDataDontLoad";
+            break;
+        case NSURLRequestReloadRevalidatingCacheData:
+            return @"NSURLRequestReloadRevalidatingCacheData";
+            break;
+        default:
+            return @"NULL";
+            break;
+    }
+}
+
+- (NSString *)getRequestMethodString:(HLRequestMethodType)method {
+    switch (method) {
+        case GET:
+            return @"GET";
+            break;
+        case POST:
+            return @"POST";
+            break;
+        case HEAD:
+            return @"HEAD";
+            break;
+        case PUT:
+            return @"PUT";
+            break;
+        case PATCH:
+            return @"PATCH";
+            break;
+        case DELETE:
+            return @"PATCH";
+            break;
+        default:
+            return @"NULL";
+            break;
+    }
 }
 
 #pragma mark - getter / lazy load
@@ -246,9 +304,9 @@
     } else {
         HLSecurityPolicyConfig *securityPolicy;
 #ifdef DEBUG
-        securityPolicy = [HLSecurityPolicyConfig policyWithPinningMode:None];
+        securityPolicy = [HLSecurityPolicyConfig policyWithPinningMode:HLSSLPinningModeNone];
 #else
-        securityPolicy = [HLSecurityPolicyConfig policyWithPinningMode:PublicKey];
+        securityPolicy = [HLSecurityPolicyConfig policyWithPinningMode:HLSSLPinningModePublicKey];
 #endif
         return securityPolicy;
     }
@@ -266,7 +324,7 @@
     if (_requestSerializerType) {
         return _requestSerializerType;
     } else {
-        return RequestJSON;
+        return RequestHTTP;
     }
 }
 
@@ -306,13 +364,13 @@
     if (_header) {
         return _header;
     } else {
-        return @{@"Content-Type" : @"application/json; charset=utf-8"};
+        return nil;
     }
 }
 
-- (NSSet *)contentTypes {
-    if (_contentTypes) {
-        return _contentTypes;
+- (NSSet *)accpetContentTypes {
+    if (_accpetContentTypes) {
+        return _accpetContentTypes;
     } else {
         return [NSSet setWithObjects:
                 @"text/json",

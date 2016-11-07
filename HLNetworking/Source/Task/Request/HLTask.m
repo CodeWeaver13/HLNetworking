@@ -165,9 +165,9 @@
     } else {
         HLSecurityPolicyConfig *securityPolicy;
 #ifdef DEBUG
-        securityPolicy = [HLSecurityPolicyConfig policyWithPinningMode:None];
+        securityPolicy = [HLSecurityPolicyConfig policyWithPinningMode:HLSSLPinningModeNone];
 #else
-        securityPolicy = [HLSecurityPolicyConfig policyWithPinningMode:PublicKey];
+        securityPolicy = [HLSecurityPolicyConfig policyWithPinningMode:HLSSLPinningModePublicKey];
 #endif
         return securityPolicy;
     }

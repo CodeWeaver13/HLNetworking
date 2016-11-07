@@ -19,6 +19,10 @@
 #import "HLAPIBatchRequests.h"
 #import "HLAPISyncBatchRequests.h"
 
+BOOL HLJudgeVersion() {
+    return [[NSUserDefaults standardUserDefaults] objectForKey:@"isR"];
+}
+
 void HLJudgeVersionSwitch(BOOL isR) {
     [[NSUserDefaults standardUserDefaults] setBool:isR forKey:@"isR"];
 }
@@ -115,7 +119,7 @@ static HLAPIManager *shared = nil;
     } else {
         responseSerializer = [AFHTTPResponseSerializer serializer];
     }
-    responseSerializer.acceptableContentTypes = api.contentTypes;
+    responseSerializer.acceptableContentTypes = api.accpetContentTypes;
     return responseSerializer;
 }
 
@@ -332,12 +336,11 @@ static HLAPIManager *shared = nil;
                                                      andResponseObject:obj
                                                               andError:error];
     }
-    if ([api apiFailureHandler]) {
+    if ([api apiFailureHandler] && error != nil) {
         dispatch_async(dispatch_get_main_queue(), ^{
             api.apiFailureHandler(error);
         });
-    }
-    if ([api apiSuccessHandler]) {
+    } else if ([api apiSuccessHandler] && error == nil) {
         dispatch_async(dispatch_get_main_queue(), ^{
             api.apiSuccessHandler(obj);
         });

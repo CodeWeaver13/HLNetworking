@@ -22,7 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) NSTimeInterval timeoutInterval;
 @property (nonatomic, copy) NSDictionary<NSString *, NSObject *> *parameters;
 @property (nonatomic, copy) NSDictionary<NSString *, NSString *> *header;
-@property (nonatomic, copy) NSSet *contentTypes;
+@property (nonatomic, copy) NSSet *accpetContentTypes;
 @property (nonatomic, copy) NSString *cURL;
 
 @property (nonatomic, copy, nullable) void (^apiSuccessHandler)(_Nonnull id responseObject);

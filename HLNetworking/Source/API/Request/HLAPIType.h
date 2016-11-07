@@ -11,24 +11,24 @@
 
 // 网络请求类型
 typedef NS_ENUM(NSUInteger, HLRequestMethodType) {
-    GET = 0,
-    POST = 1,
-    HEAD = 2,
-    PUT = 3,
-    PATCH = 4,
-    DELETE = 5
+    GET = 10,
+    POST = 11,
+    HEAD = 12,
+    PUT = 13,
+    PATCH = 14,
+    DELETE = 15
 };
 
 // 请求的序列化格式
 typedef NS_ENUM(NSUInteger, HLRequestSerializerType) {
-    RequestHTTP = 0,
-    RequestJSON = 1
+    RequestHTTP = 100,
+    RequestJSON = 101
 };
 
 // 请求返回的序列化格式
 typedef NS_ENUM(NSUInteger, HLResponseSerializerType) {
-    ResponseHTTP = 0,
-    ResponseJSON = 1
+    ResponseHTTP = 200,
+    ResponseJSON = 201
 };
 
 /**
@@ -38,15 +38,15 @@ typedef NS_ENUM(NSUInteger, HLSSLPinningMode) {
     /**
      *  不校验Pinning证书
      */
-    None,
+    HLSSLPinningModeNone,
     /**
      *  校验Pinning证书中的PublicKey.
      */
-    PublicKey,
+    HLSSLPinningModePublicKey,
     /**
      *  校验整个Pinning证书
      */
-    Certificate
+    HLSSLPinningModeCertificate
 };
 
 // 默认的请求超时时间
