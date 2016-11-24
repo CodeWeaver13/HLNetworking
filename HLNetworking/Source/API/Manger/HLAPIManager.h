@@ -18,7 +18,7 @@ extern void HLJudgeVersionSwitch(BOOL isR);
 @class HLNetworkConfig;
 @class HLAPI;
 @class HLAPIBatchRequests;
-@class HLAPISyncBatchRequests;
+@class HLAPIChainRequests;
 NS_ASSUME_NONNULL_BEGIN
 @interface HLAPIManager : NSObject
 
@@ -59,7 +59,7 @@ NS_ASSUME_NONNULL_BEGIN
 
  @param apis 带发送的同步请求集合
  */
-- (void)sendSyncBatchAPIRequests:(HLAPISyncBatchRequests *)apis;
+- (void)sendSyncBatchAPIRequests:(HLAPIChainRequests *)apis;
 
 
 /**

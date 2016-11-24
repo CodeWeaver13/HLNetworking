@@ -21,9 +21,16 @@
     return api;
 }
 
-- (HLAPI *(^)(Class clz))setResponseClass {
-    return ^HLAPI* (Class clz) {
-        self.objClz = clz;
+- (HLAPI *(^)(BOOL disable))setDisableDefaultParams {
+    return ^HLAPI* (BOOL disable) {
+        self.disableDefaultParams = disable;
+        return self;
+    };
+}
+
+- (HLAPI *(^)(NSString *clzName))setResponseClass {
+    return ^HLAPI* (NSString *clzName) {
+        self.objClz = NSClassFromString(clzName);
         return self;
     };
 }
@@ -114,7 +121,7 @@
     return ^HLAPI* (NSDictionary<NSString *, NSObject *> *parameters) {
         NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:self.parameters];
         [dict addEntriesFromDictionary:parameters];
-        self.parameters = dict;
+        self.parameters = [dict copy];
         return self;
     };
 }
@@ -292,6 +299,14 @@
 #pragma mark - getter / lazy load
 - (NSString *)baseURL {
     return nil;
+}
+
+- (BOOL)disableDefaultParams {
+    if (_disableDefaultParams) {
+        return _disableDefaultParams;
+    } else {
+        return NO;
+    }
 }
 
 /**

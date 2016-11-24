@@ -8,19 +8,19 @@
 
 #import <Foundation/Foundation.h>
 @class HLAPI;
-@class HLAPISyncBatchRequests;
+@class HLAPIChainRequests;
 
-@protocol HLAPISyncBatchRequestsProtocol <NSObject>
+@protocol HLAPIChainRequestsProtocol <NSObject>
 /**
  *  Batch Requests 全部调用完成之后调用
  *
  *  @param batchApis batchApis
  */
-- (void)batchRequestsAllDidFinished:(nonnull HLAPISyncBatchRequests *)batchApis;
+- (void)chainRequestsAllDidFinished:(nonnull HLAPIChainRequests *)batchApis;
 
 @end
 
-@interface HLAPISyncBatchRequests : NSObject
+@interface HLAPIChainRequests : NSObject
 
 
 @property (nonatomic, assign, readonly)BOOL isCancel;
@@ -32,7 +32,7 @@
 /**
  *  Sync Batch Requests 执行完成之后调用的delegate
  */
-@property (nonatomic, weak, nullable) id<HLAPISyncBatchRequestsProtocol> delegate;
+@property (nonatomic, weak, nullable) id<HLAPIChainRequestsProtocol> delegate;
 
 
 /**
@@ -47,7 +47,7 @@
  *
  *  @param apis 新加入的请求Array
  */
-- (void)addBatchAPIRequests:(nonnull NSArray<HLAPI *> *)apis;
+- (void)addChainAPIRequests:(nonnull NSArray<HLAPI *> *)apis;
 
 /**
  *  开启API 请求

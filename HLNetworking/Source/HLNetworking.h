@@ -18,7 +18,7 @@
 #import "HLAPI.h"
 #import "HLAPIType.h"
 #import "HLAPIBatchRequests.h"
-#import "HLAPISyncBatchRequests.h"
+#import "HLAPIChainRequests.h"
 // API protocol
 #import "HLMultipartFormDataProtocol.h"
 #import "HLHttpHeaderDelegate.h"

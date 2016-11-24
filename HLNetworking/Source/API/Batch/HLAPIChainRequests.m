@@ -6,18 +6,18 @@
 //  Copyright © 2016年 wangshiyu13. All rights reserved.
 //
 
-#import "HLAPISyncBatchRequests.h"
+#import "HLAPIChainRequests.h"
 #import "HLAPI.h"
 #import "HLAPIManager.h"
 
 static NSString * const hint = @"API 必须是 HLAPI的子类";
-@interface HLAPISyncBatchRequests ()
+@interface HLAPIChainRequests ()
 
 @property (nonatomic, strong, readwrite) NSMutableArray *apiRequestsArray;
 @property (nonatomic, assign, readwrite)BOOL isCancel;
 @end
 
-@implementation HLAPISyncBatchRequests
+@implementation HLAPIChainRequests
 #pragma mark - Init
 - (instancetype)init {
     self = [super init];
@@ -41,7 +41,7 @@ static NSString * const hint = @"API 必须是 HLAPI的子类";
     [self.apiRequestsArray addObject:api];
 }
 
-- (void)addBatchAPIRequests:(NSSet *)apis {
+- (void)addChainAPIRequests:(NSSet *)apis {
     NSParameterAssert(apis);
     NSAssert([apis count] > 0, @"Api集合元素个数不可小于1");
     [apis enumerateObjectsUsingBlock:^(id obj, BOOL *stop) {

@@ -29,7 +29,7 @@
 		CF3627B71D9368DF00C26AAF /* UIRefreshControl+AFNetworking.m in Sources */ = {isa = PBXBuildFile; fileRef = CF3627A51D9368DF00C26AAF /* UIRefreshControl+AFNetworking.m */; };
 		CF3627B81D9368DF00C26AAF /* UIWebView+AFNetworking.m in Sources */ = {isa = PBXBuildFile; fileRef = CF3627A71D9368DF00C26AAF /* UIWebView+AFNetworking.m */; };
 		CFDCF73C1D9C261B00DE1C8E /* HLAPIBatchRequests.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDCF71B1D9C261B00DE1C8E /* HLAPIBatchRequests.m */; };
-		CFDCF73D1D9C261B00DE1C8E /* HLAPISyncBatchRequests.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDCF71D1D9C261B00DE1C8E /* HLAPISyncBatchRequests.m */; };
+		CFDCF73D1D9C261B00DE1C8E /* HLAPIChainRequests.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDCF71D1D9C261B00DE1C8E /* HLAPIChainRequests.m */; };
 		CFDCF73E1D9C261B00DE1C8E /* HLAPIManager.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDCF7201D9C261B00DE1C8E /* HLAPIManager.m */; };
 		CFDCF73F1D9C261B00DE1C8E /* HLAPI.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDCF7281D9C261B00DE1C8E /* HLAPI.m */; };
 		CFDCF7401D9C261B00DE1C8E /* HLFormDataConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDCF72C1D9C261B00DE1C8E /* HLFormDataConfig.m */; };
@@ -91,8 +91,8 @@
 		CF60A0DD1DA16C5B00AC1BB2 /* HLTask_InternalParams.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLTask_InternalParams.h; sourceTree = "<group>"; };
 		CFDCF71A1D9C261B00DE1C8E /* HLAPIBatchRequests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLAPIBatchRequests.h; sourceTree = "<group>"; };
 		CFDCF71B1D9C261B00DE1C8E /* HLAPIBatchRequests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLAPIBatchRequests.m; sourceTree = "<group>"; };
-		CFDCF71C1D9C261B00DE1C8E /* HLAPISyncBatchRequests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLAPISyncBatchRequests.h; sourceTree = "<group>"; };
-		CFDCF71D1D9C261B00DE1C8E /* HLAPISyncBatchRequests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLAPISyncBatchRequests.m; sourceTree = "<group>"; };
+		CFDCF71C1D9C261B00DE1C8E /* HLAPIChainRequests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLAPIChainRequests.h; sourceTree = "<group>"; };
+		CFDCF71D1D9C261B00DE1C8E /* HLAPIChainRequests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLAPIChainRequests.m; sourceTree = "<group>"; };
 		CFDCF71F1D9C261B00DE1C8E /* HLAPIManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLAPIManager.h; sourceTree = "<group>"; };
 		CFDCF7201D9C261B00DE1C8E /* HLAPIManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLAPIManager.m; sourceTree = "<group>"; };
 		CFDCF7221D9C261B00DE1C8E /* HLHttpHeaderDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLHttpHeaderDelegate.h; sourceTree = "<group>"; };
@@ -254,8 +254,8 @@
 			children = (
 				CFDCF71A1D9C261B00DE1C8E /* HLAPIBatchRequests.h */,
 				CFDCF71B1D9C261B00DE1C8E /* HLAPIBatchRequests.m */,
-				CFDCF71C1D9C261B00DE1C8E /* HLAPISyncBatchRequests.h */,
-				CFDCF71D1D9C261B00DE1C8E /* HLAPISyncBatchRequests.m */,
+				CFDCF71C1D9C261B00DE1C8E /* HLAPIChainRequests.h */,
+				CFDCF71D1D9C261B00DE1C8E /* HLAPIChainRequests.m */,
 			);
 			path = Batch;
 			sourceTree = "<group>";
@@ -434,7 +434,7 @@
 				CF3627B01D9368DF00C26AAF /* AFAutoPurgingImageCache.m in Sources */,
 				CF3627B21D9368DF00C26AAF /* AFNetworkActivityIndicatorManager.m in Sources */,
 				CF3627B31D9368DF00C26AAF /* UIActivityIndicatorView+AFNetworking.m in Sources */,
-				CFDCF73D1D9C261B00DE1C8E /* HLAPISyncBatchRequests.m in Sources */,
+				CFDCF73D1D9C261B00DE1C8E /* HLAPIChainRequests.m in Sources */,
 				CF3627B51D9368DF00C26AAF /* UIImageView+AFNetworking.m in Sources */,
 				CFDCF73F1D9C261B00DE1C8E /* HLAPI.m in Sources */,
 				CF3627AA1D9368DF00C26AAF /* AFSecurityPolicy.m in Sources */,

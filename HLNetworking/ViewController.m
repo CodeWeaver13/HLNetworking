@@ -9,7 +9,7 @@
 #import "HLNetworking.h"
 #import "AFNetworking.h"
 
-@interface ViewController ()<HLAPIResponseDelegate, HLAPIRequestDelegate, HLObjReformerProtocol, HLAPISyncBatchRequestsProtocol, HLAPIBatchRequestsProtocol, HLTaskRequestDelegate, HLTaskResponseProtocol>
+@interface ViewController ()<HLAPIResponseDelegate, HLAPIRequestDelegate, HLObjReformerProtocol, HLAPIChainRequestsProtocol, HLAPIBatchRequestsProtocol, HLTaskRequestDelegate, HLTaskResponseProtocol>
 @property(nonatomic, strong)HLAPI *api1;
 @property(nonatomic, strong)HLAPI *api2;
 @property(nonatomic, strong)HLAPI *api3;
@@ -124,9 +124,9 @@
         NSLog(@"\napi 4 --- 已回调 \n----");
     });
     
-    HLAPISyncBatchRequests *syncBatch = [[HLAPISyncBatchRequests alloc] init];
+    HLAPIChainRequests *syncBatch = [[HLAPIChainRequests alloc] init];
     syncBatch.delegate = self;
-    [syncBatch addBatchAPIRequests:@[self.api1, self.api2, self.api3, self.api4]];
+    [syncBatch addChainAPIRequests:@[self.api1, self.api2, self.api3, self.api4]];
     [syncBatch start];
     
     //    HLAPIBatchRequests *asyncBatch = [[HLAPIBatchRequests alloc] init];
@@ -139,7 +139,7 @@
     });
 }
 
-- (void)batchRequestsAllDidFinished:(HLAPISyncBatchRequests *)batchApis {
+- (void)chainRequestsAllDidFinished:(HLAPIChainRequests *)batchApis {
     NSLog(@"batchRequestsAllDidFinished");
 }
 

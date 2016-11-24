@@ -26,7 +26,6 @@ NSString * HLDefaultNetworkNotReachableString     = @"网络不可用，请稍�
         self.maxHttpConnectionPerHost = MAX_HTTP_CONNECTION_PER_HOST;
         self.apiVersion = [self getCurrentVersion];
         self.isJudgeVersion = [[NSUserDefaults standardUserDefaults] boolForKey:@"isR"] ? : YES;
-        
     }
     return self;
 }

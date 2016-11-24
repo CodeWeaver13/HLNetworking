@@ -17,7 +17,7 @@
 #import "HLAPI.h"
 #import "HLAPI_InternalParams.h"
 #import "HLAPIBatchRequests.h"
-#import "HLAPISyncBatchRequests.h"
+#import "HLAPIChainRequests.h"
 
 BOOL HLJudgeVersion() {
     return [[NSUserDefaults standardUserDefaults] objectForKey:@"isR"];
@@ -193,7 +193,11 @@ static HLAPIManager *shared = nil;
  */
 - (NSDictionary<NSString *, NSObject *> *)requestParamsWithAPI:(HLAPI *)api {
     NSParameterAssert(api);
-    return api.parameters;
+    NSMutableDictionary *params = [NSMutableDictionary dictionaryWithDictionary:api.parameters];
+    if (self.config.defaultParams && !api.disableDefaultParams) {
+        [params addEntriesFromDictionary:self.config.defaultParams];
+    }
+    return [params copy];
 }
 
 #pragma mark - AFSessionManager
@@ -337,10 +341,12 @@ static HLAPIManager *shared = nil;
     if ([api apiFailureHandler] && error != nil) {
         dispatch_async(dispatch_get_main_queue(), ^{
             api.apiFailureHandler(error);
+            api.apiFailureHandler = nil;
         });
     } else if ([api apiSuccessHandler] && error == nil) {
         dispatch_async(dispatch_get_main_queue(), ^{
             api.apiSuccessHandler(obj);
+            api.apiSuccessHandler = nil;
         });
     }
     [self.responseObservers enumerateObjectsUsingBlock:^(id<HLAPIResponseDelegate>  _Nonnull obj, BOOL * _Nonnull stop) {
@@ -370,7 +376,7 @@ static HLAPIManager *shared = nil;
 
  @param apis api集合
  */
-- (void)sendSyncBatchAPIRequests:(nonnull HLAPISyncBatchRequests *)apis {
+- (void)sendSyncBatchAPIRequests:(nonnull HLAPIChainRequests *)apis {
     NSParameterAssert(apis);
     
     NSAssert([[apis.apiRequestsArray valueForKeyPath:@"hash"] count] == [apis.apiRequestsArray count],
@@ -402,7 +408,7 @@ static HLAPIManager *shared = nil;
         }];
         dispatch_group_notify(batch_api_group, dispatch_get_main_queue(), ^{
             if (apis.delegate) {
-                [apis.delegate batchRequestsAllDidFinished:apis];
+                [apis.delegate chainRequestsAllDidFinished:apis];
             }
         });
     });
