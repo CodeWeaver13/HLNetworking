@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 
 // 判断当前是否为审核版本
-extern BOOL HLJudgeVersion();
+extern BOOL HLJudgeVersion(void);
 // 设置是否为审核版本
 extern void HLJudgeVersionSwitch(BOOL isR);
 

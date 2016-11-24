@@ -64,7 +64,7 @@ static NSString * const hint = @"API 必须是 HLAPI的子类";
 
 - (nonnull id)objectAtIndexedSubscript:(NSUInteger)idx {
     if (idx >= _apiRequestsArray.count) {
-        [NSException raise:NSRangeException format:@"Index %llu 的区间为 [0, %llu].", idx, _apiRequestsArray.count];
+        [NSException raise:NSRangeException format:@"Index %lu 的区间为 [0, %lu].", (unsigned long)idx, (unsigned long)_apiRequestsArray.count];
     }
     return _apiRequestsArray[idx];
 }
