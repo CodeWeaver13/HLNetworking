@@ -21,9 +21,9 @@
     return api;
 }
 
-- (HLAPI *(^)(BOOL disable))setDisableDefaultParams {
-    return ^HLAPI* (BOOL disable) {
-        self.disableDefaultParams = disable;
+- (HLAPI *(^)(BOOL enable))enableDefaultParams {
+    return ^HLAPI* (BOOL enable) {
+        self.useDefaultParams = enable;
         return self;
     };
 }
@@ -301,11 +301,11 @@
     return nil;
 }
 
-- (BOOL)disableDefaultParams {
-    if (_disableDefaultParams) {
-        return _disableDefaultParams;
+- (BOOL)useDefaultParams {
+    if (_useDefaultParams) {
+        return _useDefaultParams;
     } else {
-        return NO;
+        return YES;
     }
 }
 

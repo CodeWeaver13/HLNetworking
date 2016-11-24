@@ -42,7 +42,7 @@ typedef void(^ProgressBlock)(NSProgress * __nullable progress);
 typedef void(^RequestConstructingBodyBlock)(id<HLMultipartFormDataProtocol> __nullable formData);
 
 @interface HLAPI : NSObject
-@property (nonatomic, assign, readonly) BOOL disableDefaultParams;
+@property (nonatomic, assign, readonly) BOOL useDefaultParams;
 @property (nonatomic, strong, readonly) Class objClz;
 @property (nonatomic, copy, readonly) NSString *baseURL;
 @property (nonatomic, copy, readonly) NSString *path;
@@ -53,7 +53,7 @@ typedef void(^RequestConstructingBodyBlock)(id<HLMultipartFormDataProtocol> __nu
 @property (nonatomic, copy, readonly) NSString *cURL;
 
 
-- (HLAPI *(^)(BOOL disable))setDisableDefaultParams;
+- (HLAPI *(^)(BOOL enable))enableDefaultParams;
 
 /**
  设置HLAPI对应的返回值类型

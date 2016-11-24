@@ -194,7 +194,7 @@ static HLAPIManager *shared = nil;
 - (NSDictionary<NSString *, NSObject *> *)requestParamsWithAPI:(HLAPI *)api {
     NSParameterAssert(api);
     NSMutableDictionary *params = [NSMutableDictionary dictionaryWithDictionary:api.parameters];
-    if (self.config.defaultParams && !api.disableDefaultParams) {
+    if (self.config.defaultParams && api.useDefaultParams) {
         [params addEntriesFromDictionary:self.config.defaultParams];
     }
     return [params copy];
