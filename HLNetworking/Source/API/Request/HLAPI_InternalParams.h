@@ -10,6 +10,7 @@
 NS_ASSUME_NONNULL_BEGIN
 @interface HLAPI ()
 // readOnly property
+@property (nonatomic, strong) Class objClz;
 @property (nonatomic, weak, nullable) id<HLAPIRequestDelegate> delegate;
 @property (nonatomic, weak, nullable) id<HLObjReformerProtocol> objReformerDelegate;
 @property (nonatomic, copy) NSString *baseURL;

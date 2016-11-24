@@ -332,9 +332,7 @@ static HLAPIManager *shared = nil;
  */
 - (void)callAPICompletion:(HLAPI *)api obj:(id)obj error:(NSError *)error completion:(void (^)())completion {
     if (api.objReformerDelegate) {
-        obj = [api.objReformerDelegate apiResponseObjReformerWithAPI:api
-                                                     andResponseObject:obj
-                                                              andError:error];
+        obj = [api.objReformerDelegate objReformerWithAPI:api andResponseObject:obj andError:error];
     }
     if ([api apiFailureHandler] && error != nil) {
         dispatch_async(dispatch_get_main_queue(), ^{

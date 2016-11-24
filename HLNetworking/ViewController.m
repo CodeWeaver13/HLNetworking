@@ -25,8 +25,6 @@
     [super viewDidLoad];
     [self setupAPINetworkConfig];
     [self testAPI];
-//    [self setupTaskNetworkConfig];
-//    [self testTask];
 }
 
 - (void)pause {
@@ -150,7 +148,7 @@
 }
 
 #pragma mark - HLObjReformerProtocol
-- (id)apiResponseObjReformerWithAPI:(HLAPI *)api andResponseObject:(id)responseObject andError:(NSError *)error {
+- (id)objReformerWithAPI:(HLAPI *)api andResponseObject:(id)responseObject andError:(NSError *)error {
     return [NSString stringWithFormat:@"我被转换了"];
 }
 

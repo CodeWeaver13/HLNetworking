@@ -26,7 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
  *
  *  @return 整理过后的请求数据
  */
-- (nullable id)apiResponseObjReformerWithAPI:(HLAPI *)api andResponseObject:(id)responseObject andError:(NSError * _Nullable)error;
+- (nullable id)objReformerWithAPI:(HLAPI *)api andResponseObject:(id)responseObject andError:(NSError * _Nullable)error;
 @end
 
 #pragma mark - HLAPI
@@ -42,6 +42,7 @@ typedef void(^ProgressBlock)(NSProgress * __nullable progress);
 typedef void(^RequestConstructingBodyBlock)(id<HLMultipartFormDataProtocol> __nullable formData);
 
 @interface HLAPI : NSObject
+@property (nonatomic, strong, readonly) Class objClz;
 @property (nonatomic, copy, readonly) NSString *baseURL;
 @property (nonatomic, copy, readonly) NSString *path;
 @property (nonatomic, assign, readonly) NSTimeInterval timeoutInterval;
@@ -49,6 +50,9 @@ typedef void(^RequestConstructingBodyBlock)(id<HLMultipartFormDataProtocol> __nu
 @property (nonatomic, copy, readonly) NSDictionary<NSString *, NSString *> *header;
 @property (nonatomic, copy, readonly) NSSet *accpetContentTypes;
 @property (nonatomic, copy, readonly) NSString *cURL;
+
+- (HLAPI *(^)(Class clz))setResponseClass;
+
 /**
  设置HLAPI的requestDelegate
  */

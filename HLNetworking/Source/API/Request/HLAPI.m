@@ -21,6 +21,13 @@
     return api;
 }
 
+- (HLAPI *(^)(Class clz))setResponseClass {
+    return ^HLAPI* (Class clz) {
+        self.objClz = clz;
+        return self;
+    };
+}
+
 - (HLAPI *(^)(id<HLAPIRequestDelegate> delegate))setDelegate {
     return ^HLAPI* (id<HLAPIRequestDelegate> delegate) {
         self.delegate = delegate;
@@ -131,13 +138,6 @@
         self.cURL = customURL;
         return self;
     };
-}
-
-- (HLAPI *)progress:(void (^)(NSProgress * __nonnull))progress {
-    [self setApiProgressHandler:^(NSProgress * __nonnull proc) {
-        progress(proc);
-    }];
-    return self;
 }
 
 - (HLAPI *(^)(ReObjBlock))success {
@@ -385,6 +385,14 @@
         return _cURL;
     } else {
         return nil;
+    }
+}
+
+- (Class)objClz {
+    if (_objClz) {
+        return _objClz;
+    } else {
+        return [NSObject class];
     }
 }
 @end
