@@ -21,7 +21,7 @@
 #import "HLAPIChainRequests.h"
 
 BOOL HLJudgeVersion() {
-    return [[NSUserDefaults standardUserDefaults] objectForKey:@"isR"];
+    return [[NSUserDefaults standardUserDefaults] boolForKey:@"isR"];
 }
 
 void HLJudgeVersionSwitch(BOOL isR) {
