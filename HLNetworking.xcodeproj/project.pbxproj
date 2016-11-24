@@ -89,6 +89,7 @@
 		CF60A0DB1DA1605D00AC1BB2 /* HLAPIRequestDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLAPIRequestDelegate.h; sourceTree = "<group>"; };
 		CF60A0DC1DA160C400AC1BB2 /* HLAPIResponseDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLAPIResponseDelegate.h; sourceTree = "<group>"; };
 		CF60A0DD1DA16C5B00AC1BB2 /* HLTask_InternalParams.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLTask_InternalParams.h; sourceTree = "<group>"; };
+		CF7326AD1DE729D100EDA1CE /* HLNetworkMacro.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLNetworkMacro.h; sourceTree = "<group>"; };
 		CFDCF71A1D9C261B00DE1C8E /* HLAPIBatchRequests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLAPIBatchRequests.h; sourceTree = "<group>"; };
 		CFDCF71B1D9C261B00DE1C8E /* HLAPIBatchRequests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLAPIBatchRequests.m; sourceTree = "<group>"; };
 		CFDCF71C1D9C261B00DE1C8E /* HLAPIChainRequests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLAPIChainRequests.h; sourceTree = "<group>"; };
@@ -301,6 +302,7 @@
 				CFDCF72E1D9C261B00DE1C8E /* HLNetworkConfig.m */,
 				CFDCF72F1D9C261B00DE1C8E /* HLSecurityPolicyConfig.h */,
 				CFDCF7301D9C261B00DE1C8E /* HLSecurityPolicyConfig.m */,
+				CF7326AD1DE729D100EDA1CE /* HLNetworkMacro.h */,
 			);
 			path = Config;
 			sourceTree = "<group>";

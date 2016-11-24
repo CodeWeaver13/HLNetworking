@@ -10,6 +10,7 @@
 #define HLNetworking_h
 
 // config
+#import "HLNetworkMacro.h"
 #import "HLNetworkConfig.h"
 #import "HLSecurityPolicyConfig.h"
 #import "HLFormDataConfig.h"

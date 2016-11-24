@@ -11,6 +11,12 @@
 
 NS_ASSUME_NONNULL_BEGIN
 @protocol HLAPIResponseDelegate <NSObject>
+
+#define HLAPIResponseDelegateRequestAPIs(...) \
+- (NSArray <HLAPI *>*)requestAPIs { \
+    return @[ __VA_ARGS__ ]; \
+}
+
 @required
 - (NSArray <HLAPI *>*)requestAPIs;
 

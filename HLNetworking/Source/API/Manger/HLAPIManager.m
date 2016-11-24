@@ -8,6 +8,7 @@
 
 #import "AFNetworking.h"
 #import "HLAPIManager.h"
+#import "HLNetworkMacro.h"
 #import "HLHttpHeaderDelegate.h"
 #import "HLSecurityPolicyConfig.h"
 #import "HLAPIResponseDelegate.h"
@@ -385,21 +386,20 @@ static HLAPIManager *shared = nil;
     __block dispatch_semaphore_t semaphore = dispatch_semaphore_create(1);
     
     dispatch_group_t batch_api_group = dispatch_group_create();
-    __weak typeof(self) weakSelf = self;
-    
+    @weakify(self);
     dispatch_async(dispatch_queue_create([queueName UTF8String], DISPATCH_QUEUE_SERIAL), ^{
         [apis.apiRequestsArray enumerateObjectsUsingBlock:^(id  _Nonnull api, NSUInteger idx, BOOL * _Nonnull stop) {
+            @strongify(self);
             dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
             dispatch_group_enter(batch_api_group);
-            __strong typeof (weakSelf) strongSelf = weakSelf;
-            AFHTTPSessionManager *sessionManager = [strongSelf sessionManagerWithAPI:api];
+            AFHTTPSessionManager *sessionManager = [self sessionManagerWithAPI:api];
             if (!sessionManager) {
                 *stop = YES;
                 dispatch_group_leave(batch_api_group);
             }
             sessionManager.completionGroup = batch_api_group;
             
-            [strongSelf _sendSingleAPIRequest:api
+            [self _sendSingleAPIRequest:api
                            withSessionManager:sessionManager
                            andCompletionGroup:batch_api_group
                               completionBlock:^{
@@ -422,19 +422,18 @@ static HLAPIManager *shared = nil;
              @"不能在集合中加入相同的 API");
     
     dispatch_group_t batch_api_group = dispatch_group_create();
-    __weak typeof(self) weakSelf = self;
+    @weakify(self);
     [apis.apiRequestsSet enumerateObjectsUsingBlock:^(id api, BOOL * stop) {
+        @strongify(self);
         dispatch_group_enter(batch_api_group);
-        
-        __strong typeof (weakSelf) strongSelf = weakSelf;
-        AFHTTPSessionManager *sessionManager = [strongSelf sessionManagerWithAPI:api];
+        AFHTTPSessionManager *sessionManager = [self sessionManagerWithAPI:api];
         if (!sessionManager) {
             *stop = YES;
             dispatch_group_leave(batch_api_group);
         }
         sessionManager.completionGroup = batch_api_group;
         
-        [strongSelf _sendSingleAPIRequest:api
+        [self _sendSingleAPIRequest:api
                        withSessionManager:sessionManager
                        andCompletionGroup:batch_api_group
                           completionBlock:nil];
@@ -473,7 +472,7 @@ static HLAPIManager *shared = nil;
     NSParameterAssert(api);
     NSParameterAssert(sessionManager);
     
-    __weak typeof(self) weakSelf = self;
+    @weakify(self);
     NSString *requestUrlStr = [self requestUrlStringWithAPI:api];
     NSDictionary<NSString *,NSObject *> *requestParams = [self requestParamsWithAPI:api];
     NSString *hashKey = [NSString stringWithFormat:@"%lu", (unsigned long)[api hash]];
@@ -530,12 +529,12 @@ static HLAPIManager *shared = nil;
      */
     void (^successBlock)(NSURLSessionDataTask *task, id responseObject)
     = ^(NSURLSessionDataTask * task, id responseObject) {
-        __strong typeof (weakSelf) strongSelf = weakSelf;
-        if (strongSelf.config.isNetworkingActivityIndicatorEnabled) {
+        @strongify(self);
+        if (self.config.isNetworkingActivityIndicatorEnabled) {
             [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
         }
-        [strongSelf handleSuccWithResponse:responseObject andAPI:api completion:completion];
-        [strongSelf.sessionTasksCache removeObjectForKey:hashKey];
+        [self handleSuccWithResponse:responseObject andAPI:api completion:completion];
+        [self.sessionTasksCache removeObjectForKey:hashKey];
         if (completionGroup) {
             dispatch_group_leave(completionGroup);
         }
@@ -546,12 +545,12 @@ static HLAPIManager *shared = nil;
      */
     void (^failureBlock)(NSURLSessionDataTask * task, NSError * error)
     = ^(NSURLSessionDataTask * task, NSError * error) {
-        __strong typeof (weakSelf) strongSelf = weakSelf;
-        if (strongSelf.config.isNetworkingActivityIndicatorEnabled) {
+        @strongify(self);
+        if (self.config.isNetworkingActivityIndicatorEnabled) {
             [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
         }
-        [strongSelf handleFailureWithError:error andAPI:api completion:completion];
-        [strongSelf.sessionTasksCache removeObjectForKey:hashKey];
+        [self handleFailureWithError:error andAPI:api completion:completion];
+        [self.sessionTasksCache removeObjectForKey:hashKey];
         if (completionGroup) {
             dispatch_group_leave(completionGroup);
         }

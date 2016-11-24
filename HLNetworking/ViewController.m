@@ -162,9 +162,12 @@
 }
 
 #pragma mark - HLResponseDelegate
-- (NSArray<HLAPI *> *)requestAPIs {
-    return @[self.api1, self.api2, self.api3, self.api4];
-}
+
+HLAPIResponseDelegateRequestAPIs(self.api1, self.api2, self.api3)
+
+//- (NSArray<HLAPI *> *)requestAPIs {
+//    return @[self.api1, self.api2, self.api3, self.api4];
+//}
 
 - (void)requestSucessWithResponseObject:(id)responseObject atAPI:(HLAPI *)api {
     NSLog(@"\n%@------RequestSuccessDelegate\n", [self getAPIName:api]);
