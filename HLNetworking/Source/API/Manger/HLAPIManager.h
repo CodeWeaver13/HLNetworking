@@ -59,7 +59,7 @@ NS_ASSUME_NONNULL_BEGIN
 
  @param apis 带发送的同步请求集合
  */
-- (void)sendSyncBatchAPIRequests:(HLAPIChainRequests *)apis;
+- (void)sendChainAPIRequests:(HLAPIChainRequests *)apis;
 
 
 /**

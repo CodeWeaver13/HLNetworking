@@ -124,22 +124,24 @@
         NSLog(@"\napi 4 --- 已回调 \n----");
     });
     
-    HLAPIChainRequests *syncBatch = [[HLAPIChainRequests alloc] init];
-    syncBatch.delegate = self;
-    [syncBatch addChainAPIRequests:@[self.api1, self.api2, self.api3, self.api4]];
-    [syncBatch start];
-    
+    HLAPIChainRequests *chain = [[HLAPIChainRequests alloc] init];
+    chain.delegate = self;
+    [chain addChainAPIRequests:@[self.api1, self.api2, self.api3, self.api4]];
+    [chain start];
+    for (id obj in chain) {
+        NSLog(@"%@", obj);
+    }
     //    HLAPIBatchRequests *asyncBatch = [[HLAPIBatchRequests alloc] init];
     //    asyncBatch.delegate = self;
     //    [asyncBatch addBatchAPIRequests:[NSSet setWithObjects:self.api1, self.api2, self.api3, self.api4, self.api5, nil]];
     //    [asyncBatch start];
     
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5), dispatch_get_main_queue(), ^{
-        [syncBatch cancel];
+        [chain cancel];
     });
 }
 
-- (void)chainRequestsAllDidFinished:(HLAPIChainRequests *)batchApis {
+- (void)chainRequestsAllDidFinished:(HLAPIChainRequests *)chainApis {
     NSLog(@"batchRequestsAllDidFinished");
 }
 

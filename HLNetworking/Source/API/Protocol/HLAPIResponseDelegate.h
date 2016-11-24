@@ -12,6 +12,13 @@
 NS_ASSUME_NONNULL_BEGIN
 @protocol HLAPIResponseDelegate <NSObject>
 
+
+/**
+ 快速返回必须的apis
+
+ @param ... apis
+ @return 必要的APIs集合
+ */
 #define HLAPIResponseDelegateRequestAPIs(...) \
 - (NSArray <HLAPI *>*)requestAPIs { \
     return @[ __VA_ARGS__ ]; \

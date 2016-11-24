@@ -11,8 +11,8 @@
 
 // 网络请求类型
 typedef NS_ENUM(NSUInteger, HLRequestTaskType) {
-    Upload,
-    Download
+    Upload = 16,
+    Download = 17
 };
 
 #endif /* HLTaskType_h */

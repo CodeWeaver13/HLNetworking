@@ -12,22 +12,17 @@
 
 @protocol HLAPIChainRequestsProtocol <NSObject>
 /**
- *  Batch Requests 全部调用完成之后调用
+ *  Chain Requests 全部调用完成之后调用
  *
- *  @param batchApis batchApis
+ *  @param chainApis chainApis集合
  */
-- (void)chainRequestsAllDidFinished:(nonnull HLAPIChainRequests *)batchApis;
+- (void)chainRequestsAllDidFinished:(nonnull HLAPIChainRequests *)chainApis;
 
 @end
 
-@interface HLAPIChainRequests : NSObject
-
+@interface HLAPIChainRequests : NSObject<NSFastEnumeration>
 
 @property (nonatomic, assign, readonly)BOOL isCancel;
-/**
- *  Sync Batch 执行的API Requests 集合
- */
-@property (nonatomic, strong, readonly, nullable) NSMutableArray *apiRequestsArray;
 
 /**
  *  Sync Batch Requests 执行完成之后调用的delegate
@@ -36,7 +31,7 @@
 
 
 /**
- 将API 加入到SyncBatchRequest Array 集合中
+ 将API 加入到chainBatchRequest Array 集合中
  
  @param api 新加入的请求
  */
@@ -58,4 +53,14 @@
  取消请求所有请求
  */
 - (void)cancel;
+
+#pragma mark - 遍历方法
+
+@property (readonly) NSUInteger count;
+
+- (void)enumerateObjectsUsingBlock:(void (^_Nonnull)(id _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop))block;
+
+- (nonnull NSEnumerator*)objectEnumerator;
+
+- (nonnull id)objectAtIndexedSubscript:(NSUInteger)idx;
 @end

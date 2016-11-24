@@ -226,7 +226,7 @@
             [HLAPIManager shared].config.apiVersion ?: @"未设置",
             self.class, self.baseURL ?: [HLAPIManager shared].config.baseURL,
             self.path, self.cURL ?: @"未设置",
-            self.parameters ?: @"未设置", self.header,
+            self.parameters ?: @"未设置", self.header ?: @"未设置",
             self.accpetContentTypes,
             self.timeoutInterval,
             self.securityPolicy,

@@ -377,18 +377,17 @@ static HLAPIManager *shared = nil;
 
  @param apis api集合
  */
-- (void)sendSyncBatchAPIRequests:(nonnull HLAPIChainRequests *)apis {
+- (void)sendChainAPIRequests:(nonnull HLAPIChainRequests *)apis {
     NSParameterAssert(apis);
-    
-    NSAssert([[apis.apiRequestsArray valueForKeyPath:@"hash"] count] == [apis.apiRequestsArray count],
-             @"不能在集合中加入相同的 API");
+//    NSArray *array = [apis valueForKey:@"apiRequestsArray"];
+//    NSAssert([[array valueForKeyPath:@"hash"] count] == [array count], @"不能在集合中加入相同的 API");
     NSString *queueName = [NSString stringWithFormat:@"com.qkhl.networking.wangshiyu13.%lu", (unsigned long)apis.hash];
     __block dispatch_semaphore_t semaphore = dispatch_semaphore_create(1);
     
     dispatch_group_t batch_api_group = dispatch_group_create();
     @weakify(self);
     dispatch_async(dispatch_queue_create([queueName UTF8String], DISPATCH_QUEUE_SERIAL), ^{
-        [apis.apiRequestsArray enumerateObjectsUsingBlock:^(id  _Nonnull api, NSUInteger idx, BOOL * _Nonnull stop) {
+        [apis enumerateObjectsUsingBlock:^(id  _Nonnull api, NSUInteger idx, BOOL * _Nonnull stop) {
             @strongify(self);
             dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
             dispatch_group_enter(batch_api_group);
@@ -418,8 +417,8 @@ static HLAPIManager *shared = nil;
 - (void)sendBatchAPIRequests:(nonnull HLAPIBatchRequests *)apis {
     NSParameterAssert(apis);
     
-    NSAssert([[apis.apiRequestsSet valueForKeyPath:@"hash"] count] == [apis.apiRequestsSet count],
-             @"不能在集合中加入相同的 API");
+//    NSAssert([[apis.apiRequestsSet valueForKeyPath:@"hash"] count] == [apis.apiRequestsSet count],
+//             @"不能在集合中加入相同的 API");
     
     dispatch_group_t batch_api_group = dispatch_group_create();
     @weakify(self);
