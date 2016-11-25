@@ -53,6 +53,9 @@ typedef void(^RequestConstructingBodyBlock)(id<HLMultipartFormDataProtocol> __nu
 @property (nonatomic, copy, readonly) NSString *cURL;
 
 
+/**
+ 是否使用APIManager.config的默认参数
+ */
 - (HLAPI *(^)(BOOL enable))enableDefaultParams;
 
 /**

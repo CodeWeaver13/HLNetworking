@@ -58,7 +58,7 @@ static NSString * const hint = @"API 必须是 HLAPI的子类";
 
 #pragma mark - NSFastEnumeration
 
-- (NSUInteger)numItems {
+- (NSUInteger)count {
     return _apiRequestsArray.count;
 }
 

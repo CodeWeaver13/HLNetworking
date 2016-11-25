@@ -131,6 +131,8 @@
     for (id obj in chain) {
         NSLog(@"%@", obj);
     }
+    HLAPI *api = chain[0];
+    NSLog(@"%@", api);
     //    HLAPIBatchRequests *asyncBatch = [[HLAPIBatchRequests alloc] init];
     //    asyncBatch.delegate = self;
     //    [asyncBatch addBatchAPIRequests:[NSSet setWithObjects:self.api1, self.api2, self.api3, self.api4, self.api5, nil]];
