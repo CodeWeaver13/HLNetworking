@@ -11,19 +11,23 @@
 
 NS_ASSUME_NONNULL_BEGIN
 @protocol HLTaskResponseProtocol <NSObject>
-@required
-
 /**
- 用于返回需要监听的task对象
+ 快速返回需要监听的task对象
 
+ @param ... tasks
  @return HLTask对象数组
  */
-
 #define HLTaskResponseDelegateRequestTasks(...) \
 - (NSArray <HLTask *>* _Nonnull)requestTasks { \
     return @[ __VA_ARGS__ ]; \
 }
 
+@required
+/**
+ 用于返回需要监听的task对象
+ 
+ @return HLTask对象数组
+ */
 - (NSArray <HLTask *>*)requestTasks;
 
 @optional

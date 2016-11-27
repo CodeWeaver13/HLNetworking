@@ -16,15 +16,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - HLObjReformerProtocol
 @protocol HLObjReformerProtocol <NSObject>
+
 /**
- *  一般用来进行JSON -> Model 数据的转换工作
- *   返回的id，如果没有error，则为转换成功后的Model数据；
- *    如果有error， 则直接返回传参中的responseObject
- *
- *  @param responseObject 请求的返回
- *  @param error          请求的错误
- *
- *  @return 整理过后的请求数据
+ 一般用来进行JSON -> Model 数据的转换工作。返回的id，如果没有error，则为转换成功后的Model数据。如果有error， 则直接返回传参中的responseObject
+
+ @param api 调用的api
+ @param responseObject 请求的返回
+ @param error 请求的错误
+ @return 整理过后的请求数据
  */
 - (nullable id)objReformerWithAPI:(HLAPI *)api andResponseObject:(id)responseObject andError:(NSError * _Nullable)error;
 @end

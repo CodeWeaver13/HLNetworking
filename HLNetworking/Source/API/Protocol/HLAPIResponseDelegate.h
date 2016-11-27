@@ -12,10 +12,9 @@
 NS_ASSUME_NONNULL_BEGIN
 @protocol HLAPIResponseDelegate <NSObject>
 
-
 /**
  快速返回必须的apis
-
+ 
  @param ... apis
  @return 必要的APIs集合
  */
@@ -25,6 +24,11 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 @required
+/**
+ 返回必须的apis
+
+ @return 必要的APIs集合
+ */
 - (NSArray <HLAPI *>*)requestAPIs;
 
 @optional
@@ -46,8 +50,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)requestFailureWithResponseError:(nullable NSError *)error atAPI:(HLAPI *)api;
 
 /**
- *  api 上传、下载等长时间执行的Progress进度
- *  NSProgress: 进度
+ api 上传、下载等长时间执行的Progress进度
+
+ @param progress 进度
  @param api 调用的api
  */
 - (void)requestProgress:(nullable NSProgress *)progress atAPI:(HLAPI *)api;
