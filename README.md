@@ -239,6 +239,9 @@ it, simply add the following line to your Podfile:
 pod "HLNetworking"
 ```
 
+## 更新日志
+
+
 ## 作者
 
 wangshiyu13, wangshiyu13@163.com

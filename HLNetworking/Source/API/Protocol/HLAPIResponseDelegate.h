@@ -31,8 +31,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  请求成功的回调
- 
+
  @param responseObject 回调对象
+ @param api 调用的api
  */
 - (void)requestSucessWithResponseObject:(nonnull id)responseObject atAPI:(HLAPI *)api;
 
@@ -40,12 +41,14 @@ NS_ASSUME_NONNULL_BEGIN
  请求失败的回调
  
  @param error 错误对象
+ @param api 调用的api
  */
 - (void)requestFailureWithResponseError:(nullable NSError *)error atAPI:(HLAPI *)api;
 
 /**
  *  api 上传、下载等长时间执行的Progress进度
  *  NSProgress: 进度
+ @param api 调用的api
  */
 - (void)requestProgress:(nullable NSProgress *)progress atAPI:(HLAPI *)api;
 @end

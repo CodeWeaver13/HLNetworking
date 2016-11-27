@@ -279,6 +279,7 @@ static HLAPIManager *shared = nil;
 
  @param responseObject 返回的对象
  @param api            调用的API
+ @param completion 完成回调
  */
 - (void)handleSuccWithResponse:(id)responseObject andAPI:(HLAPI *)api completion:(void (^)())completion {
     [self callAPICompletion:api obj:responseObject error:nil completion:completion];
@@ -289,6 +290,7 @@ static HLAPIManager *shared = nil;
 
  @param error 返回的错误
  @param api   调用的API
+ @param completion 完成回调
  */
 - (void)handleFailureWithError:(NSError *)error andAPI:(HLAPI *)api completion:(void (^)())completion  {
     if (error) {
@@ -334,6 +336,7 @@ static HLAPIManager *shared = nil;
  @param api   调用的API
  @param obj   返回的对象
  @param error 返回的错误
+ @param completion 完成回调
  */
 - (void)callAPICompletion:(HLAPI *)api obj:(id)obj error:(NSError *)error completion:(void (^)())completion {
     if (api.objReformerDelegate) {

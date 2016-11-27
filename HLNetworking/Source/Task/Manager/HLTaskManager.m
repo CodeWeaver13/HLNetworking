@@ -77,8 +77,9 @@ static HLTaskManager *shared = nil;
 
 /**
  创建新的SessionManager
- 
- @return AFHTTPSessionManager
+
+ @param task 执行的task
+ @return AFHTTPSessionManager对象
  */
 - (AFURLSessionManager *)newSessionManagerWithTask:(HLTask *)task {
     NSURLSessionConfiguration *sessionConfig;
@@ -179,10 +180,11 @@ static HLTaskManager *shared = nil;
 
 /**
  API完成的回调方法
- 
- @param task   调用的API
- @param obj   返回的对象
+
+ @param task 调用的API
+ @param obj 返回的对象
  @param error 返回的错误
+ @param completion 完成回调
  */
 - (void)callTaskCompletion:(HLTask *)task obj:(id)obj error:(NSError *)error completion:(void (^)())completion {
     [self.responseObservers enumerateObjectsUsingBlock:^(id<HLTaskResponseProtocol>  _Nonnull delegate, BOOL * _Nonnull stop) {
@@ -206,7 +208,8 @@ static HLTaskManager *shared = nil;
  API成功的方法
  
  @param responseObject 返回的对象
- @param task            调用的API
+ @param task 调用的API
+ @param completion 完成回调
  */
 - (void)handleSuccWithResponse:(id)responseObject andTask:(HLTask *)task completion:(void (^)())completion {
     [self callTaskCompletion:task obj:responseObject error:nil completion:completion];
@@ -216,7 +219,8 @@ static HLTaskManager *shared = nil;
  API失败的方法
  
  @param error 返回的错误
- @param task   调用的API
+ @param task 调用的API
+ @param completion 完成回调
  */
 - (void)handleFailureWithError:(NSError *)error andTask:(HLTask *)task completion:(void (^)())completion  {
     
