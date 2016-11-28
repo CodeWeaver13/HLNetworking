@@ -28,6 +28,9 @@
 		CF3627B61D9368DF00C26AAF /* UIProgressView+AFNetworking.m in Sources */ = {isa = PBXBuildFile; fileRef = CF3627A31D9368DF00C26AAF /* UIProgressView+AFNetworking.m */; };
 		CF3627B71D9368DF00C26AAF /* UIRefreshControl+AFNetworking.m in Sources */ = {isa = PBXBuildFile; fileRef = CF3627A51D9368DF00C26AAF /* UIRefreshControl+AFNetworking.m */; };
 		CF3627B81D9368DF00C26AAF /* UIWebView+AFNetworking.m in Sources */ = {isa = PBXBuildFile; fileRef = CF3627A71D9368DF00C26AAF /* UIWebView+AFNetworking.m */; };
+		CF54B9BE1DEC42A800CEEE8D /* HLNetworking.podspec in Resources */ = {isa = PBXBuildFile; fileRef = CF54B9BB1DEC42A800CEEE8D /* HLNetworking.podspec */; };
+		CF54B9BF1DEC42A800CEEE8D /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = CF54B9BC1DEC42A800CEEE8D /* LICENSE */; };
+		CF54B9C01DEC42A800CEEE8D /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = CF54B9BD1DEC42A800CEEE8D /* README.md */; };
 		CFDCF73C1D9C261B00DE1C8E /* HLAPIBatchRequests.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDCF71B1D9C261B00DE1C8E /* HLAPIBatchRequests.m */; };
 		CFDCF73D1D9C261B00DE1C8E /* HLAPIChainRequests.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDCF71D1D9C261B00DE1C8E /* HLAPIChainRequests.m */; };
 		CFDCF73E1D9C261B00DE1C8E /* HLAPIManager.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDCF7201D9C261B00DE1C8E /* HLAPIManager.m */; };
@@ -85,6 +88,9 @@
 		CF3627A51D9368DF00C26AAF /* UIRefreshControl+AFNetworking.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIRefreshControl+AFNetworking.m"; sourceTree = "<group>"; };
 		CF3627A61D9368DF00C26AAF /* UIWebView+AFNetworking.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIWebView+AFNetworking.h"; sourceTree = "<group>"; };
 		CF3627A71D9368DF00C26AAF /* UIWebView+AFNetworking.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIWebView+AFNetworking.m"; sourceTree = "<group>"; };
+		CF54B9BB1DEC42A800CEEE8D /* HLNetworking.podspec */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = HLNetworking.podspec; sourceTree = "<group>"; };
+		CF54B9BC1DEC42A800CEEE8D /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		CF54B9BD1DEC42A800CEEE8D /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		CF60A0DA1DA1600900AC1BB2 /* HLAPI_InternalParams.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLAPI_InternalParams.h; sourceTree = "<group>"; };
 		CF60A0DB1DA1605D00AC1BB2 /* HLAPIRequestDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLAPIRequestDelegate.h; sourceTree = "<group>"; };
 		CF60A0DC1DA160C400AC1BB2 /* HLAPIResponseDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLAPIResponseDelegate.h; sourceTree = "<group>"; };
@@ -147,6 +153,7 @@
 		CF36274C1D9368BD00C26AAF /* HLNetworking */ = {
 			isa = PBXGroup;
 			children = (
+				CF54B9BA1DEC429700CEEE8D /* Podspec */,
 				CF3627821D9368DF00C26AAF /* AFNetworking */,
 				CF3627641D9368CD00C26AAF /* Source */,
 				CF3627501D9368BD00C26AAF /* AppDelegate.h */,
@@ -237,6 +244,16 @@
 				CF3627A71D9368DF00C26AAF /* UIWebView+AFNetworking.m */,
 			);
 			path = "UIKit+AFNetworking";
+			sourceTree = "<group>";
+		};
+		CF54B9BA1DEC429700CEEE8D /* Podspec */ = {
+			isa = PBXGroup;
+			children = (
+				CF54B9BB1DEC42A800CEEE8D /* HLNetworking.podspec */,
+				CF54B9BC1DEC42A800CEEE8D /* LICENSE */,
+				CF54B9BD1DEC42A800CEEE8D /* README.md */,
+			);
+			name = Podspec;
 			sourceTree = "<group>";
 		};
 		CFDCF7181D9C261B00DE1C8E /* API */ = {
@@ -412,9 +429,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CF54B9BE1DEC42A800CEEE8D /* HLNetworking.podspec in Resources */,
 				CF36275D1D9368BD00C26AAF /* LaunchScreen.storyboard in Resources */,
 				CF36275A1D9368BD00C26AAF /* Assets.xcassets in Resources */,
 				CF3627581D9368BD00C26AAF /* Main.storyboard in Resources */,
+				CF54B9BF1DEC42A800CEEE8D /* LICENSE in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -435,6 +454,7 @@
 				CF3627B61D9368DF00C26AAF /* UIProgressView+AFNetworking.m in Sources */,
 				CF3627B01D9368DF00C26AAF /* AFAutoPurgingImageCache.m in Sources */,
 				CF3627B21D9368DF00C26AAF /* AFNetworkActivityIndicatorManager.m in Sources */,
+				CF54B9C01DEC42A800CEEE8D /* README.md in Sources */,
 				CF3627B31D9368DF00C26AAF /* UIActivityIndicatorView+AFNetworking.m in Sources */,
 				CFDCF73D1D9C261B00DE1C8E /* HLAPIChainRequests.m in Sources */,
 				CF3627B51D9368DF00C26AAF /* UIImageView+AFNetworking.m in Sources */,
