@@ -45,8 +45,8 @@ static HLAPIManager *shared = nil;
 
 @property (nonatomic, strong) NSCache *sessionManagerCache;
 @property (nonatomic, strong) NSCache *sessionTasksCache;
-@property (nonatomic, strong) NSMutableSet<id <HLAPIResponseDelegate>> *responseObservers;
-@property (nonatomic, strong) NSMutableSet<id <HLNetworkErrorProtocol>> *errorObservers;
+@property (nonatomic, strong) NSHashTable<id <HLAPIResponseDelegate>> *responseObservers;
+@property (nonatomic, strong) NSHashTable<id <HLNetworkErrorProtocol>> *errorObservers;
 
 @end
 
@@ -65,8 +65,8 @@ static HLAPIManager *shared = nil;
     if (!shared) {
         shared = [super init];
         shared.config = [HLNetworkConfig config];
-        shared.errorObservers = [NSMutableSet set];
-        shared.responseObservers = [NSMutableSet set];
+        shared.errorObservers = [NSHashTable hashTableWithOptions:NSHashTableWeakMemory];
+        shared.responseObservers = [NSHashTable hashTableWithOptions:NSHashTableWeakMemory];
     }
     return shared;
 }
@@ -294,9 +294,9 @@ static HLAPIManager *shared = nil;
  */
 - (void)handleFailureWithError:(NSError *)error andAPI:(HLAPI *)api completion:(void (^)())completion  {
     if (error) {
-        [self.errorObservers enumerateObjectsUsingBlock:^(id<HLNetworkErrorProtocol> observer, BOOL * _Nonnull stop) {
+        for (id<HLNetworkErrorProtocol> observer in self.errorObservers) {
             [observer networkErrorInfo:error];
-        }];
+        }
     }
     
     // Error -999, representing API Cancelled
@@ -353,7 +353,7 @@ static HLAPIManager *shared = nil;
             api.apiSuccessHandler = nil;
         });
     }
-    [self.responseObservers enumerateObjectsUsingBlock:^(id<HLAPIResponseDelegate>  _Nonnull obj, BOOL * _Nonnull stop) {
+    for (id<HLAPIResponseDelegate> obj in self.responseObservers) {
         dispatch_async(dispatch_get_main_queue(), ^{
             if ([obj.requestAPIs containsObject:api]) {
                 if (error) {
@@ -367,7 +367,7 @@ static HLAPIManager *shared = nil;
                 }
             }
         });
-    }];
+    }
     if (completion) {
         completion();
     }
@@ -568,11 +568,11 @@ static HLAPIManager *shared = nil;
         }
         dispatch_async(dispatch_get_main_queue(), ^{
             api.apiProgressHandler(progress);
-            [self.responseObservers enumerateObjectsUsingBlock:^(id<HLAPIResponseDelegate>  _Nonnull obj, BOOL * _Nonnull stop) {
+            for (id<HLAPIResponseDelegate> obj in self.responseObservers) {
                 if ([obj respondsToSelector:@selector(requestProgress:atAPI:)]) {
                     [obj requestProgress:progress atAPI:api];
                 }
-            }];
+            }
         });
     } : nil;
     

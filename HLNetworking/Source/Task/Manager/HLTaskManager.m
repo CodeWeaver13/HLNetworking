@@ -30,7 +30,7 @@ static HLTaskManager *shared = nil;
 @interface HLTaskManager ()
 @property (nonatomic, strong) NSCache *sessionManagerCache;
 @property (nonatomic, strong) NSCache *sessionTasksCache;
-@property (nonatomic, strong) NSMutableSet<id <HLTaskResponseProtocol>> *responseObservers;
+@property (nonatomic, strong) NSHashTable<id <HLTaskResponseProtocol>> *responseObservers;
 @end
 
 @implementation HLTaskManager
@@ -47,7 +47,7 @@ static HLTaskManager *shared = nil;
     if (!shared) {
         shared = [super init];
         shared.config = [HLNetworkConfig config];
-        shared.responseObservers = [NSMutableSet set];
+        shared.responseObservers = [NSHashTable hashTableWithOptions:NSHashTableWeakMemory];
     }
     return shared;
 }
@@ -187,7 +187,7 @@ static HLTaskManager *shared = nil;
  @param completion 完成回调
  */
 - (void)callTaskCompletion:(HLTask *)task obj:(id)obj error:(NSError *)error completion:(void (^)())completion {
-    [self.responseObservers enumerateObjectsUsingBlock:^(id<HLTaskResponseProtocol>  _Nonnull delegate, BOOL * _Nonnull stop) {
+    for (id<HLTaskResponseProtocol> delegate in self.responseObservers) {
         dispatch_async(dispatch_get_main_queue(), ^{
             if ([[delegate requestTasks] containsObject:task]) {
                 if (error) {
@@ -201,7 +201,7 @@ static HLTaskManager *shared = nil;
                 }
             }
         });
-    }];
+    }
 }
 
 /**
@@ -341,11 +341,11 @@ static HLTaskManager *shared = nil;
             return;
         }
         dispatch_async(dispatch_get_main_queue(), ^{
-            [self.responseObservers enumerateObjectsUsingBlock:^(id<HLTaskResponseProtocol>  _Nonnull obj, BOOL * _Nonnull stop) {
+            for (id<HLTaskResponseProtocol> obj in self.responseObservers) {
                 if ([obj respondsToSelector:@selector(requestProgress:atTask:)]) {
                     [obj requestProgress:progress atTask:task];
                 }
-            }];
+            }
         });
     } : nil;
     
