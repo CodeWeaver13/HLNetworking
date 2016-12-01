@@ -38,15 +38,15 @@ typedef NS_ENUM(NSUInteger, HLSSLPinningMode) {
     /**
      *  不校验Pinning证书
      */
-    HLSSLPinningModeNone = 300,
+    HLSSLPinningModeNone,
     /**
      *  校验Pinning证书中的PublicKey.
      */
-    HLSSLPinningModePublicKey = 301,
+    HLSSLPinningModePublicKey,
     /**
      *  校验整个Pinning证书
      */
-    HLSSLPinningModeCertificate = 302
+    HLSSLPinningModeCertificate
 };
 
 // 默认的请求超时时间
