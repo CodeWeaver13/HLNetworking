@@ -28,6 +28,12 @@
  */
 @property (nonatomic, assign) BOOL validatesDomainName;
 
+
+/**
+ cer证书文件路径
+ */
+@property (nonatomic, copy) NSString *cerFilePath;
+
 /**
  *  创建新的SecurityPolicy
  *

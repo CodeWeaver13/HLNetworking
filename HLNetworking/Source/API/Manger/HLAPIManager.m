@@ -269,6 +269,9 @@ static HLAPIManager *shared = nil;
     AFSecurityPolicy *securityPolicy        = [AFSecurityPolicy policyWithPinningMode:pinningMode];
     securityPolicy.allowInvalidCertificates = api.securityPolicy.allowInvalidCertificates;
     securityPolicy.validatesDomainName      = api.securityPolicy.validatesDomainName;
+    NSString *cerPath                       = api.securityPolicy.cerFilePath;
+    NSData *certData                        = [NSData dataWithContentsOfFile:cerPath];
+    securityPolicy.pinnedCertificates       = [NSSet setWithObject:certData];
     return securityPolicy;
 }
 

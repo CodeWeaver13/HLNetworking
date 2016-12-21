@@ -21,6 +21,7 @@
         securityPolicy.SSLPinningMode           = pinningMode;
         securityPolicy.allowInvalidCertificates = NO;
         securityPolicy.validatesDomainName      = YES;
+        securityPolicy.cerFilePath              = nil;
     }
     return securityPolicy;
 }
