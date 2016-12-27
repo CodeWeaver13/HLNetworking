@@ -10,4 +10,9 @@ spec.source_files     = 'HLNetworking/Source/**/*.{h,m}'
 spec.requires_arc     = true
 spec.ios.deployment_target = '8.0'
 spec.dependency 'AFNetworking', '~> 3.1.0'
+  spec.subspec 'Center' do |ss|
+    ss.source_files = 'HLNetworking/Source/Center/*.{h,m}'
+    ss.libraries = 'sqlite3.0', 'z'
+    ss.dependency = 'YYModel'
+  end
 end

@@ -28,9 +28,6 @@
 		CF3627B61D9368DF00C26AAF /* UIProgressView+AFNetworking.m in Sources */ = {isa = PBXBuildFile; fileRef = CF3627A31D9368DF00C26AAF /* UIProgressView+AFNetworking.m */; };
 		CF3627B71D9368DF00C26AAF /* UIRefreshControl+AFNetworking.m in Sources */ = {isa = PBXBuildFile; fileRef = CF3627A51D9368DF00C26AAF /* UIRefreshControl+AFNetworking.m */; };
 		CF3627B81D9368DF00C26AAF /* UIWebView+AFNetworking.m in Sources */ = {isa = PBXBuildFile; fileRef = CF3627A71D9368DF00C26AAF /* UIWebView+AFNetworking.m */; };
-		CF54B9BE1DEC42A800CEEE8D /* HLNetworking.podspec in Resources */ = {isa = PBXBuildFile; fileRef = CF54B9BB1DEC42A800CEEE8D /* HLNetworking.podspec */; };
-		CF54B9BF1DEC42A800CEEE8D /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = CF54B9BC1DEC42A800CEEE8D /* LICENSE */; };
-		CF54B9C01DEC42A800CEEE8D /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = CF54B9BD1DEC42A800CEEE8D /* README.md */; };
 		CFDCF73C1D9C261B00DE1C8E /* HLAPIBatchRequests.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDCF71B1D9C261B00DE1C8E /* HLAPIBatchRequests.m */; };
 		CFDCF73D1D9C261B00DE1C8E /* HLAPIChainRequests.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDCF71D1D9C261B00DE1C8E /* HLAPIChainRequests.m */; };
 		CFDCF73E1D9C261B00DE1C8E /* HLAPIManager.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDCF7201D9C261B00DE1C8E /* HLAPIManager.m */; };
@@ -40,6 +37,9 @@
 		CFDCF7421D9C261B00DE1C8E /* HLSecurityPolicyConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDCF7301D9C261B00DE1C8E /* HLSecurityPolicyConfig.m */; };
 		CFDCF7431D9C261B00DE1C8E /* HLTaskManager.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDCF7361D9C261B00DE1C8E /* HLTaskManager.m */; };
 		CFDCF7441D9C261B00DE1C8E /* HLTask.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDCF73A1D9C261B00DE1C8E /* HLTask.m */; };
+		CFDE3FE41E12220E00CDA39E /* HLAPICenter.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDE3FE01E12220E00CDA39E /* HLAPICenter.m */; };
+		CFDE3FE51E12220E00CDA39E /* HLBaseObjReformer.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDE3FE31E12220E00CDA39E /* HLBaseObjReformer.m */; };
+		CFDE3FEB1E1222CB00CDA39E /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = CFDE3FE91E1222CB00CDA39E /* README.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -88,9 +88,6 @@
 		CF3627A51D9368DF00C26AAF /* UIRefreshControl+AFNetworking.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIRefreshControl+AFNetworking.m"; sourceTree = "<group>"; };
 		CF3627A61D9368DF00C26AAF /* UIWebView+AFNetworking.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIWebView+AFNetworking.h"; sourceTree = "<group>"; };
 		CF3627A71D9368DF00C26AAF /* UIWebView+AFNetworking.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIWebView+AFNetworking.m"; sourceTree = "<group>"; };
-		CF54B9BB1DEC42A800CEEE8D /* HLNetworking.podspec */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = HLNetworking.podspec; sourceTree = "<group>"; };
-		CF54B9BC1DEC42A800CEEE8D /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
-		CF54B9BD1DEC42A800CEEE8D /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		CF60A0DA1DA1600900AC1BB2 /* HLAPI_InternalParams.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLAPI_InternalParams.h; sourceTree = "<group>"; };
 		CF60A0DB1DA1605D00AC1BB2 /* HLAPIRequestDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLAPIRequestDelegate.h; sourceTree = "<group>"; };
 		CF60A0DC1DA160C400AC1BB2 /* HLAPIResponseDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLAPIResponseDelegate.h; sourceTree = "<group>"; };
@@ -121,6 +118,14 @@
 		CFDCF73A1D9C261B00DE1C8E /* HLTask.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLTask.m; sourceTree = "<group>"; };
 		CFDCF73B1D9C261B00DE1C8E /* HLTaskType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLTaskType.h; sourceTree = "<group>"; };
 		CFDCF7461D9C265F00DE1C8E /* HLTaskResponseProtocol.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HLTaskResponseProtocol.h; sourceTree = "<group>"; };
+		CFDE3FDF1E12220E00CDA39E /* HLAPICenter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLAPICenter.h; sourceTree = "<group>"; };
+		CFDE3FE01E12220E00CDA39E /* HLAPICenter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLAPICenter.m; sourceTree = "<group>"; };
+		CFDE3FE11E12220E00CDA39E /* HLAPIMacro.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLAPIMacro.h; sourceTree = "<group>"; };
+		CFDE3FE21E12220E00CDA39E /* HLBaseObjReformer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLBaseObjReformer.h; sourceTree = "<group>"; };
+		CFDE3FE31E12220E00CDA39E /* HLBaseObjReformer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLBaseObjReformer.m; sourceTree = "<group>"; };
+		CFDE3FE61E1222A900CDA39E /* HLNetworking.podspec */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = HLNetworking.podspec; sourceTree = SOURCE_ROOT; };
+		CFDE3FE81E1222CB00CDA39E /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = SOURCE_ROOT; };
+		CFDE3FE91E1222CB00CDA39E /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -180,6 +185,7 @@
 		CF3627641D9368CD00C26AAF /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				CFDE3FDE1E12220E00CDA39E /* Center */,
 				CFDCF7321D9C261B00DE1C8E /* Task */,
 				CFDCF7181D9C261B00DE1C8E /* API */,
 				CFDCF72A1D9C261B00DE1C8E /* Config */,
@@ -249,9 +255,9 @@
 		CF54B9BA1DEC429700CEEE8D /* Podspec */ = {
 			isa = PBXGroup;
 			children = (
-				CF54B9BB1DEC42A800CEEE8D /* HLNetworking.podspec */,
-				CF54B9BC1DEC42A800CEEE8D /* LICENSE */,
-				CF54B9BD1DEC42A800CEEE8D /* README.md */,
+				CFDE3FE81E1222CB00CDA39E /* LICENSE */,
+				CFDE3FE91E1222CB00CDA39E /* README.md */,
+				CFDE3FE61E1222A900CDA39E /* HLNetworking.podspec */,
 			);
 			name = Podspec;
 			sourceTree = "<group>";
@@ -370,6 +376,18 @@
 			path = Request;
 			sourceTree = "<group>";
 		};
+		CFDE3FDE1E12220E00CDA39E /* Center */ = {
+			isa = PBXGroup;
+			children = (
+				CFDE3FDF1E12220E00CDA39E /* HLAPICenter.h */,
+				CFDE3FE01E12220E00CDA39E /* HLAPICenter.m */,
+				CFDE3FE11E12220E00CDA39E /* HLAPIMacro.h */,
+				CFDE3FE21E12220E00CDA39E /* HLBaseObjReformer.h */,
+				CFDE3FE31E12220E00CDA39E /* HLBaseObjReformer.m */,
+			);
+			path = Center;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -429,11 +447,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CF54B9BE1DEC42A800CEEE8D /* HLNetworking.podspec in Resources */,
 				CF36275D1D9368BD00C26AAF /* LaunchScreen.storyboard in Resources */,
 				CF36275A1D9368BD00C26AAF /* Assets.xcassets in Resources */,
 				CF3627581D9368BD00C26AAF /* Main.storyboard in Resources */,
-				CF54B9BF1DEC42A800CEEE8D /* LICENSE in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -454,9 +470,9 @@
 				CF3627B61D9368DF00C26AAF /* UIProgressView+AFNetworking.m in Sources */,
 				CF3627B01D9368DF00C26AAF /* AFAutoPurgingImageCache.m in Sources */,
 				CF3627B21D9368DF00C26AAF /* AFNetworkActivityIndicatorManager.m in Sources */,
-				CF54B9C01DEC42A800CEEE8D /* README.md in Sources */,
 				CF3627B31D9368DF00C26AAF /* UIActivityIndicatorView+AFNetworking.m in Sources */,
 				CFDCF73D1D9C261B00DE1C8E /* HLAPIChainRequests.m in Sources */,
+				CFDE3FEB1E1222CB00CDA39E /* README.md in Sources */,
 				CF3627B51D9368DF00C26AAF /* UIImageView+AFNetworking.m in Sources */,
 				CFDCF73F1D9C261B00DE1C8E /* HLAPI.m in Sources */,
 				CF3627AA1D9368DF00C26AAF /* AFSecurityPolicy.m in Sources */,
@@ -467,6 +483,8 @@
 				CFDCF7411D9C261B00DE1C8E /* HLNetworkConfig.m in Sources */,
 				CF3627521D9368BD00C26AAF /* AppDelegate.m in Sources */,
 				CF3627B11D9368DF00C26AAF /* AFImageDownloader.m in Sources */,
+				CFDE3FE41E12220E00CDA39E /* HLAPICenter.m in Sources */,
+				CFDE3FE51E12220E00CDA39E /* HLBaseObjReformer.m in Sources */,
 				CF36274F1D9368BD00C26AAF /* main.m in Sources */,
 				CF3627A81D9368DF00C26AAF /* AFHTTPSessionManager.m in Sources */,
 				CF3627A91D9368DF00C26AAF /* AFNetworkReachabilityManager.m in Sources */,
