@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
 spec.name             = 'HLNetworking'
-spec.version          = '1.1.4'
+spec.version          = '1.1.5'
 spec.license          = { :type => "MIT", :file => 'LICENSE' }
 spec.homepage         = 'https://github.com/QianKun-HanLin/HLNetworking'
 spec.authors          = {"wangshiyu13" => "wangshiyu13@163.com"}
@@ -12,7 +12,6 @@ spec.ios.deployment_target = '8.0'
 spec.dependency 'AFNetworking', '~> 3.1.0'
   spec.subspec 'Center' do |ss|
     ss.source_files = 'HLNetworking/Source/Center/*.{h,m}'
-    ss.libraries = 'sqlite3.0', 'z'
     ss.dependency = 'YYModel'
   end
 end
