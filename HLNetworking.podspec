@@ -13,6 +13,7 @@ Pod::Spec.new do |spec|
   spec.subspec 'Center' do |center|
     center.source_files = 'HLNetworking/Source/Center/*.{h,m}'
     center.dependency 'YYModel'
+    center.dependency 'HLNetworking'
   end
 
 end
