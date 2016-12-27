@@ -6,8 +6,13 @@ Pod::Spec.new do |spec|
   spec.authors          = {"wangshiyu13" => "wangshiyu13@163.com"}
   spec.summary          = '基于AFNetworking的多范式网络请求管理器'
   spec.source           =  {:git => 'https://github.com/QianKun-HanLin/HLNetworking.git', :tag => spec.version }
-  spec.source_files     = 'HLNetworking/Source/*.{h,m}', 'HLNetworking/Source/Config/*.{h,m}', 'HLNetworking/Source/API/*.{h,m}', 'HLNetworking/Source/Task/*.{h,m}'
+  spec.source_files     = 'HLNetworking/Source/HLNetworking.h', 'HLNetworking/Source/Config/**/*.{h,m}', 'HLNetworking/Source/API/**/*.{h,m}', 'HLNetworking/Source/Task/**/*.{h,m}'
   spec.requires_arc     = true
   spec.ios.deployment_target = '8.0'
   spec.dependency 'AFNetworking', '~> 3.1.0'
+  spec.subspec 'Center' do |center|
+    center.source_files = 'HLNetworking/Source/Center/*.{h,m}'
+    center.dependency 'YYModel'
+  end
+
 end
