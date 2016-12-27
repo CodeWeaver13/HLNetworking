@@ -28,6 +28,8 @@
 		CF3627B61D9368DF00C26AAF /* UIProgressView+AFNetworking.m in Sources */ = {isa = PBXBuildFile; fileRef = CF3627A31D9368DF00C26AAF /* UIProgressView+AFNetworking.m */; };
 		CF3627B71D9368DF00C26AAF /* UIRefreshControl+AFNetworking.m in Sources */ = {isa = PBXBuildFile; fileRef = CF3627A51D9368DF00C26AAF /* UIRefreshControl+AFNetworking.m */; };
 		CF3627B81D9368DF00C26AAF /* UIWebView+AFNetworking.m in Sources */ = {isa = PBXBuildFile; fileRef = CF3627A71D9368DF00C26AAF /* UIWebView+AFNetworking.m */; };
+		CF66A7131E123135002AA44E /* NSObject+YYModel.m in Sources */ = {isa = PBXBuildFile; fileRef = CF66A70F1E123135002AA44E /* NSObject+YYModel.m */; };
+		CF66A7141E123135002AA44E /* YYClassInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = CF66A7111E123135002AA44E /* YYClassInfo.m */; };
 		CFDCF73C1D9C261B00DE1C8E /* HLAPIBatchRequests.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDCF71B1D9C261B00DE1C8E /* HLAPIBatchRequests.m */; };
 		CFDCF73D1D9C261B00DE1C8E /* HLAPIChainRequests.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDCF71D1D9C261B00DE1C8E /* HLAPIChainRequests.m */; };
 		CFDCF73E1D9C261B00DE1C8E /* HLAPIManager.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDCF7201D9C261B00DE1C8E /* HLAPIManager.m */; };
@@ -92,6 +94,11 @@
 		CF60A0DB1DA1605D00AC1BB2 /* HLAPIRequestDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLAPIRequestDelegate.h; sourceTree = "<group>"; };
 		CF60A0DC1DA160C400AC1BB2 /* HLAPIResponseDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLAPIResponseDelegate.h; sourceTree = "<group>"; };
 		CF60A0DD1DA16C5B00AC1BB2 /* HLTask_InternalParams.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLTask_InternalParams.h; sourceTree = "<group>"; };
+		CF66A70E1E123135002AA44E /* NSObject+YYModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSObject+YYModel.h"; sourceTree = "<group>"; };
+		CF66A70F1E123135002AA44E /* NSObject+YYModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSObject+YYModel.m"; sourceTree = "<group>"; };
+		CF66A7101E123135002AA44E /* YYClassInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = YYClassInfo.h; sourceTree = "<group>"; };
+		CF66A7111E123135002AA44E /* YYClassInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = YYClassInfo.m; sourceTree = "<group>"; };
+		CF66A7121E123135002AA44E /* YYModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = YYModel.h; sourceTree = "<group>"; };
 		CF7326AD1DE729D100EDA1CE /* HLNetworkMacro.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLNetworkMacro.h; sourceTree = "<group>"; };
 		CFDCF71A1D9C261B00DE1C8E /* HLAPIBatchRequests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLAPIBatchRequests.h; sourceTree = "<group>"; };
 		CFDCF71B1D9C261B00DE1C8E /* HLAPIBatchRequests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLAPIBatchRequests.m; sourceTree = "<group>"; };
@@ -158,6 +165,7 @@
 		CF36274C1D9368BD00C26AAF /* HLNetworking */ = {
 			isa = PBXGroup;
 			children = (
+				CF66A70D1E123135002AA44E /* YYModel */,
 				CF54B9BA1DEC429700CEEE8D /* Podspec */,
 				CF3627821D9368DF00C26AAF /* AFNetworking */,
 				CF3627641D9368CD00C26AAF /* Source */,
@@ -260,6 +268,18 @@
 				CFDE3FE61E1222A900CDA39E /* HLNetworking.podspec */,
 			);
 			name = Podspec;
+			sourceTree = "<group>";
+		};
+		CF66A70D1E123135002AA44E /* YYModel */ = {
+			isa = PBXGroup;
+			children = (
+				CF66A70E1E123135002AA44E /* NSObject+YYModel.h */,
+				CF66A70F1E123135002AA44E /* NSObject+YYModel.m */,
+				CF66A7101E123135002AA44E /* YYClassInfo.h */,
+				CF66A7111E123135002AA44E /* YYClassInfo.m */,
+				CF66A7121E123135002AA44E /* YYModel.h */,
+			);
+			path = YYModel;
 			sourceTree = "<group>";
 		};
 		CFDCF7181D9C261B00DE1C8E /* API */ = {
@@ -460,6 +480,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CF66A7131E123135002AA44E /* NSObject+YYModel.m in Sources */,
 				CF3627AD1D9368DF00C26AAF /* AFURLSessionManager.m in Sources */,
 				CFDCF7421D9C261B00DE1C8E /* HLSecurityPolicyConfig.m in Sources */,
 				CFDCF7401D9C261B00DE1C8E /* HLFormDataConfig.m in Sources */,
@@ -487,6 +508,7 @@
 				CFDE3FE51E12220E00CDA39E /* HLBaseObjReformer.m in Sources */,
 				CF36274F1D9368BD00C26AAF /* main.m in Sources */,
 				CF3627A81D9368DF00C26AAF /* AFHTTPSessionManager.m in Sources */,
+				CF66A7141E123135002AA44E /* YYClassInfo.m in Sources */,
 				CF3627A91D9368DF00C26AAF /* AFNetworkReachabilityManager.m in Sources */,
 				CF3627B81D9368DF00C26AAF /* UIWebView+AFNetworking.m in Sources */,
 				CF3627AC1D9368DF00C26AAF /* AFURLResponseSerialization.m in Sources */,

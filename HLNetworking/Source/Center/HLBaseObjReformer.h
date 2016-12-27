@@ -7,7 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import <HLNetworking/HLNetworking.h>
+#import "HLNetworking.h"
 
 @interface HLBaseObjReformer : NSObject<HLObjReformerProtocol>
 

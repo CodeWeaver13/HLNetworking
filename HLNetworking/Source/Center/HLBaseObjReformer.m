@@ -7,7 +7,7 @@
 //
 
 #import "HLBaseObjReformer.h"
-#import <YYModel/YYModel.h>
+#import "YYModel.h"
 
 @implementation HLBaseObjReformer
 - (id)objReformerWithAPI:(HLAPI *)api andResponseObject:(id)responseObject andError:(NSError *)error {
