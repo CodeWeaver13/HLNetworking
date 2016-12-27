@@ -10,8 +10,4 @@ Pod::Spec.new do |s|
   s.requires_arc     = true
   s.ios.deployment_target = '8.0'
   s.dependency 'AFNetworking', '~> 3.1.0'
-  s.subspec 'Center' do |ss|
-    ss.source_files = 'HLNetworking/Source/Center/*.{h,m}'
-    ss.dependency = 'YYModel'
-  end
 end
