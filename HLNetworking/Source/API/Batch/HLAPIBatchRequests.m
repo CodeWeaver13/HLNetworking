@@ -15,7 +15,7 @@ static NSString * const hint = @"API 必须是 HLAPI的子类";
 @interface HLAPIBatchRequests ()
 
 @property (nonatomic, assign, readwrite) BOOL isCancel;
-@property (nonatomic, strong, readwrite) NSMutableSet<HLAPI *> *apiRequestsSet;
+@property (nonatomic, strong, readwrite) NSMutableSet<HLAPI *> *apiSet;
 
 @end
 
@@ -25,7 +25,7 @@ static NSString * const hint = @"API 必须是 HLAPI的子类";
 - (instancetype)init {
     self = [super init];
     if (self) {
-        self.apiRequestsSet = [NSMutableSet set];
+        _apiSet = [NSMutableSet set];
     }
     return self;
 }
@@ -34,13 +34,13 @@ static NSString * const hint = @"API 必须是 HLAPI的子类";
 - (void)add:(HLAPI *)api {
     NSParameterAssert(api);
     NSAssert([api isKindOfClass:[HLAPI class]], hint);
-    if ([self.apiRequestsSet containsObject:api]) {
+    if ([self.apiSet containsObject:api]) {
 #ifdef DEBUG
         NSLog(@"批处理队列中已有相同的API！");
 #endif
     }
     
-    [self.apiRequestsSet addObject:api];
+    [self.apiSet addObject:api];
 }
 
 - (void)addAPIs:(NSSet<HLAPI *> *)apis {
@@ -52,13 +52,13 @@ static NSString * const hint = @"API 必须是 HLAPI的子类";
 }
 
 - (void)start {
-    NSAssert([self.apiRequestsSet count] != 0, @"APIBatch元素不可小于1");
+    NSAssert([self.apiSet count] != 0, @"APIBatch元素不可小于1");
     [HLAPIManager sendBatch:self];
 }
 
 - (void)cancel {
-    NSAssert([self.apiRequestsSet count] != 0, @"APIBatch元素不可小于1");
-    for (HLAPI *api in self.apiRequestsSet) {
+    NSAssert([self.apiSet count] != 0, @"APIBatch元素不可小于1");
+    for (HLAPI *api in self.apiSet) {
         [HLAPIManager cancel:api];
     }
     self.isCancel = YES;

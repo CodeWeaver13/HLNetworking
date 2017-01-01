@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "HLDebugMessage.h"
 #import "HLAPIType.h"
 
 // 判断当前是否为审核版本
@@ -170,6 +171,15 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign, readonly, getter = isReachableViaWWAN) BOOL reachableViaWWAN;
 // 当前是否使用WiFi访问网络
 @property (nonatomic, assign, readonly, getter = isReachableViaWiFi) BOOL reachableViaWiFi;
+
+// 通过sharedMager单例，获取当前reachability状态
++ (HLReachabilityStatus)reachabilityStatus;
+// 通过sharedMager单例，获取当前是否可访问网络
++ (BOOL)isReachable;
+// 通过sharedMager单例，获取当前是否使用数据流量访问网络
++ (BOOL)isReachableViaWWAN;
+// 通过sharedMager单例，获取当前是否使用WiFi访问网络
++ (BOOL)isReachableViaWiFi;
 
 // 开启默认reachability监视器，block返回状态
 + (void)listening:(void(^)(HLReachabilityStatus status))listener;

@@ -151,6 +151,13 @@
     };
 }
 
+- (HLTask* (^)(HLRequestTaskType requestTaskType))setTaskType {
+    return ^HLTask* (HLRequestTaskType requestTaskType) {
+        self.requestTaskType = requestTaskType;
+        return self;
+    };
+}
+
 - (void)requestWillBeSent {
     if ([self.delegate respondsToSelector:@selector(requestWillBeSentWithTask:)]) {
         [self.delegate requestWillBeSentWithTask:self];

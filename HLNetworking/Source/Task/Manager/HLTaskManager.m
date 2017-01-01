@@ -141,9 +141,8 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
  @param task 调用的API
  @param obj 返回的对象
  @param error 返回的错误
- @param completion 完成回调
  */
-- (void)callTaskCompletion:(HLTask *)task obj:(id)obj error:(NSError *)error completion:(void (^)())completion {
+- (void)callTaskCompletion:(HLTask *)task obj:(id)obj error:(NSError *)error {
     // 处理回调的block
     NSError *netError = error;
     if (error) {
@@ -189,9 +188,7 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
 }
 
 - (void)sendSingleTaskRequest:(HLTask *)task
-           withSessionManager:(AFURLSessionManager *)sessionManager
-           andCompletionGroup:(dispatch_group_t)completionGroup
-              completionBlock:(void (^)())completion {
+           withSessionManager:(AFURLSessionManager *)sessionManager {
     NSParameterAssert(task);
     NSParameterAssert(sessionManager);
     @weakify(self);
@@ -228,11 +225,7 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
         NSError *cancelError = [NSError errorWithDomain:NSURLErrorDomain
                                                    code:NSURLErrorCancelled
                                                userInfo:userInfo];
-        [self callTaskCompletion:task obj:nil error:cancelError completion:completion];
-        if (completionGroup) {
-            dispatch_group_leave(completionGroup);
-        }
-        completion();
+        [self callTaskCompletion:task obj:nil error:cancelError];
         return;
     }
     
@@ -257,10 +250,7 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
         NSError *networkUnreachableError = [NSError errorWithDomain:NSURLErrorDomain
                                                                code:NSURLErrorCannotConnectToHost
                                                            userInfo:userInfo];
-        [self callTaskCompletion:task obj:nil error:networkUnreachableError completion:completion];
-        if (completionGroup) {
-            dispatch_group_leave(completionGroup);
-        }
+        [self callTaskCompletion:task obj:nil error:networkUnreachableError];
         return;
     }
     
@@ -301,12 +291,9 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
         if (self.config.isNetworkingActivityIndicatorEnabled) {
             [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
         }
-        [self callTaskCompletion:task obj:filePath error:error completion:completion];
+        [self callTaskCompletion:task obj:filePath error:error];
         if (isDownloadTask) {
             [self.downloadTasksCache removeObjectForKey:hashKey];
-        }
-        if (completionGroup) {
-            dispatch_group_leave(completionGroup);
         }
     };
     
@@ -338,12 +325,9 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
                                                if (self.config.isNetworkingActivityIndicatorEnabled) {
                                                    [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
                                                }
-                                               [self callTaskCompletion:task obj:responseObject error:error completion:completion];
+                                               [self callTaskCompletion:task obj:responseObject error:error];
                                                if (!isDownloadTask) {
                                                    [self.uploadTasksCache removeObjectForKey:hashKey];
-                                               }
-                                               if (completionGroup) {
-                                                   dispatch_group_leave(completionGroup);
                                                }
                                            }];
         }
@@ -403,7 +387,7 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
         if (!sessionManager) {
             return;
         }
-        [self sendSingleTaskRequest:task withSessionManager:sessionManager andCompletionGroup:nil completionBlock:nil];
+        [self sendSingleTaskRequest:task withSessionManager:sessionManager];
     });
 }
 

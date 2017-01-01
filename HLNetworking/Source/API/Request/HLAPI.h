@@ -27,6 +27,8 @@ FOUNDATION_EXPORT HLDebugKey const kHLOriginalRequestDebugKey;
 FOUNDATION_EXPORT HLDebugKey const kHLCurrentRequestDebugKey;
 // 获取NSURLResponse
 FOUNDATION_EXPORT HLDebugKey const kHLResponseDebugKey;
+// 获取执行的队列名
+FOUNDATION_EXPORT HLDebugKey const kHLQueueDebugKey;
 
 #pragma mark - HLObjReformerProtocol
 @protocol HLObjReformerProtocol <NSObject>
@@ -42,7 +44,7 @@ FOUNDATION_EXPORT HLDebugKey const kHLResponseDebugKey;
 @end
 
 #pragma mark - HLAPI
-@interface HLAPI : NSObject
+@interface HLAPI : NSObject<NSCopying>
 @property (nonatomic, assign, readonly) BOOL useDefaultParams;
 @property (nonatomic, strong, readonly) Class objClz;
 @property (nonatomic, copy, readonly) NSString *baseURL;
@@ -163,19 +165,7 @@ FOUNDATION_EXPORT HLDebugKey const kHLResponseDebugKey;
 
 /**
  用于Debug的Block 
- block内返回字典，通过以下key取值：
- -- 获取NSURLSessionTask
- kHLSessionTaskDebugKey
- -- 获取HLAPI
- kHLAPIDebugKey;
- -- 获取NSError
- kHLErrorDebugKey;
- -- 获取NSURLRequest
- kHLOriginalRequestDebugKey;
- -- 获取NSURLRequest
- kHLCurrentRequestDebugKey;
- -- 获取NSURLResponse
- kHLResponseDebugKey;
+ block内返回HLDebugMessage对象
  */
 - (HLAPI *(^)(HLDebugBlock))debug;
 

@@ -17,7 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param ... tasks
  @return HLTask对象数组
  */
-#define HLTaskResponseDelegateRequestTasks(...) \
+#define HLObserverTasks(...) \
 - (NSArray <HLTask *>* _Nonnull)requestTasks { \
     return @[ __VA_ARGS__ ]; \
 }

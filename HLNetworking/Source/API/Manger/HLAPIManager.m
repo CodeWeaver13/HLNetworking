@@ -9,7 +9,6 @@
 #import <AFNetworking/AFNetworking.h>
 #import "HLAPIManager.h"
 #import "HLNetworkMacro.h"
-#import "HLHttpHeaderDelegate.h"
 #import "HLSecurityPolicyConfig.h"
 #import "HLAPIResponseDelegate.h"
 #import "HLMultipartFormDataProtocol.h"
@@ -52,6 +51,7 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
 @property (nonatomic, assign, readwrite, getter = isReachable) BOOL reachable;
 @property (nonatomic, assign, readwrite, getter = isReachableViaWWAN) BOOL reachableViaWWAN;
 @property (nonatomic, assign, readwrite, getter = isReachableViaWiFi) BOOL reachableViaWiFi;
+@property (nonatomic, strong) dispatch_queue_t currentQueue;
 
 @end
 
@@ -66,6 +66,7 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
     self = [super init];
     if (self) {
         _config = [HLNetworkConfig config];
+        _currentQueue = _config.apiCallbackQueue ?: qkhl_api_http_creation_queue();
         _reachabilityStatus = HLReachabilityStatusUnknown;
         _reachabilities = [NSMutableDictionary dictionary];
         _sessionManagerCache = [NSMutableDictionary dictionary];
@@ -79,10 +80,11 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
 #pragma mark - SetupConfig
 - (void)setupConfig:(void (^)(HLNetworkConfig * _Nonnull config))configBlock {
     HL_SAFE_BLOCK(configBlock, self.config);
+    self.currentQueue = self.config.apiCallbackQueue ?: qkhl_api_http_creation_queue();
 }
 
 + (void)setupConfig:(void (^)(HLNetworkConfig * _Nonnull config))configBlock {
-    return [[self sharedManager] setupConfig:configBlock];
+    [[self sharedManager] setupConfig:configBlock];
 }
 
 #pragma mark - 创建AFHTTPSessionManager
@@ -167,13 +169,19 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
     }
     
     // 设置AFSecurityPolicy参数
-    NSUInteger pinningMode                  = api.securityPolicy.SSLPinningMode;
-    AFSecurityPolicy *securityPolicy        = [AFSecurityPolicy policyWithPinningMode:pinningMode];
-    securityPolicy.allowInvalidCertificates = api.securityPolicy.allowInvalidCertificates;
-    securityPolicy.validatesDomainName      = api.securityPolicy.validatesDomainName;
-    NSString *cerPath                       = api.securityPolicy.cerFilePath;
-    NSData *certData                        = [NSData dataWithContentsOfFile:cerPath];
-    securityPolicy.pinnedCertificates       = [NSSet setWithObject:certData];
+    NSUInteger pinningMode = api.securityPolicy.SSLPinningMode ?: self.config.defaultSecurityPolicy.SSLPinningMode;
+    AFSecurityPolicy *securityPolicy = [AFSecurityPolicy policyWithPinningMode:pinningMode];
+    
+    securityPolicy.allowInvalidCertificates = api.securityPolicy.allowInvalidCertificates ?: self.config.defaultSecurityPolicy.allowInvalidCertificates;
+    securityPolicy.validatesDomainName = api.securityPolicy.validatesDomainName ?: self.config.defaultSecurityPolicy.validatesDomainName;
+    NSString *cerPath = api.securityPolicy.cerFilePath ?: self.config.defaultSecurityPolicy.cerFilePath;
+    NSData *certData = nil;
+    if (cerPath && ![cerPath isEqualToString:@""]) {
+        certData = [NSData dataWithContentsOfFile:cerPath];
+        if (certData) {
+            securityPolicy.pinnedCertificates = [NSSet setWithObject:certData];
+        }
+    }
     
     // AFHTTPSession
     AFHTTPSessionManager *sessionManager = [self.sessionManagerCache objectForKey:baseUrlStr];
@@ -202,9 +210,13 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
  @param api   调用的API
  @param obj   返回的对象
  @param error 返回的错误
- @param completion 完成回调
+ @param semaphore 完成的信号量
  */
-- (void)callAPICompletion:(HLAPI *)api obj:(id)obj error:(NSError *)error completion:(void (^)())completion {
+- (void)callAPICompletion:(HLAPI *)api
+                      obj:(id)obj
+                    error:(NSError *)error
+        completeSemaphore:(dispatch_semaphore_t)semaphore
+{
     if (api.objReformerDelegate) {
         obj = [api.objReformerDelegate objReformerWithAPI:api andResponseObject:obj andError:error];
     }
@@ -268,8 +280,8 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
             }
         });
     }
-    if (completion) {
-        completion();
+    if (semaphore) {
+        dispatch_semaphore_signal(semaphore);
     }
 }
 
@@ -277,7 +289,7 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
 - (void)sendSingleAPIRequest:(HLAPI *)api
           withSessionManager:(AFHTTPSessionManager *)sessionManager
           andCompletionGroup:(dispatch_group_t)completionGroup
-             completionBlock:(void (^)())completion {
+      andCompletionSemaphore:(dispatch_semaphore_t)semaphore {
     NSParameterAssert(api);
     NSParameterAssert(sessionManager);
     @weakify(self);
@@ -321,13 +333,19 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
         NSError *cancelError = [NSError errorWithDomain:NSURLErrorDomain
                                                    code:NSURLErrorCancelled
                                                userInfo:userInfo];
-        [self callAPICompletion:api obj:nil error:cancelError completion:completion];
+        [self callAPICompletion:api obj:nil error:cancelError completeSemaphore:semaphore];
         if (completionGroup) {
             dispatch_group_leave(completionGroup);
         }
-        if (completion) {
-            completion();
+#if DEBUG
+        if (api.apiDebugHandler) {
+            HLDebugMessage *msg = [self createDebugMessageWithAPI:api
+                                                          andTask:nil
+                                                         andError:cancelError
+                                                 andCallbackQueue:self.currentQueue];
+            api.apiDebugHandler(msg);
         }
+#endif
         return;
     }
     
@@ -352,10 +370,22 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
         NSError *networkUnreachableError = [NSError errorWithDomain:NSURLErrorDomain
                                                                code:NSURLErrorCannotConnectToHost
                                                            userInfo:userInfo];
-        [self callAPICompletion:api obj:nil error:networkUnreachableError completion:completion];
+        [self callAPICompletion:api
+                            obj:nil
+                          error:networkUnreachableError
+              completeSemaphore:semaphore];
         if (completionGroup) {
             dispatch_group_leave(completionGroup);
         }
+#if DEBUG
+        if (api.apiDebugHandler) {
+            HLDebugMessage *msg = [self createDebugMessageWithAPI:api
+                                                          andTask:nil
+                                                         andError:networkUnreachableError
+                                                 andCallbackQueue:self.currentQueue];
+            api.apiDebugHandler(msg);
+        }
+#endif
         return;
     }
     
@@ -370,11 +400,14 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
         }
 #if DEBUG
         if (api.apiDebugHandler) {
-            NSDictionary *dict = [self createDebugDictionaryWithAPI:api andTask:task andError:nil];
-            api.apiDebugHandler(dict);
+            HLDebugMessage *msg = [self createDebugMessageWithAPI:api
+                                                          andTask:task
+                                                         andError:nil
+                                                 andCallbackQueue:self.currentQueue];
+            api.apiDebugHandler(msg);
         }
 #endif
-        [self callAPICompletion:api obj:responseObject error:nil completion:completion];
+        [self callAPICompletion:api obj:responseObject error:nil completeSemaphore:semaphore];
         [self.sessionTasksCache removeObjectForKey:hashKey];
         if (completionGroup) {
             dispatch_group_leave(completionGroup);
@@ -392,11 +425,17 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
         }
 #if DEBUG
         if (api.apiDebugHandler) {
-            NSDictionary *dict = [self createDebugDictionaryWithAPI:api andTask:task andError:error];
-            api.apiDebugHandler(dict);
+            HLDebugMessage *msg = [self createDebugMessageWithAPI:api
+                                                          andTask:task
+                                                         andError:error
+                                                 andCallbackQueue:self.currentQueue];
+            api.apiDebugHandler(msg);
         }
 #endif
-        [self callAPICompletion:api obj:nil error:error completion:completion];
+        [self callAPICompletion:api
+                            obj:nil
+                          error:error
+              completeSemaphore:semaphore];
         [self.sessionTasksCache removeObjectForKey:hashKey];
         if (completionGroup) {
             dispatch_group_leave(completionGroup);
@@ -543,7 +582,7 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
  @param api 需要发送的API
  */
 - (void)send:(nonnull HLAPI *)api {
-    dispatch_async(qkhl_api_http_creation_queue(), ^{
+    dispatch_async(self.currentQueue, ^{
         AFHTTPSessionManager *sessionManager = [self sessionManagerWithAPI:api];
         if (!sessionManager) {
             return;
@@ -551,12 +590,12 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
         [self sendSingleAPIRequest:api
                 withSessionManager:sessionManager
                 andCompletionGroup:nil
-                   completionBlock:nil];
+            andCompletionSemaphore:nil];
     });
 }
 
 - (void)cancel:(nonnull HLAPI *)api {
-    dispatch_async(qkhl_api_http_creation_queue(), ^{
+    dispatch_async(self.currentQueue, ^{
         NSString *hashKey = [self hashStringWithAPI:api];
         NSURLSessionDataTask *dataTask = [self.sessionTasksCache objectForKey:hashKey];
         if (dataTask) {
@@ -570,7 +609,6 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
     });
 }
 
-
 #pragma mark - Send Sync Chain Requests
 
 /**
@@ -580,12 +618,18 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
  */
 - (void)sendChain:(nonnull HLAPIChainRequests *)apis {
     NSParameterAssert(apis);
-    NSString *queueName = [NSString stringWithFormat:@"com.qkhl.networking.wangshiyu13.%lu", (unsigned long)apis.hash];
-    __block dispatch_semaphore_t semaphore = dispatch_semaphore_create(1);
+    dispatch_queue_t queue;
+    if (apis.customChainQueue) {
+        queue = apis.customChainQueue;
+    } else {
+        NSString *queueName = [NSString stringWithFormat:@"com.qkhl.networking.wangshiyu13.%lu", (unsigned long)apis.hash];
+        queue = dispatch_queue_create([queueName UTF8String], DISPATCH_QUEUE_SERIAL);
+    }
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(1);
     
     dispatch_group_t batch_api_group = dispatch_group_create();
     @weakify(self);
-    dispatch_async(dispatch_queue_create([queueName UTF8String], DISPATCH_QUEUE_SERIAL), ^{
+    dispatch_async(queue, ^{
         [apis enumerateObjectsUsingBlock:^(id  _Nonnull api, NSUInteger idx, BOOL * _Nonnull stop) {
             @strongify(self);
             dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
@@ -600,9 +644,7 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
             [self sendSingleAPIRequest:api
                     withSessionManager:sessionManager
                     andCompletionGroup:batch_api_group
-                       completionBlock:^{
-                           dispatch_semaphore_signal(semaphore);
-                       }];
+                andCompletionSemaphore:semaphore];
         }];
         dispatch_group_notify(batch_api_group, dispatch_get_main_queue(), ^{
             if (apis.delegate) {
@@ -617,7 +659,7 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
     NSParameterAssert(apis);
     dispatch_group_t batch_api_group = dispatch_group_create();
     @weakify(self);
-    [apis.apiRequestsSet enumerateObjectsUsingBlock:^(id api, BOOL * stop) {
+    [apis.apiSet enumerateObjectsUsingBlock:^(id api, BOOL * stop) {
         @strongify(self);
         dispatch_group_enter(batch_api_group);
         AFHTTPSessionManager *sessionManager = [self sessionManagerWithAPI:api];
@@ -630,7 +672,7 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
         [self sendSingleAPIRequest:api
                 withSessionManager:sessionManager
                 andCompletionGroup:batch_api_group
-                   completionBlock:nil];
+            andCompletionSemaphore:nil];
     }];
     dispatch_group_notify(batch_api_group, dispatch_get_main_queue(), ^{
         if (apis.delegate) {
@@ -640,34 +682,35 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
 }
 
 #pragma mark - private method
-- (NSDictionary *)createDebugDictionaryWithAPI:(HLAPI *)api
-                                       andTask:(NSURLSessionDataTask *)task
-                                      andError:(NSError *)error {
-    id mApi, mTask, response, originalRequest, currentRequest, debugError = [NSNull null];
-    if (mApi) {
-        mApi = [api mutableCopy];
-    }
+- (HLDebugMessage *)createDebugMessageWithAPI:(HLAPI *)api
+                                      andTask:(NSURLSessionDataTask *)task
+                                     andError:(NSError *)error
+                             andCallbackQueue:(dispatch_queue_t)queue
+{
+    id mTask, response, originalRequest, currentRequest, debugError = [NSNull null];
     if (task) {
-        mTask = [task mutableCopy];
+        mTask = task;
     }
     if (task.response) {
-        response = [task.response mutableCopy];
+        response = task.response;
     }
     if (task.originalRequest) {
-        originalRequest = [task.originalRequest mutableCopy];
+        originalRequest = task.originalRequest;
     }
     if (task.currentRequest) {
-        currentRequest = [task.currentRequest mutableCopy];
+        currentRequest = task.currentRequest;
     }
     if (error) {
-        debugError = [error mutableCopy];
+        debugError = error;
     }
-    return @{kHLAPIDebugKey: mApi,
-             kHLSessionTaskDebugKey: mTask,
-             kHLResponseDebugKey: response,
-             kHLOriginalRequestDebugKey: originalRequest,
-             kHLCurrentRequestDebugKey: currentRequest,
-             kHLErrorDebugKey: debugError};
+    NSDictionary *params = @{kHLAPIDebugKey: api,
+                             kHLSessionTaskDebugKey: mTask,
+                             kHLResponseDebugKey: response,
+                             kHLOriginalRequestDebugKey: originalRequest,
+                             kHLCurrentRequestDebugKey: currentRequest,
+                             kHLErrorDebugKey: debugError,
+                             kHLQueueDebugKey: queue};
+    return [[HLDebugMessage alloc] initWithDict:params];
 }
 
 - (NSString *)hashStringWithAPI:(HLAPI *)api {
@@ -749,6 +792,22 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
 
 - (BOOL)isReachableViaWiFi {
     return self.reachabilityStatus == HLReachabilityStatusReachableViaWiFi;
+}
+
++ (HLReachabilityStatus)reachabilityStatus {
+    return [self sharedManager].reachabilityStatus;
+}
+
++ (BOOL)isReachable {
+    return [self sharedManager].isReachable;
+}
+
++ (BOOL)isReachableViaWWAN {
+    return [self sharedManager].isReachableViaWWAN;
+}
+
++ (BOOL)isReachableViaWiFi {
+    return [self sharedManager].isReachableViaWiFi;
 }
 
 + (void)listening:(void (^)(HLReachabilityStatus))listener {

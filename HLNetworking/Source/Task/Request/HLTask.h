@@ -26,35 +26,26 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy, readonly) NSString *filePath;
 @property (nonatomic, copy, readonly) NSString *resumePath;
 
-/**
- 设置HLAPI的requestDelegate
- */
+// 设置HLAPI的requestDelegate
 - (HLTask *(^)(id<HLTaskRequestDelegate> delegate))setDelegate;
 
-/**
- taskURL
- 如果设置了taskURL，则baseURL无效
- */
+// 自定义的RequestUrl，该参数会无视任何baseURL的设置，优先级最高
 - (HLTask *(^)(NSString *taskURL))setTaskURL;
 
-/**
- *  baseURL
- *  注意：如果Task子类有设定baseURL, 则 Configuration 里的baseURL不起作用
- *  即： Task里的baseURL 优先级更高
- */
+// 设置API的baseURL，该参数会覆盖config中的baseURL
 - (HLTask *(^)(NSString *baseURL))setBaseURL;
 
-/**
- urlQuery
- 即baseURL后的地址
- */
+// urlQuery即baseURL后的地址
 - (HLTask *(^)(NSString *path))setPath;
 
-/**
- *  filePath
- *  保存或者读取的本地文件路径
- */
+// 设置下载或者上传的本地文件路径
 - (HLTask *(^)(NSString *filePath))setFilePath;
+
+// 设置安全策略
+- (HLTask* (^)(HLSecurityPolicyConfig *apiSecurityPolicy))setSecurityPolicy;
+
+// 设置task的类型（上传/下载）
+- (HLTask* (^)(HLRequestTaskType requestTaskType))setTaskType;
 
 #pragma mark - functory method
 // 请使用task

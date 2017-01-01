@@ -9,6 +9,15 @@
 #import "HLNetworking.h"
 #import "AFNetworking.h"
 
+static dispatch_queue_t my_api_queue() {
+    static dispatch_queue_t my_api_queue;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        my_api_queue = dispatch_queue_create("com.qkhl.queue", DISPATCH_QUEUE_SERIAL);
+    });
+    return my_api_queue;
+}
+
 @interface ViewController ()<HLAPIResponseDelegate, HLAPIRequestDelegate, HLObjReformerProtocol, HLAPIChainRequestsProtocol, HLAPIBatchRequestsProtocol, HLTaskRequestDelegate, HLTaskResponseProtocol>
 @property(nonatomic, strong)HLAPI *api1;
 @property(nonatomic, strong)HLAPI *api2;
@@ -43,7 +52,10 @@
     pauseButton.backgroundColor = [UIColor redColor];
     [self.view addSubview:pauseButton];
     [pauseButton addTarget:self action:@selector(pause) forControlEvents:UIControlEventTouchUpInside];
-    self.task1 = [[HLTask task].setDelegate(self).setFilePath([[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:@"Boom2.dmg"]).setTaskURL(@"https://dl.devmate.com/com.globaldelight.Boom2/Boom2.dmg") start];
+    self.task1 = [[HLTask task]
+                  .setDelegate(self)
+                  .setFilePath([[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:@"Boom2.dmg"])
+                  .setTaskURL(@"https://dl.devmate.com/com.globaldelight.Boom2/Boom2.dmg") start];
 }
 
 - (void)setupTaskNetworkConfig {
@@ -85,16 +97,41 @@
     [HLAPIManager setupConfig:^(HLNetworkConfig * _Nonnull config) {
         config.baseURL = @"https://httpbin.org/";
         config.apiVersion = nil;
+        config.apiCallbackQueue = my_api_queue();
     }];
     [HLAPIManager registerResponseObserver:self];
 }
 
 - (void)testAPI {
+    HLAPIChainRequests *chain = [[HLAPIChainRequests alloc] init];
+    [chain setupChainQueue:@"mychain"];
+    chain.delegate = self;
+    
     self.api1 = [HLAPI API].setMethod(GET)
-    .setPath(@"get")
+    .setCustomURL(@"https://api.lovek12.com/v200/index.php?r=user/user-info&device_type=ad1&user_id=74")
     .setDelegate(self)
+    .setObjReformerDelegate(self)
     .success(^(id obj) {
-        NSLog(@"\napi1 = %@ --- 已回调\n %@ \n----", self.api1, obj);
+        NSLog(@"\napi1 --- 已回调\n %@ \n----", obj);
+    })
+    .debug(^(HLDebugMessage *message){
+        NSLog(@"\n debug参数：\n \
+              sessionTask = %@\n \
+              api = %@\n \
+              error = %@\n \
+              originRequest = %@\n \
+              currentRequest = %@\n \
+              response = %@\n \
+              queue = %@\n \
+              chainQueue = %@\n",
+              message.sessionTask,
+              message.api,
+              message.error,
+              message.originRequest,
+              message.currentRequest,
+              message.response,
+              message.queueName,
+              chain.customChainQueue);
     });
 //    .formData([HLFormDataConfig configWithData:[NSData data]
 //                                          name:@"name"
@@ -124,8 +161,6 @@
         NSLog(@"\napi 4 --- 已回调 \n----");
     });
     
-    HLAPIChainRequests *chain = [[HLAPIChainRequests alloc] init];
-    chain.delegate = self;
     [chain addAPIs:@[self.api1, self.api2, self.api3, self.api4]];
     [chain start];
     for (id obj in chain) {
@@ -133,10 +168,10 @@
     }
     HLAPI *api = chain[0];
     NSLog(@"%@", api);
-    //    HLAPIBatchRequests *asyncBatch = [[HLAPIBatchRequests alloc] init];
-    //    asyncBatch.delegate = self;
-    //    [asyncBatch addBatchAPIRequests:[NSSet setWithObjects:self.api1, self.api2, self.api3, self.api4, self.api5, nil]];
-    //    [asyncBatch start];
+//        HLAPIBatchRequests *asyncBatch = [[HLAPIBatchRequests alloc] init];
+//        asyncBatch.delegate = self;
+//        [asyncBatch addBatchAPIRequests:[NSSet setWithObjects:self.api1, self.api2, self.api3, self.api4, self.api5, nil]];
+//        [asyncBatch start];
     
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5), dispatch_get_main_queue(), ^{
         [chain cancel];
@@ -167,7 +202,7 @@
 
 #pragma mark - HLResponseDelegate
 
-HLAPIResponseDelegateRequestAPIs(self.api1, self.api2, self.api3)
+HLObserverAPIs(self.api1, self.api2, self.api3)
 
 //- (NSArray<HLAPI *> *)requestAPIs {
 //    return @[self.api1, self.api2, self.api3, self.api4];

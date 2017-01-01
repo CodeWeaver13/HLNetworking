@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "HLSecurityPolicyConfig.h"
 NS_ASSUME_NONNULL_BEGIN
 // 默认的请求超时时间
 #define HL_API_REQUEST_TIME_OUT     15
@@ -20,12 +21,19 @@ FOUNDATION_EXPORT NSString * const HLDefaultNetworkNotReachableString;
 
 @interface HLNetworkConfig : NSObject<NSCopying>
 
-// 默认的parameters，可以在HLAPI中选择是否使用，默认开启
-@property (nonatomic, strong) NSDictionary *defaultParams;
+// 请求的自定义队列
+@property (nonatomic, strong) dispatch_queue_t apiCallbackQueue;
 
-/**
- 是否为后台模式所用的GroupID，该选项只对Task有影响
- */
+// 默认的parameters，可以在HLAPI中选择是否使用，默认开启
+@property (nonatomic, strong) NSDictionary<NSString *, NSObject *> *defaultParams;
+
+// 默认的header，可以在HLAPI中覆盖
+@property (nonatomic, strong) NSDictionary<NSString *, NSString *> *defaultHeaders;
+
+// 全局的baseURL，HLAPI的baseURL会覆盖该参数
+@property (nonatomic, copy, nullable) NSString *baseURL;
+
+// 是否为后台模式所用的GroupID，该选项只对Task有影响
 @property (nonatomic, copy) NSString *AppGroup;
 
 // 是否为后台模式，该选项只对Task有影响
@@ -45,9 +53,6 @@ FOUNDATION_EXPORT NSString * const HLDefaultNetworkNotReachableString;
 
 // 出现网络请求错误时，是否在请求错误的文字后加上{code}，默认为YES
 @property (nonatomic, assign) BOOL isErrorCodeDisplayEnabled;
-
-// 全局的baseURL，HLAPI的baseURL会覆盖该参数
-@property (nonatomic, copy, nullable) NSString *baseURL;
 
 // api版本，用于拼接在请求的Path上
 // 默认为infoPlist中的CFBundleShortVersionString，格式为v{version}{r}，审核版本为r
@@ -76,6 +81,9 @@ FOUNDATION_EXPORT NSString * const HLDefaultNetworkNotReachableString;
 
 // 是否启用reachability，baseURL为domain
 @property (nonatomic, assign) BOOL enableReachability;
+
+// 默认的安全策略配置
+@property (nonatomic, strong) HLSecurityPolicyConfig *defaultSecurityPolicy;
 
 // 快速构建config
 + (HLNetworkConfig *)config;

@@ -17,6 +17,7 @@ NSString * const HLDefaultNetworkNotReachableString     = @"网络不可用，�
 - (instancetype)init {
     self = [super init];
     if (self) {
+        _apiCallbackQueue = nil;
         _generalErrorTypeStr = HLDefaultGeneralErrorString;
         _frequentRequestErrorStr = HLDefaultFrequentRequestErrorString;
         _networkNotReachableErrorStr = HLDefaultNetworkNotReachableString;
@@ -28,7 +29,12 @@ NSString * const HLDefaultNetworkNotReachableString     = @"网络不可用，�
         _URLCache = [NSURLCache sharedURLCache];
         _apiVersion = [self getCurrentVersion];
         _isJudgeVersion = [[NSUserDefaults standardUserDefaults] boolForKey:@"isR"] ? : YES;
-        _enableReachability = FALSE;
+        _enableReachability = NO;
+#ifdef DEBUG
+        _defaultSecurityPolicy = [HLSecurityPolicyConfig policyWithPinningMode:HLSSLPinningModeNone];
+#else
+        _defaultSecurityPolicy = [HLSecurityPolicyConfig policyWithPinningMode:HLSSLPinningModePublicKey];
+#endif
     }
     return self;
 }

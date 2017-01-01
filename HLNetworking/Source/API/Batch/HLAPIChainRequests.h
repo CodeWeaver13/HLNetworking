@@ -9,50 +9,37 @@
 #import <Foundation/Foundation.h>
 @class HLAPI;
 @class HLAPIChainRequests;
-
+NS_ASSUME_NONNULL_BEGIN
 @protocol HLAPIChainRequestsProtocol <NSObject>
-/**
- *  Chain Requests 全部调用完成之后调用
- *
- *  @param chainApis chainApis集合
- */
+// Chain Requests 全部调用完成之后调用
 - (void)chainRequestsAllDidFinished:(nonnull HLAPIChainRequests *)chainApis;
 
 @end
 
 @interface HLAPIChainRequests : NSObject<NSFastEnumeration>
 
-@property (nonatomic, assign, readonly)BOOL isCancel;
+// 自定义的同步请求所在的串行队列
+@property (nonatomic, strong, readonly) dispatch_queue_t customChainQueue;
 
-/**
- *  Sync Batch Requests 执行完成之后调用的delegate
- */
+// 已经被全部取消
+@property (nonatomic, assign, readonly) BOOL isCancel;
+
+// Chain Requests 执行完成之后调用的delegate
 @property (nonatomic, weak, nullable) id<HLAPIChainRequestsProtocol> delegate;
 
-
-/**
- 将API 加入到chainBatchRequest Array 集合中
- 
- @param api 新加入的请求
- */
+// 加入到chainBatchRequest Array 集合中
 - (void)add:(nonnull HLAPI *)api;
 
-/**
- *  将带有API集合的Array 赋值
- *
- *  @param apis 新加入的请求Array
- */
+// 将带有API集合的Array 赋值
 - (void)addAPIs:(nonnull NSArray<HLAPI *> *)apis;
 
-/**
- *  开启API 请求
- */
+// 开启队列请求
 - (void)start;
 
-/**
- 取消请求所有请求
- */
+// 取消所有请求
 - (void)cancel;
+
+- (dispatch_queue_t)setupChainQueue:(NSString *)queueName;
 
 #pragma mark - 遍历方法
 
@@ -64,3 +51,4 @@
 
 - (nonnull id)objectAtIndexedSubscript:(NSUInteger)idx;
 @end
+NS_ASSUME_NONNULL_END

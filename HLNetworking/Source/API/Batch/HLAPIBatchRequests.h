@@ -24,39 +24,24 @@
 
 @interface HLAPIBatchRequests : NSObject
 
+// 已经被全部取消
 @property (nonatomic, assign, readonly)BOOL isCancel;
-/**
- *  Batch 执行的API Requests 集合
- */
-@property (nonatomic, strong, readonly, nullable) NSMutableSet<HLAPI *> *apiRequestsSet;
 
-/**
- *  Batch Requests 执行完成之后调用的delegate
- */
+// Batch 执行的API Requests 集合
+@property (nonatomic, strong, readonly, nullable) NSMutableSet<HLAPI *> *apiSet;
+
+// Batch Requests 执行完成之后调用的delegate
 @property (nonatomic, weak, nullable) id<HLAPIBatchRequestsProtocol> delegate;
 
-
-/**
- 将API 加入到BatchRequest Set 集合中
-
- @param api 新加入的请求
- */
+// 将API 加入到BatchRequest Set 集合中
 - (void)add:(HLAPI * _Nonnull)api;
 
-/**
- *  将带有API集合的Sets 赋值
- *
- *  @param apis 新加入的请求Set
- */
+// 将带有API集合的Sets 赋值
 - (void)addAPIs:(nonnull NSSet<HLAPI *> *)apis;
 
-/**
- *  开启API 请求
- */
+// 开启API 请求
 - (void)start;
 
-/**
- 取消请求所有请求
- */
+// 取消请求所有请求
 - (void)cancel;
 @end

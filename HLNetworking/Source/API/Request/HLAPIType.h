@@ -9,6 +9,7 @@
 #ifndef HLAPIType_h
 #define HLAPIType_h
 @protocol HLMultipartFormDataProtocol;
+@class HLDebugMessage;
 // 网络请求类型
 typedef NS_ENUM(NSUInteger, HLRequestMethodType) {
     GET = 10,
@@ -59,7 +60,7 @@ typedef void(^HLProgressBlock)(NSProgress * __nullable progress);
 // formData拼接回调
 typedef void(^HLRequestConstructingBodyBlock)(id<HLMultipartFormDataProtocol> __nullable formData);
 // debug回调
-typedef void(^HLDebugBlock)(NSDictionary * __nonnull debugMessage);
+typedef void(^HLDebugBlock)(HLDebugMessage * __nonnull debugMessage);
 // debugKey
 typedef NSString *HLDebugKey;
 

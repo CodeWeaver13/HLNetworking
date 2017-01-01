@@ -15,6 +15,7 @@
 		CF36275A1D9368BD00C26AAF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CF3627591D9368BD00C26AAF /* Assets.xcassets */; };
 		CF36275D1D9368BD00C26AAF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CF36275B1D9368BD00C26AAF /* LaunchScreen.storyboard */; };
 		CFD3863B1E193BA8001CF086 /* HLFormDataConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = CFD3863A1E193BA8001CF086 /* HLFormDataConfig.m */; };
+		CFD386441E196081001CF086 /* HLDebugMessage.m in Sources */ = {isa = PBXBuildFile; fileRef = CFD386431E196081001CF086 /* HLDebugMessage.m */; };
 		CFDCF73C1D9C261B00DE1C8E /* HLAPIBatchRequests.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDCF71B1D9C261B00DE1C8E /* HLAPIBatchRequests.m */; };
 		CFDCF73D1D9C261B00DE1C8E /* HLAPIChainRequests.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDCF71D1D9C261B00DE1C8E /* HLAPIChainRequests.m */; };
 		CFDCF73E1D9C261B00DE1C8E /* HLAPIManager.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDCF7201D9C261B00DE1C8E /* HLAPIManager.m */; };
@@ -50,13 +51,14 @@
 		CFD3863A1E193BA8001CF086 /* HLFormDataConfig.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLFormDataConfig.m; sourceTree = "<group>"; };
 		CFD3863D1E193C09001CF086 /* HLNetworkingTask.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HLNetworkingTask.h; sourceTree = "<group>"; };
 		CFD3863E1E193C15001CF086 /* HLNetworkingAPI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HLNetworkingAPI.h; sourceTree = "<group>"; };
+		CFD386421E196081001CF086 /* HLDebugMessage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLDebugMessage.h; sourceTree = "<group>"; };
+		CFD386431E196081001CF086 /* HLDebugMessage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLDebugMessage.m; sourceTree = "<group>"; };
 		CFDCF71A1D9C261B00DE1C8E /* HLAPIBatchRequests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLAPIBatchRequests.h; sourceTree = "<group>"; };
 		CFDCF71B1D9C261B00DE1C8E /* HLAPIBatchRequests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLAPIBatchRequests.m; sourceTree = "<group>"; };
 		CFDCF71C1D9C261B00DE1C8E /* HLAPIChainRequests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLAPIChainRequests.h; sourceTree = "<group>"; };
 		CFDCF71D1D9C261B00DE1C8E /* HLAPIChainRequests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLAPIChainRequests.m; sourceTree = "<group>"; };
 		CFDCF71F1D9C261B00DE1C8E /* HLAPIManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLAPIManager.h; sourceTree = "<group>"; };
 		CFDCF7201D9C261B00DE1C8E /* HLAPIManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLAPIManager.m; sourceTree = "<group>"; };
-		CFDCF7221D9C261B00DE1C8E /* HLHttpHeaderDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLHttpHeaderDelegate.h; sourceTree = "<group>"; };
 		CFDCF7231D9C261B00DE1C8E /* HLMultipartFormDataProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLMultipartFormDataProtocol.h; sourceTree = "<group>"; };
 		CFDCF7241D9C261B00DE1C8E /* HLNetworkErrorProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLNetworkErrorProtocol.h; sourceTree = "<group>"; };
 		CFDCF7271D9C261B00DE1C8E /* HLAPI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLAPI.h; sourceTree = "<group>"; };
@@ -124,6 +126,7 @@
 		CF36274C1D9368BD00C26AAF /* HLNetworking */ = {
 			isa = PBXGroup;
 			children = (
+				CFD386451E198D7F001CF086 /* Test */,
 				CF54B9BA1DEC429700CEEE8D /* Podspec */,
 				CF3627641D9368CD00C26AAF /* Source */,
 				CF3627501D9368BD00C26AAF /* AppDelegate.h */,
@@ -169,6 +172,13 @@
 			name = Podspec;
 			sourceTree = "<group>";
 		};
+		CFD386451E198D7F001CF086 /* Test */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Test;
+			sourceTree = "<group>";
+		};
 		CFDCF7181D9C261B00DE1C8E /* API */ = {
 			isa = PBXGroup;
 			children = (
@@ -197,6 +207,8 @@
 			children = (
 				CFDCF71F1D9C261B00DE1C8E /* HLAPIManager.h */,
 				CFDCF7201D9C261B00DE1C8E /* HLAPIManager.m */,
+				CFD386421E196081001CF086 /* HLDebugMessage.h */,
+				CFD386431E196081001CF086 /* HLDebugMessage.m */,
 			);
 			path = Manger;
 			sourceTree = "<group>";
@@ -206,7 +218,6 @@
 			children = (
 				CFD386391E193BA8001CF086 /* HLFormDataConfig.h */,
 				CFD3863A1E193BA8001CF086 /* HLFormDataConfig.m */,
-				CFDCF7221D9C261B00DE1C8E /* HLHttpHeaderDelegate.h */,
 				CFDCF7231D9C261B00DE1C8E /* HLMultipartFormDataProtocol.h */,
 				CFDCF7241D9C261B00DE1C8E /* HLNetworkErrorProtocol.h */,
 				CF60A0DB1DA1605D00AC1BB2 /* HLAPIRequestDelegate.h */,
@@ -439,6 +450,7 @@
 				CFDCF73E1D9C261B00DE1C8E /* HLAPIManager.m in Sources */,
 				CFDCF73C1D9C261B00DE1C8E /* HLAPIBatchRequests.m in Sources */,
 				CFDCF7411D9C261B00DE1C8E /* HLNetworkConfig.m in Sources */,
+				CFD386441E196081001CF086 /* HLDebugMessage.m in Sources */,
 				CF3627521D9368BD00C26AAF /* AppDelegate.m in Sources */,
 				CFDE3FE41E12220E00CDA39E /* HLAPICenter.m in Sources */,
 				CFDE3FE51E12220E00CDA39E /* HLBaseObjReformer.m in Sources */,

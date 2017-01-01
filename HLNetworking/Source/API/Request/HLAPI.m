@@ -19,6 +19,7 @@ HLDebugKey const kHLErrorDebugKey = @"kHLErrorDebugKey";
 HLDebugKey const kHLOriginalRequestDebugKey = @"kHLOriginalRequestDebugKey";
 HLDebugKey const kHLCurrentRequestDebugKey = @"kHLCurrentRequestDebugKey";
 HLDebugKey const kHLResponseDebugKey = @"kHLResponseDebugKey";
+HLDebugKey const kHLQueueDebugKey = @"kHLQueueDebugKey";
 
 @implementation HLAPI
 
@@ -35,19 +36,14 @@ HLDebugKey const kHLResponseDebugKey = @"kHLResponseDebugKey";
                                @"application/json",
                                @"text/javascript",
                                @"text/plain", nil];
-        _header = nil;
+        _header = [HLAPIManager sharedManager].config.defaultHeaders;
         _parameters = nil;
         _timeoutInterval = HL_API_REQUEST_TIME_OUT;
         _cachePolicy = NSURLRequestUseProtocolCachePolicy;
         _requestMethodType = GET;
         _requestSerializerType = RequestHTTP;
         _responseSerializerType = ResponseJSON;
-        // 为了方便，在Debug模式下使用None来保证用Charles之类可以抓到HTTPS报文Production下，则用Pinning Certification PublicKey 来防止中间人攻击
-#ifdef DEBUG
-        _securityPolicy = [HLSecurityPolicyConfig policyWithPinningMode:HLSSLPinningModeNone];
-#else
-        _securityPolicy = [HLSecurityPolicyConfig policyWithPinningMode:HLSSLPinningModePublicKey];
-#endif
+        _securityPolicy = [HLAPIManager sharedManager].config.defaultSecurityPolicy;
     }
     return self;
 }
@@ -56,6 +52,31 @@ HLDebugKey const kHLResponseDebugKey = @"kHLResponseDebugKey";
     return [[self alloc] init];
 }
 
+- (id)copyWithZone:(NSZone *)zone {
+    HLAPI *api = [[[self class] alloc] init];
+    if (api) {
+        api.useDefaultParams = _useDefaultParams;
+        api.objClz = _objClz;
+        api.cURL = _cURL;
+        api.accpetContentTypes = _accpetContentTypes;
+        api.header = _header;
+        api.parameters = _parameters;
+        api.timeoutInterval = _timeoutInterval;
+        api.cachePolicy = _cachePolicy;
+        api.requestMethodType = _requestMethodType;
+        api.requestSerializerType = _requestSerializerType;
+        api.responseSerializerType = _responseSerializerType;
+        api.securityPolicy = _securityPolicy;
+        api.useDefaultParams = _useDefaultParams;
+        api.delegate = _delegate;
+        api.objReformerDelegate = _objReformerDelegate;
+        api.baseURL = _baseURL;
+        api.path = _path;
+    }
+    return api;
+}
+
+#pragma mark - 参数拼接方法
 - (HLAPI *(^)(BOOL enable))enableDefaultParams {
     return ^HLAPI* (BOOL enable) {
         self.useDefaultParams = enable;

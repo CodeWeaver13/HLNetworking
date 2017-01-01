@@ -18,7 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param ... apis
  @return 必要的APIs集合
  */
-#define HLAPIResponseDelegateRequestAPIs(...) \
+#define HLObserverAPIs(...) \
 - (NSArray <HLAPI *>*)requestAPIs { \
     return @[ __VA_ARGS__ ]; \
 }
