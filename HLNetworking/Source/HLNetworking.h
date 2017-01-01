@@ -13,24 +13,9 @@
 #import "HLNetworkMacro.h"
 #import "HLNetworkConfig.h"
 #import "HLSecurityPolicyConfig.h"
-#import "HLFormDataConfig.h"
-// API
-#import "HLAPIManager.h"
-#import "HLAPI.h"
-#import "HLAPIType.h"
-#import "HLAPIBatchRequests.h"
-#import "HLAPIChainRequests.h"
-// API protocol
-#import "HLMultipartFormDataProtocol.h"
-#import "HLHttpHeaderDelegate.h"
-#import "HLAPIRequestDelegate.h"
-#import "HLAPIResponseDelegate.h"
-#import "HLNetworkErrorProtocol.h"
 // Task
-#import "HLTaskManager.h"
-#import "HLTask.h"
-#import "HLTaskType.h"
-// Task protocol
-#import "HLTaskResponseProtocol.h"
+#import "HLNetworkingTask.h"
+// API
+#import "HLNetworkingAPI.h"
 
 #endif /* HLNetworking_h */

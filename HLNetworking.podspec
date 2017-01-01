@@ -17,14 +17,14 @@ Pod::Spec.new do |spec|
   spec.subspec 'Core' do |core|
 
     core.source_files = 'HLNetworking/Source/HLNetworking.h', 'HLNetworking/Source/Config/**/*.{h,m}', 'HLNetworking/Source/API/**/*.{h,m}', 'HLNetworking/Source/Task/**/*.{h,m}'
-    
+
     core.dependency 'AFNetworking', '~> 3.1.0'
 
   end
 
   spec.subspec 'API' do |api|
 
-    api.source_files = 'HLNetworking/Source/HLNetworking.h', 'HLNetworking/Source/Config/**/*.{h,m}', 'HLNetworking/Source/API/**/*.{h,m}'
+    api.source_files = 'HLNetworking/Source/HLNetworkingAPI.h', 'HLNetworking/Source/Config/**/*.{h,m}', 'HLNetworking/Source/API/**/*.{h,m}'
 
     api.dependency 'AFNetworking', '~> 3.1.0'
 
@@ -32,7 +32,7 @@ Pod::Spec.new do |spec|
 
   spec.subspec 'Task' do |task|
 
-    task.source_files = 'HLNetworking/Source/HLNetworking.h', 'HLNetworking/Source/Config/**/*.{h,m}', 'HLNetworking/Source/Task/**/*.{h,m}'
+    task.source_files = 'HLNetworking/Source/HLNetworkingTask.h', 'HLNetworking/Source/Config/**/*.{h,m}', 'HLNetworking/Source/Task/**/*.{h,m}'
 
     task.dependency 'AFNetworking', '~> 3.1.0'
 
@@ -45,5 +45,6 @@ Pod::Spec.new do |spec|
     center.dependency 'HLNetworking/API'
 
     center.dependency 'YYModel'
+    
   end
 end

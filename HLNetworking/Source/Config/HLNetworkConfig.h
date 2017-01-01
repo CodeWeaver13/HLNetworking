@@ -8,8 +8,11 @@
 
 #import <Foundation/Foundation.h>
 NS_ASSUME_NONNULL_BEGIN
+// 默认的请求超时时间
+#define HL_API_REQUEST_TIME_OUT     15
 
-
+// 每个host最大连接数
+#define MAX_HTTP_CONNECTION_PER_HOST 5
 
 FOUNDATION_EXPORT NSString * const HLDefaultGeneralErrorString;
 FOUNDATION_EXPORT NSString * const HLDefaultFrequentRequestErrorString;

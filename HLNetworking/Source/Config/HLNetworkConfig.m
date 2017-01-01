@@ -7,7 +7,6 @@
 //
 
 #import "HLNetworkConfig.h"
-#import "HLAPIType.h"
 
 NSString * const HLDefaultGeneralErrorString            = @"服务器连接错误，请稍候重试";
 NSString * const HLDefaultFrequentRequestErrorString    = @"请求发送速度太快, 请稍候重试";

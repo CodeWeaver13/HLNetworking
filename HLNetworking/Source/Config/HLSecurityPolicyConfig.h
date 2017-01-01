@@ -7,7 +7,16 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "HLAPIType.h"
+
+// SSL Pinning
+typedef NS_ENUM(NSUInteger, HLSSLPinningMode) {
+    // 不校验Pinning证书
+    HLSSLPinningModeNone,
+    // 校验Pinning证书中的PublicKey
+    HLSSLPinningModePublicKey,
+    // 校验整个Pinning证书
+    HLSSLPinningModeCertificate
+};
 
 @interface HLSecurityPolicyConfig : NSObject
 /**

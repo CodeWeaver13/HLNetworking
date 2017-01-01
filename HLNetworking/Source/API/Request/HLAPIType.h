@@ -41,16 +41,6 @@ typedef NS_ENUM(NSUInteger, HLResponseSerializerType) {
     ResponseXML = 203
 };
 
-// SSL Pinning
-typedef NS_ENUM(NSUInteger, HLSSLPinningMode) {
-    // 不校验Pinning证书
-    HLSSLPinningModeNone,
-    // 校验Pinning证书中的PublicKey
-    HLSSLPinningModePublicKey,
-    // 校验整个Pinning证书
-    HLSSLPinningModeCertificate
-};
-
 // reachability的状态
 typedef NS_ENUM(NSUInteger, HLReachabilityStatus) {
     HLReachabilityStatusUnknown,
@@ -73,11 +63,5 @@ typedef void(^HLDebugBlock)(NSDictionary * __nonnull debugMessage);
 // debugKey
 typedef NSString *HLDebugKey;
 
-
-// 默认的请求超时时间
-#define HL_API_REQUEST_TIME_OUT     15
-
-// 每个host最大连接数
-#define MAX_HTTP_CONNECTION_PER_HOST 5
 
 #endif /* HLAPIType_h */

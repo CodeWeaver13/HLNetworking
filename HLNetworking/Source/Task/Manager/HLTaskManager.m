@@ -12,7 +12,6 @@
 #import "HLTask_InternalParams.h"
 #import "HLNetworkConfig.h"
 #import "HLSecurityPolicyConfig.h"
-#import "HLAPIType.h"
 #import "HLNetworkMacro.h"
 #import <AFNetworking/AFURLSessionManager.h>
 

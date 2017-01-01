@@ -14,11 +14,11 @@
 		CF3627581D9368BD00C26AAF /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CF3627561D9368BD00C26AAF /* Main.storyboard */; };
 		CF36275A1D9368BD00C26AAF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CF3627591D9368BD00C26AAF /* Assets.xcassets */; };
 		CF36275D1D9368BD00C26AAF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CF36275B1D9368BD00C26AAF /* LaunchScreen.storyboard */; };
+		CFD3863B1E193BA8001CF086 /* HLFormDataConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = CFD3863A1E193BA8001CF086 /* HLFormDataConfig.m */; };
 		CFDCF73C1D9C261B00DE1C8E /* HLAPIBatchRequests.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDCF71B1D9C261B00DE1C8E /* HLAPIBatchRequests.m */; };
 		CFDCF73D1D9C261B00DE1C8E /* HLAPIChainRequests.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDCF71D1D9C261B00DE1C8E /* HLAPIChainRequests.m */; };
 		CFDCF73E1D9C261B00DE1C8E /* HLAPIManager.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDCF7201D9C261B00DE1C8E /* HLAPIManager.m */; };
 		CFDCF73F1D9C261B00DE1C8E /* HLAPI.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDCF7281D9C261B00DE1C8E /* HLAPI.m */; };
-		CFDCF7401D9C261B00DE1C8E /* HLFormDataConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDCF72C1D9C261B00DE1C8E /* HLFormDataConfig.m */; };
 		CFDCF7411D9C261B00DE1C8E /* HLNetworkConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDCF72E1D9C261B00DE1C8E /* HLNetworkConfig.m */; };
 		CFDCF7421D9C261B00DE1C8E /* HLSecurityPolicyConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDCF7301D9C261B00DE1C8E /* HLSecurityPolicyConfig.m */; };
 		CFDCF7431D9C261B00DE1C8E /* HLTaskManager.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDCF7361D9C261B00DE1C8E /* HLTaskManager.m */; };
@@ -46,6 +46,10 @@
 		CF60A0DC1DA160C400AC1BB2 /* HLAPIResponseDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLAPIResponseDelegate.h; sourceTree = "<group>"; };
 		CF60A0DD1DA16C5B00AC1BB2 /* HLTask_InternalParams.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLTask_InternalParams.h; sourceTree = "<group>"; };
 		CF7326AD1DE729D100EDA1CE /* HLNetworkMacro.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLNetworkMacro.h; sourceTree = "<group>"; };
+		CFD386391E193BA8001CF086 /* HLFormDataConfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLFormDataConfig.h; sourceTree = "<group>"; };
+		CFD3863A1E193BA8001CF086 /* HLFormDataConfig.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLFormDataConfig.m; sourceTree = "<group>"; };
+		CFD3863D1E193C09001CF086 /* HLNetworkingTask.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HLNetworkingTask.h; sourceTree = "<group>"; };
+		CFD3863E1E193C15001CF086 /* HLNetworkingAPI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HLNetworkingAPI.h; sourceTree = "<group>"; };
 		CFDCF71A1D9C261B00DE1C8E /* HLAPIBatchRequests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLAPIBatchRequests.h; sourceTree = "<group>"; };
 		CFDCF71B1D9C261B00DE1C8E /* HLAPIBatchRequests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLAPIBatchRequests.m; sourceTree = "<group>"; };
 		CFDCF71C1D9C261B00DE1C8E /* HLAPIChainRequests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLAPIChainRequests.h; sourceTree = "<group>"; };
@@ -58,8 +62,6 @@
 		CFDCF7271D9C261B00DE1C8E /* HLAPI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLAPI.h; sourceTree = "<group>"; };
 		CFDCF7281D9C261B00DE1C8E /* HLAPI.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLAPI.m; sourceTree = "<group>"; };
 		CFDCF7291D9C261B00DE1C8E /* HLAPIType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLAPIType.h; sourceTree = "<group>"; };
-		CFDCF72B1D9C261B00DE1C8E /* HLFormDataConfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLFormDataConfig.h; sourceTree = "<group>"; };
-		CFDCF72C1D9C261B00DE1C8E /* HLFormDataConfig.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLFormDataConfig.m; sourceTree = "<group>"; };
 		CFDCF72D1D9C261B00DE1C8E /* HLNetworkConfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLNetworkConfig.h; sourceTree = "<group>"; };
 		CFDCF72E1D9C261B00DE1C8E /* HLNetworkConfig.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLNetworkConfig.m; sourceTree = "<group>"; };
 		CFDCF72F1D9C261B00DE1C8E /* HLSecurityPolicyConfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLSecurityPolicyConfig.h; sourceTree = "<group>"; };
@@ -174,6 +176,7 @@
 				CFDCF71E1D9C261B00DE1C8E /* Manger */,
 				CFDCF7211D9C261B00DE1C8E /* Protocol */,
 				CFDCF7261D9C261B00DE1C8E /* Request */,
+				CFD3863E1E193C15001CF086 /* HLNetworkingAPI.h */,
 			);
 			path = API;
 			sourceTree = "<group>";
@@ -201,6 +204,8 @@
 		CFDCF7211D9C261B00DE1C8E /* Protocol */ = {
 			isa = PBXGroup;
 			children = (
+				CFD386391E193BA8001CF086 /* HLFormDataConfig.h */,
+				CFD3863A1E193BA8001CF086 /* HLFormDataConfig.m */,
 				CFDCF7221D9C261B00DE1C8E /* HLHttpHeaderDelegate.h */,
 				CFDCF7231D9C261B00DE1C8E /* HLMultipartFormDataProtocol.h */,
 				CFDCF7241D9C261B00DE1C8E /* HLNetworkErrorProtocol.h */,
@@ -224,8 +229,6 @@
 		CFDCF72A1D9C261B00DE1C8E /* Config */ = {
 			isa = PBXGroup;
 			children = (
-				CFDCF72B1D9C261B00DE1C8E /* HLFormDataConfig.h */,
-				CFDCF72C1D9C261B00DE1C8E /* HLFormDataConfig.m */,
 				CFDCF72D1D9C261B00DE1C8E /* HLNetworkConfig.h */,
 				CFDCF72E1D9C261B00DE1C8E /* HLNetworkConfig.m */,
 				CFDCF72F1D9C261B00DE1C8E /* HLSecurityPolicyConfig.h */,
@@ -242,6 +245,7 @@
 				CFDCF7341D9C261B00DE1C8E /* Manager */,
 				CFDCF7371D9C261B00DE1C8E /* Protocol */,
 				CFDCF7381D9C261B00DE1C8E /* Request */,
+				CFD3863D1E193C09001CF086 /* HLNetworkingTask.h */,
 			);
 			path = Task;
 			sourceTree = "<group>";
@@ -426,11 +430,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				CFDCF7421D9C261B00DE1C8E /* HLSecurityPolicyConfig.m in Sources */,
-				CFDCF7401D9C261B00DE1C8E /* HLFormDataConfig.m in Sources */,
 				CF3627551D9368BD00C26AAF /* ViewController.m in Sources */,
 				CFDCF7431D9C261B00DE1C8E /* HLTaskManager.m in Sources */,
 				CFDCF73D1D9C261B00DE1C8E /* HLAPIChainRequests.m in Sources */,
 				CFDCF73F1D9C261B00DE1C8E /* HLAPI.m in Sources */,
+				CFD3863B1E193BA8001CF086 /* HLFormDataConfig.m in Sources */,
 				CFDCF7441D9C261B00DE1C8E /* HLTask.m in Sources */,
 				CFDCF73E1D9C261B00DE1C8E /* HLAPIManager.m in Sources */,
 				CFDCF73C1D9C261B00DE1C8E /* HLAPIBatchRequests.m in Sources */,
