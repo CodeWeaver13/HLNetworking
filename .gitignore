@@ -1,0 +1,7 @@
+HLNetworking.xcodeproj/xcuserdata/
+HLNetworking.xcworkspace/
+Pods/
+*.swp
+Podfile.lock
+.DS_Store
+HLNetworking.xcodeproj/project.xcworkspace/xcuserdata/

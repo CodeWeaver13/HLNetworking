@@ -13,12 +13,47 @@
 #import "HLSecurityPolicyConfig.h"
 #import "HLAPIRequestDelegate.h"
 
+HLDebugKey const kHLSessionTaskDebugKey = @"kHLSessionTaskDebugKey";
+HLDebugKey const kHLAPIDebugKey = @"kHLAPIDebugKey";
+HLDebugKey const kHLErrorDebugKey = @"kHLErrorDebugKey";
+HLDebugKey const kHLOriginalRequestDebugKey = @"kHLOriginalRequestDebugKey";
+HLDebugKey const kHLCurrentRequestDebugKey = @"kHLCurrentRequestDebugKey";
+HLDebugKey const kHLResponseDebugKey = @"kHLResponseDebugKey";
+
 @implementation HLAPI
 
 #pragma mark - Init
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _useDefaultParams = YES;
+        _objClz = [NSObject class];
+        _cURL = nil;
+        _accpetContentTypes = [NSSet setWithObjects:
+                               @"text/json",
+                               @"text/html",
+                               @"application/json",
+                               @"text/javascript",
+                               @"text/plain", nil];
+        _header = nil;
+        _parameters = nil;
+        _timeoutInterval = HL_API_REQUEST_TIME_OUT;
+        _cachePolicy = NSURLRequestUseProtocolCachePolicy;
+        _requestMethodType = GET;
+        _requestSerializerType = RequestHTTP;
+        _responseSerializerType = ResponseJSON;
+        // 为了方便，在Debug模式下使用None来保证用Charles之类可以抓到HTTPS报文Production下，则用Pinning Certification PublicKey 来防止中间人攻击
+#ifdef DEBUG
+        _securityPolicy = [HLSecurityPolicyConfig policyWithPinningMode:HLSSLPinningModeNone];
+#else
+        _securityPolicy = [HLSecurityPolicyConfig policyWithPinningMode:HLSSLPinningModePublicKey];
+#endif
+    }
+    return self;
+}
+
 + (instancetype)API {
-    HLAPI *api = [[HLAPI alloc] init];
-    return api;
+    return [[self alloc] init];
 }
 
 - (HLAPI *(^)(BOOL enable))enableDefaultParams {
@@ -77,14 +112,12 @@
     };
 }
 
-
 - (HLAPI* (^)(HLRequestSerializerType requestSerializerType))setRequestType {
     return ^HLAPI* (HLRequestSerializerType requestSerializerType) {
         self.requestSerializerType = requestSerializerType;
         return self;
     };
 }
-
 
 - (HLAPI* (^)(HLResponseSerializerType apiResponseSerializerType))setResponseType {
     return ^HLAPI* (HLResponseSerializerType responseSerializerType) {
@@ -93,14 +126,12 @@
     };
 }
 
-
 - (HLAPI* (^)(NSURLRequestCachePolicy apiRequestCachePolicy))setCachePolicy {
     return ^HLAPI* (NSURLRequestCachePolicy apiRequestCachePolicy) {
         self.cachePolicy = apiRequestCachePolicy;
         return self;
     };
 }
-
 
 - (HLAPI* (^)(NSTimeInterval apiRequestTimeoutInterval))setTimeout {
     return ^HLAPI* (NSTimeInterval apiRequestTimeoutInterval) {
@@ -109,16 +140,15 @@
     };
 }
 
-
-- (HLAPI* (^)(NSDictionary<NSString *, NSObject *> *parameters))setParams {
-    return ^HLAPI* (NSDictionary<NSString *, NSObject *> *parameters) {
+- (HLAPI* (^)(NSDictionary<NSString *, id> *parameters))setParams {
+    return ^HLAPI* (NSDictionary<NSString *, id> *parameters) {
         self.parameters = parameters;
         return self;
     };
 }
 
-- (HLAPI* (^)(NSDictionary<NSString *, NSObject *> *parameters))addParams {
-    return ^HLAPI* (NSDictionary<NSString *, NSObject *> *parameters) {
+- (HLAPI* (^)(NSDictionary<NSString *, id> *parameters))addParams {
+    return ^HLAPI* (NSDictionary<NSString *, id> *parameters) {
         NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:self.parameters];
         [dict addEntriesFromDictionary:parameters];
         self.parameters = [dict copy];
@@ -147,30 +177,37 @@
     };
 }
 
-- (HLAPI *(^)(ReObjBlock))success {
-    return ^HLAPI* (ReObjBlock objBlock) {
+- (HLAPI *(^)(HLSuccessBlock))success {
+    return ^HLAPI* (HLSuccessBlock objBlock) {
         [self setApiSuccessHandler:objBlock];
         return self;
     };
 }
 
-- (HLAPI *(^)(ReErrorBlock))failure {
-    return ^HLAPI* (ReErrorBlock errorBlock) {
+- (HLAPI *(^)(HLFailureBlock))failure {
+    return ^HLAPI* (HLFailureBlock errorBlock) {
         [self setApiFailureHandler:errorBlock];
         return self;
     };
 }
 
-- (HLAPI *(^)(ProgressBlock))progress {
-    return ^HLAPI* (ProgressBlock progressBlock) {
+- (HLAPI *(^)(HLProgressBlock))progress {
+    return ^HLAPI* (HLProgressBlock progressBlock) {
         [self setApiProgressHandler:progressBlock];
         return self;
     };
 }
 
-- (HLAPI *(^)(RequestConstructingBodyBlock))formData {
-    return ^HLAPI* (RequestConstructingBodyBlock bodyBlock) {
+- (HLAPI *(^)(HLRequestConstructingBodyBlock))formData {
+    return ^HLAPI* (HLRequestConstructingBodyBlock bodyBlock) {
         [self setApiRequestConstructingBodyBlock:bodyBlock];
+        return self;
+    };
+}
+
+- (HLAPI *(^)(HLDebugBlock))debug {
+    return ^HLAPI* (HLDebugBlock debugBlock) {
+        [self setApiDebugHandler:debugBlock];
         return self;
     };
 }
@@ -189,22 +226,22 @@
 }
 
 - (HLAPI *)start {
-    [[HLAPIManager shared] sendAPIRequest:((HLAPI *)self)];
+    [[HLAPIManager sharedManager] sendAPIRequest:((HLAPI *)self)];
     return self;
 }
 
 - (HLAPI *)cancel {
-    [[HLAPIManager shared] cancelAPIRequest:((HLAPI *)self)];
+    [[HLAPIManager sharedManager] cancelAPIRequest:((HLAPI *)self)];
     return self;
 }
 
 #pragma mark - NSObject method
 - (NSUInteger)hash {
-    NSString *hashStr;
+    NSString *hashStr = nil;
     if (self.cURL) {
         hashStr = [NSString stringWithFormat:@"%@?%@", self.cURL, self.parameters];
     } else {
-        hashStr = [NSString stringWithFormat:@"%@/%@?%@", self.path, self.baseURL, self.parameters];
+        hashStr = [NSString stringWithFormat:@"%@/%@?%@", self.baseURL, self.path, self.parameters];
     }
     return [hashStr hash];
 }
@@ -223,16 +260,16 @@
     NSString *desc;
 #if DEBUG
     desc = [NSString stringWithFormat:@"\n===============HLAPI===============\nAPIVersion: %@\nClass: %@\nBaseURL: %@\nPath: %@\nCustomURL: %@\nParameters: %@\nHeader: %@\nContentTypes: %@\nTimeoutInterval: %f\nSecurityPolicy: %@\nRequestMethodType: %@\nRequestSerializerType: %@\nResponseSerializerType: %@\nCachePolicy: %@\n===============end===============\n\n",
-            [HLAPIManager shared].config.apiVersion ?: @"未设置",
-            self.class, self.baseURL ?: [HLAPIManager shared].config.baseURL,
+            [HLAPIManager sharedManager].config.apiVersion ?: @"未设置",
+            self.class, self.baseURL ?: [HLAPIManager sharedManager].config.baseURL,
             self.path, self.cURL ?: @"未设置",
             self.parameters ?: @"未设置", self.header ?: @"未设置",
             self.accpetContentTypes,
             self.timeoutInterval,
             self.securityPolicy,
             [self getRequestMethodString:self.requestMethodType],
-            self.requestSerializerType == RequestHTTP ? @"HTTP" : @"JSON",
-            self.responseSerializerType == ResponseHTTP ? @"HTTP" : @"JSON",
+            [self getRequestSerializerTypeString: self.requestSerializerType],
+            [self getResponseSerializerTypeString: self.responseSerializerType],
             [self getCachePolicy:self.cachePolicy]];
 #else
     desc = @"";
@@ -296,118 +333,44 @@
     }
 }
 
+- (NSString *)getRequestSerializerTypeString:(HLRequestSerializerType)type {
+    switch (type) {
+        case RequestJSON:
+            return @"RequestJSON";
+            break;
+        case RequestPlist:
+            return @"RequestPlist";
+            break;
+        case RequestHTTP:
+            return @"RequestHTTP";
+            break;
+        default:
+            return @"NULL";
+            break;
+    }
+}
+
+- (NSString *)getResponseSerializerTypeString:(HLResponseSerializerType)type {
+    switch (type) {
+        case ResponseXML:
+            return @"ResponseXML";
+            break;
+        case ResponsePlist:
+            return @"ResponsePlist";
+            break;
+        case ResponseHTTP:
+            return @"ResponseHTTP";
+            break;
+        case ResponseJSON:
+            return @"ResponseJSON";
+            break;
+        default:
+            return @"NULL";
+            break;
+    }
+}
+
 #pragma mark - getter / lazy load
-- (NSString *)baseURL {
-    return nil;
-}
 
-- (BOOL)useDefaultParams {
-    if (_useDefaultParams) {
-        return _useDefaultParams;
-    } else {
-        return YES;
-    }
-}
 
-/**
- *  为了方便，在Debug模式下使用None来保证用Charles之类可以抓到HTTPS报文
- *  Production下，则用Pinning Certification PublicKey 来防止中间人攻击
- */
-- (nonnull HLSecurityPolicyConfig *)securityPolicy {
-    if (_securityPolicy) {
-        return _securityPolicy;
-    } else {
-        HLSecurityPolicyConfig *securityPolicy;
-#ifdef DEBUG
-        securityPolicy = [HLSecurityPolicyConfig policyWithPinningMode:HLSSLPinningModeNone];
-#else
-        securityPolicy = [HLSecurityPolicyConfig policyWithPinningMode:HLSSLPinningModePublicKey];
-#endif
-        return securityPolicy;
-    }
-}
-
-- (HLRequestMethodType)requestMethodType {
-    if (_requestMethodType) {
-        return _requestMethodType;
-    } else {
-        return GET;
-    }
-}
-
-- (HLRequestSerializerType)requestSerializerType {
-    if (_requestSerializerType) {
-        return _requestSerializerType;
-    } else {
-        return RequestHTTP;
-    }
-}
-
-- (HLResponseSerializerType)responseSerializerType {
-    if (_responseSerializerType) {
-        return _responseSerializerType;
-    } else {
-        return ResponseJSON;
-    }
-}
-
-- (NSURLRequestCachePolicy)cachePolicy {
-    if (_cachePolicy) {
-        return _cachePolicy;
-    } else {
-        return NSURLRequestUseProtocolCachePolicy;
-    }
-}
-
-- (NSTimeInterval)timeoutInterval {
-    if (_timeoutInterval) {
-        return _timeoutInterval;
-    } else {
-        return HL_API_REQUEST_TIME_OUT;
-    }
-}
-
-- (NSDictionary<NSString *, NSObject *> *)parameters {
-    if (_parameters) {
-        return _parameters;
-    } else {
-        return nil;
-    }
-}
-
-- (NSDictionary<NSString *, NSString *> *)header {
-    if (_header) {
-        return _header;
-    } else {
-        return nil;
-    }
-}
-
-- (NSSet *)accpetContentTypes {
-    if (_accpetContentTypes) {
-        return _accpetContentTypes;
-    } else {
-        return [NSSet setWithObjects:
-                @"text/json",
-                @"text/html",
-                @"application/json",
-                @"text/javascript", nil];;
-    }
-}
-
-- (NSString *)cURL {
-    if (_cURL) {
-        return _cURL;
-    } else {
-        return nil;
-    }
-}
-
-- (Class)objClz {
-    if (_objClz) {
-        return _objClz;
-    } else {
-        return [NSObject class];
-    }
-}
 @end

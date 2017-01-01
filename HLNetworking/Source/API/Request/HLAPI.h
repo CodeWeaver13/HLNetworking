@@ -14,9 +14,22 @@
 @protocol HLAPIRequestDelegate;
 NS_ASSUME_NONNULL_BEGIN
 
+#pragma mark - DebugKey
+// 获取NSURLSessionTask
+FOUNDATION_EXPORT HLDebugKey const kHLSessionTaskDebugKey;
+// 获取HLAPI
+FOUNDATION_EXPORT HLDebugKey const kHLAPIDebugKey;
+// 获取NSError
+FOUNDATION_EXPORT HLDebugKey const kHLErrorDebugKey;
+// 获取NSURLRequest
+FOUNDATION_EXPORT HLDebugKey const kHLOriginalRequestDebugKey;
+// 获取NSURLRequest
+FOUNDATION_EXPORT HLDebugKey const kHLCurrentRequestDebugKey;
+// 获取NSURLResponse
+FOUNDATION_EXPORT HLDebugKey const kHLResponseDebugKey;
+
 #pragma mark - HLObjReformerProtocol
 @protocol HLObjReformerProtocol <NSObject>
-
 /**
  一般用来进行JSON -> Model 数据的转换工作。返回的id，如果没有error，则为转换成功后的Model数据。如果有error， 则直接返回传参中的responseObject
 
@@ -29,17 +42,6 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 #pragma mark - HLAPI
-
-// 定义的Block
-// 请求结果回调
-typedef void(^ReObjBlock)(id __nullable responseObj);
-// 请求失败回调
-typedef void(^ReErrorBlock)(NSError * __nullable error);
-// 请求进度回调
-typedef void(^ProgressBlock)(NSProgress * __nullable progress);
-// formData拼接回调
-typedef void(^RequestConstructingBodyBlock)(id<HLMultipartFormDataProtocol> __nullable formData);
-
 @interface HLAPI : NSObject
 @property (nonatomic, assign, readonly) BOOL useDefaultParams;
 @property (nonatomic, strong, readonly) Class objClz;
@@ -51,19 +53,20 @@ typedef void(^RequestConstructingBodyBlock)(id<HLMultipartFormDataProtocol> __nu
 @property (nonatomic, copy, readonly) NSSet *accpetContentTypes;
 @property (nonatomic, copy, readonly) NSString *cURL;
 
+// 请使用API
+- (instancetype)init NS_UNAVAILABLE;
++ (instancetype)new NS_UNAVAILABLE;
 
-/**
- 是否使用APIManager.config的默认参数
- */
+// 是否使用APIManager.config的默认参数
 - (HLAPI *(^)(BOOL enable))enableDefaultParams;
 
-/**
- 设置HLAPI对应的返回值类型
- */
+// 设置HLAPI对应的返回值模型类型
 - (HLAPI *(^)(NSString *clzName))setResponseClass;
 
-/**
- 设置HLAPI的requestDelegate
+/** 
+ 设置HLAPI的requestDelegate，对应代理方法为：
+ 请求将要发出 - (void)requestWillBeSentWithAPI:(HLAPI *)api;
+ 请求已经发出 - (void)requestDidSentWithAPI:(HLAPI *)api;
  */
 - (HLAPI *(^)(id<HLAPIRequestDelegate> delegate))setDelegate;
 
@@ -79,115 +82,50 @@ typedef void(^RequestConstructingBodyBlock)(id<HLMultipartFormDataProtocol> __nu
  */
 - (HLAPI *(^)(id<HLObjReformerProtocol> delegate))setObjReformerDelegate;
 
-/**
- *  baseURL
- *  注意：如果API子类有设定baseURL, 则 Configuration 里的baseURL不起作用
- *  即： API里的baseURL 优先级更高
- */
+// 设置API的baseURL，该参数会覆盖config中的baseURL
 - (HLAPI *(^)(NSString *baseURL))setBaseURL;
 
-/**
- urlQuery
- 即baseURL后的地址
- */
+// urlQuery，baseURL后的地址
 - (HLAPI *(^)(NSString *path))setPath;
 
-/**
- *  HTTPS 请求的Security策略
- *
- *  @return HTTPS证书验证策略
- */
+// HTTPS 请求的Security策略
 - (HLAPI* (^)(HLSecurityPolicyConfig *apiSecurityPolicy))setSecurityPolicy;
 
-/**
- *  请求的类型:GET, POST
- *  @default
- *   Post
- *
- *  @return HLRequestMethodType
- */
+// 请求方法 GET POST等
 - (HLAPI* (^)(HLRequestMethodType requestMethodType))setMethod;
 
-/**
- *  Request 序列化类型：JSON, HTTP, 见HLRequestSerializerType
- *  @default
- *   ResponseJSON
- *
- *  @return HLRequestSerializerTYPE
- */
+// Request 序列化类型：JSON, HTTP, 见HLRequestSerializerType
 - (HLAPI* (^)(HLRequestSerializerType requestSerializerType))setRequestType;
 
-/**
- *  Response 序列化类型： JSON, HTTP
- *
- *  @return HLResponseSerializerType
- */
+// Response 序列化类型： JSON, HTTP
 - (HLAPI* (^)(HLResponseSerializerType responseSerializerType))setResponseType;
 
-/**
- *  HTTP 请求的Cache策略
- *  @default
- *   NSURLRequestUseProtocolCachePolicy
- *
- *  @return NSURLRequestCachePolicy
- */
+// HTTP 请求的Cache策略
 - (HLAPI* (^)(NSURLRequestCachePolicy apiRequestCachePolicy))setCachePolicy;
 
-/**
- *  HTTP 请求超时的时间
- *  @default
- *    API_REQUEST_TIME_OUT
- *
- *  @return 超时时间
- */
+// HTTP 请求超时的时间，默认为15秒
 - (HLAPI* (^)(NSTimeInterval apiRequestTimeoutInterval))setTimeout;
 
-/**
- *  用户api请求中的参数列表
- *  每次设置都会覆盖
- *  @return 一般来说是NSDictionary
- */
-- (HLAPI* (^)(NSDictionary<NSString *, NSObject *> *parameters))setParams;
+// 请求中的参数，每次设置都会覆盖之前的内容
+- (HLAPI* (^)(NSDictionary<NSString *, id> *parameters))setParams;
 
-/**
- *  用户api请求中的参数列表
- *  每次设置都是添加新参数
- *  @return 一般来说是NSDictionary
- */
-- (HLAPI* (^)(NSDictionary<NSString *, NSObject *> *parameters))addParams;
+// 请求中的参数，每次设置都是添加新参数，不会覆盖之前的内容
+- (HLAPI* (^)(NSDictionary<NSString *, id> *parameters))addParams;
 
-/**
- *  HTTP 请求的头部区域自定义
- *  @default
- *   默认为：@{
- *               @"Content-Type" : @"application/json; charset=utf-8"
- *           }
- *
- *  @return NSDictionary
- */
+// HTTP 请求的头部区域自定义，默认为nil
 - (HLAPI* (^)(NSDictionary<NSString *, NSString *> *header))setHeader;
 
-/**
- *  HTTP 请求的返回可接受的内容类型
- *  @default
- *   默认为：[NSSet setWithObjects:
- *            @"text/json",
- *            @"text/html",
- *            @"application/json",
- *            @"text/javascript", nil];
- *
- *  @return NSSet
+/** 
+ HTTP 请求的返回可接受的内容类型
+ 默认为：[NSSet setWithObjects:
+ @"text/json",
+ @"text/html",
+ @"application/json",
+ @"text/javascript", nil];
  */
 - (HLAPI* (^)(NSSet *contentTypes))setAccpetContentTypes;
 
-/**
- *  自定义的RequestUrl 请求
- *  @descriptions:
- *    APIManager 对于RequestUrl 处理为：
- *     当customeUrl 不为空时，将直接返回customRequestUrl 作为请求数据
- *
- *  @return url String
- */
+// 自定义的RequestUrl，该参数会无视任何baseURL的设置，优先级最高
 - (HLAPI* (^)(NSString *customURL))setCustomURL;
 
 #pragma mark - handler block function
@@ -195,54 +133,60 @@ typedef void(^RequestConstructingBodyBlock)(id<HLMultipartFormDataProtocol> __nu
  API完成后的成功回调
  写法：
  .success(^(id obj) {
- 
+    dosomething
  })
-
- @return HLAPI
  */
-- (HLAPI *(^)(ReObjBlock))success;
+- (HLAPI *(^)(HLSuccessBlock))success;
 
 /**
  API完成后的失败回调
  写法：
-
- @return HLAPI
+ .failure(^(NSError *error) {
+ 
+ })
  */
-- (HLAPI *(^)(ReErrorBlock))failure;
+- (HLAPI *(^)(HLFailureBlock))failure;
 
 /**
  API上传、下载等长时间执行的Progress进度
  写法：
  .progress(^(NSProgress *proc){
- NSLog(@"当前进度：%@", proc);
+    NSLog(@"当前进度：%@", proc);
  })
-
- @return HLAPI
  */
-- (HLAPI *(^)(ProgressBlock))progress;
+- (HLAPI *(^)(HLProgressBlock))progress;
 
 /**
- *  用于组织POST体FormData
+ 用于组织POST体的formData
  */
+- (HLAPI *(^)(HLRequestConstructingBodyBlock))formData;
+
 /**
- *  @method      formData
+ 用于Debug的Block 
+ block内返回字典，通过以下key取值：
+ -- 获取NSURLSessionTask
+ kHLSessionTaskDebugKey
+ -- 获取HLAPI
+ kHLAPIDebugKey;
+ -- 获取NSError
+ kHLErrorDebugKey;
+ -- 获取NSURLRequest
+ kHLOriginalRequestDebugKey;
+ -- 获取NSURLRequest
+ kHLCurrentRequestDebugKey;
+ -- 获取NSURLResponse
+ kHLResponseDebugKey;
  */
-- (HLAPI *(^)(RequestConstructingBodyBlock))formData;
+- (HLAPI *(^)(HLDebugBlock))debug;
 
 #pragma mark - functory method
-+ (nullable instancetype)API;
-
++ (instancetype)API;
 
 #pragma mark - Process
-
-/**
- *  开启API 请求
- */
+// 开启API 请求
 - (HLAPI *)start;
 
-/**
- *  取消API 请求
- */
+// 取消API 请求
 - (HLAPI *)cancel;
 
 @end

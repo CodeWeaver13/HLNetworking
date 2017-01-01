@@ -6,6 +6,13 @@
 //  Copyright © 2016 wangshiyu13. All rights reserved.
 //
 
+#ifndef HLNetworkMacro_h
+#define HLNetworkMacro_h
+
+#define HL_SAFE_BLOCK(BlockName, ...) ({ !BlockName ? nil : BlockName(__VA_ARGS__); })
+#define HLLock() dispatch_semaphore_wait(self->_lock, DISPATCH_TIME_FOREVER)
+#define HLUnlock() dispatch_semaphore_signal(self->_lock)
+
 #pragma mark - weakify strongify
 
 #if DEBUG
@@ -685,3 +692,5 @@ metamacro_concat(metamacro_if_eq_recursive0_, VALUE)
 #define metamacro_drop18(...) metamacro_drop17(metamacro_tail(__VA_ARGS__))
 #define metamacro_drop19(...) metamacro_drop18(metamacro_tail(__VA_ARGS__))
 #define metamacro_drop20(...) metamacro_drop19(metamacro_tail(__VA_ARGS__))
+
+#endif

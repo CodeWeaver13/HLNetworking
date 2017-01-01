@@ -9,25 +9,33 @@
 #import "HLNetworkConfig.h"
 #import "HLAPIType.h"
 
-NSString * HLDefaultGeneralErrorString            = @"服务器连接错误，请稍候重试";
-NSString * HLDefaultFrequentRequestErrorString    = @"请求发送速度太快, 请稍候重试";
-NSString * HLDefaultNetworkNotReachableString     = @"网络不可用，请稍后重试";
+NSString * const HLDefaultGeneralErrorString            = @"服务器连接错误，请稍候重试";
+NSString * const HLDefaultFrequentRequestErrorString    = @"请求发送速度太快, 请稍候重试";
+NSString * const HLDefaultNetworkNotReachableString     = @"网络不可用，请稍后重试";
 
 @implementation HLNetworkConfig
 
 - (instancetype)init {
     self = [super init];
     if (self) {
-        self.generalErrorTypeStr = HLDefaultGeneralErrorString;
-        self.frequentRequestErrorStr = HLDefaultFrequentRequestErrorString;
-        self.networkNotReachableErrorStr = HLDefaultNetworkNotReachableString;
-        self.isNetworkingActivityIndicatorEnabled = YES;
-        self.isErrorCodeDisplayEnabled = YES;
-        self.maxHttpConnectionPerHost = MAX_HTTP_CONNECTION_PER_HOST;
-        self.apiVersion = [self getCurrentVersion];
-        self.isJudgeVersion = [[NSUserDefaults standardUserDefaults] boolForKey:@"isR"] ? : YES;
+        _generalErrorTypeStr = HLDefaultGeneralErrorString;
+        _frequentRequestErrorStr = HLDefaultFrequentRequestErrorString;
+        _networkNotReachableErrorStr = HLDefaultNetworkNotReachableString;
+        _isNetworkingActivityIndicatorEnabled = YES;
+        _isErrorCodeDisplayEnabled = YES;
+        _maxHttpConnectionPerHost = MAX_HTTP_CONNECTION_PER_HOST;
+        _requestTimeoutInterval = HL_API_REQUEST_TIME_OUT;
+        _cachePolicy = NSURLRequestUseProtocolCachePolicy;
+        _URLCache = [NSURLCache sharedURLCache];
+        _apiVersion = [self getCurrentVersion];
+        _isJudgeVersion = [[NSUserDefaults standardUserDefaults] boolForKey:@"isR"] ? : YES;
+        _enableReachability = FALSE;
     }
     return self;
+}
+
++ (HLNetworkConfig *)config {
+    return [[self alloc] init];
 }
 
 - (NSString *)getCurrentVersion {
@@ -40,19 +48,17 @@ NSString * HLDefaultNetworkNotReachableString     = @"网络不可用，请稍�
 }
 
 - (id)copyWithZone:(NSZone *)zone {
-    HLNetworkConfig *config = [[HLNetworkConfig allocWithZone:zone] init];
-    config.generalErrorTypeStr = self.generalErrorTypeStr;
-    config.frequentRequestErrorStr = self.frequentRequestErrorStr;
-    config.networkNotReachableErrorStr = self.networkNotReachableErrorStr;
-    config.isErrorCodeDisplayEnabled = self.isErrorCodeDisplayEnabled;
-    config.baseURL = self.baseURL;
-    config.apiVersion = self.apiVersion;
-    config.userAgent = self.userAgent;
-    config.maxHttpConnectionPerHost = self.maxHttpConnectionPerHost;
+    HLNetworkConfig *config = [[[self class] alloc] init];
+    if (config) {
+        config.generalErrorTypeStr = [_generalErrorTypeStr copyWithZone:zone];
+        config.frequentRequestErrorStr = [_frequentRequestErrorStr copyWithZone:zone];
+        config.networkNotReachableErrorStr = [_networkNotReachableErrorStr copyWithZone:zone];
+        config.isErrorCodeDisplayEnabled = _isErrorCodeDisplayEnabled;
+        config.baseURL = [_baseURL copyWithZone:zone];
+        config.apiVersion = [_apiVersion copyWithZone:zone];
+        config.userAgent = [_userAgent copyWithZone:zone];
+        config.maxHttpConnectionPerHost = _maxHttpConnectionPerHost;
+    }
     return config;
-}
-
-+ (HLNetworkConfig *)config {
-    return [[HLNetworkConfig alloc] init];
 }
 @end

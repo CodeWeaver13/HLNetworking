@@ -1,4 +1,4 @@
-//
+
 //  HLAPIManager.m
 //  HLPPShop
 //
@@ -6,7 +6,7 @@
 //  Copyright © 2016年 wangshiyu13. All rights reserved.
 //
 
-#import "AFNetworking.h"
+#import <AFNetworking/AFNetworking.h>
 #import "HLAPIManager.h"
 #import "HLNetworkMacro.h"
 #import "HLHttpHeaderDelegate.h"
@@ -34,62 +34,82 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         qkhl_api_http_creation_queue =
-        dispatch_queue_create("com.qkhl.networking.wangshiyu13.api.creation", DISPATCH_QUEUE_SERIAL);
+        dispatch_queue_create("com.qkhl.networking.wangshiyu13.api.callback.queue", DISPATCH_QUEUE_SERIAL);
     });
     return qkhl_api_http_creation_queue;
 }
 
-static HLAPIManager *shared = nil;
-
 @interface HLAPIManager ()
 
-@property (nonatomic, strong) NSCache *sessionManagerCache;
-@property (nonatomic, strong) NSCache *sessionTasksCache;
+@property (nonatomic, strong, readwrite) HLNetworkConfig *config;
+@property (nonatomic, strong) NSMutableDictionary *sessionManagerCache;
+@property (nonatomic, strong) NSMutableDictionary *sessionTasksCache;
 @property (nonatomic, strong) NSHashTable<id <HLAPIResponseDelegate>> *responseObservers;
 @property (nonatomic, strong) NSHashTable<id <HLNetworkErrorProtocol>> *errorObservers;
+
+@property (nonatomic, strong) NSMutableDictionary <NSString *, AFNetworkReachabilityManager *> *reachabilities;
+@property (nonatomic, assign, readwrite) HLReachabilityStatus reachabilityStatus;
+@property (nonatomic, assign, readwrite, getter = isReachable) BOOL reachable;
+@property (nonatomic, assign, readwrite, getter = isReachableViaWWAN) BOOL reachableViaWWAN;
+@property (nonatomic, assign, readwrite, getter = isReachableViaWiFi) BOOL reachableViaWiFi;
 
 @end
 
 @implementation HLAPIManager
 
 #pragma mark - init method
-+ (HLAPIManager *)shared {
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        shared = [[self alloc] init];
-    });
-    return shared;
++ (HLAPIManager *)manager {
+    return [[self alloc] init];
 }
 
 - (instancetype)init {
-    if (!shared) {
-        shared = [super init];
-        shared.config = [HLNetworkConfig config];
-        shared.errorObservers = [NSHashTable hashTableWithOptions:NSHashTableWeakMemory];
-        shared.responseObservers = [NSHashTable hashTableWithOptions:NSHashTableWeakMemory];
+    self = [super init];
+    if (self) {
+        _config = [HLNetworkConfig config];
+        _reachabilityStatus = HLReachabilityStatusUnknown;
+        _reachabilities = [NSMutableDictionary dictionary];
+        _sessionManagerCache = [NSMutableDictionary dictionary];
+        _sessionTasksCache = [NSMutableDictionary dictionary];
+        _errorObservers = [NSHashTable hashTableWithOptions:NSHashTableWeakMemory];
+        _responseObservers = [NSHashTable hashTableWithOptions:NSHashTableWeakMemory];
     }
-    return shared;
+    return self;
 }
 
-#pragma mark - serializer
+#pragma mark - SetupConfig
+- (void)setupConfig:(void (^)(HLNetworkConfig * _Nonnull config))configBlock {
+    HL_SAFE_BLOCK(configBlock, self.config);
+}
 
++ (void)setupConfig:(void (^)(HLNetworkConfig * _Nonnull config))configBlock {
+    return [[self sharedManager] setupConfig:configBlock];
+}
+
+#pragma mark - 创建AFHTTPSessionManager
 /**
- 从API中获取request序列化类型
- 
+ 根据API的BaseURL创建AFSessionManager
+
  @param api 调用的API
- 
- @return 序列化类型
+
+ @return AFHTTPSessionManager
  */
-- (AFHTTPRequestSerializer *)requestSerializerForAPI:(HLAPI *)api {
+- (AFHTTPSessionManager *)sessionManagerWithAPI:(HLAPI *)api {
     NSParameterAssert(api);
-    
+    // Request 序列化
     AFHTTPRequestSerializer *requestSerializer;
-    if (api.requestSerializerType == RequestJSON) {
-        requestSerializer = [AFJSONRequestSerializer serializer];
-    } else {
-        requestSerializer = [AFHTTPRequestSerializer serializer];
+    switch (api.requestSerializerType) {
+        case RequestHTTP:
+            requestSerializer = [AFHTTPRequestSerializer serializer];
+            break;
+        case RequestJSON:
+            requestSerializer = [AFJSONRequestSerializer serializer];
+            break;
+        case RequestPlist:
+            requestSerializer = [AFPropertyListRequestSerializer serializer];
+            break;
+        default:
+            break;
     }
-    
     requestSerializer.cachePolicy          = api.cachePolicy;
     requestSerializer.timeoutInterval      = api.timeoutInterval;
     NSDictionary *requestHeaderFieldParams = api.header;
@@ -102,169 +122,51 @@ static HLAPIManager *shared = nil;
             [requestSerializer setValue:obj forHTTPHeaderField:key];
         }];
     }
-    return requestSerializer;
-}
-
-/**
- 从API中获取reponse序列化类型
-
- @param api 调用的API
-
- @return 序列化类型
- */
-- (AFHTTPResponseSerializer *)responseSerializerForAPI:(HLAPI *)api {
-    NSParameterAssert(api);
-    AFHTTPResponseSerializer *responseSerializer;
-    if (api.responseSerializerType == ResponseJSON) {
-        responseSerializer = [AFJSONResponseSerializer serializer];
-    } else {
-        responseSerializer = [AFHTTPResponseSerializer serializer];
-    }
-    responseSerializer.acceptableContentTypes = api.accpetContentTypes;
-    return responseSerializer;
-}
-
-#pragma mark - Request Invoke Organize
-
-/**
- 从API中获取requestBaseURL
- 
- @param api 调用的API
- 
- @return baseURL
- */
-- (NSString *)requestBaseUrlStringWithAPI:(HLAPI *)api {
-    NSParameterAssert(api);
-    
-    // 如果定义了自定义的cURL, 则直接使用
-    if (api.cURL) {
-        NSURL *url  = [NSURL URLWithString:api.cURL];
-        NSURL *root = [NSURL URLWithString:@"/" relativeToURL:url];
-        return [NSString stringWithFormat:@"%@", root.absoluteString];
-    }
-    
-    NSAssert(api.baseURL != nil || self.config.baseURL != nil,
-             @"api baseURL 和 self.config.baseurl 两者必须有一个有值");
-    
-    NSString *baseURL = api.baseURL ? : self.config.baseURL;
-    
-    // 在某些情况下，一些用户会直接把整个url地址写进 baseUrl
-    // 因此，还需要对baseUrl 进行一次切割
-    NSURL *theUrl = [NSURL URLWithString:baseURL];
-    NSURL *root   = [NSURL URLWithString:@"/" relativeToURL:theUrl];
-    return [NSString stringWithFormat:@"%@", root.absoluteString];
-}
-
-/**
- 从API中获取requestURL
-
- @param api 调用的API
-
- @return requestURL
- */
-- (NSString *)requestUrlStringWithAPI:(HLAPI *)api {
-    NSParameterAssert(api);
-    
-    NSString *baseUrlStr = api.baseURL ?: self.config.baseURL;
-    // 如果定义了自定义的cURL, 则直接使用
-    if (api.cURL && ![api.cURL isEqualToString:@""]) {
-        return [NSURL URLWithString:api.cURL].absoluteString;
-    }
-    NSAssert(api.baseURL != nil || self.config.baseURL != nil,
-             @"api baseURL 和 self.config.baseurl 两者必须有一个有值");
-    
-    // 如果啥都没定义，则使用BaseUrl + apiversion(可选) + path 组成 UrlString
-    NSString *requestURLString;
-    if (self.config.apiVersion && ![self.config.apiVersion isEqualToString:@""]) {
-        requestURLString = [NSString stringWithFormat:@"%@/%@/%@", baseUrlStr, self.config.apiVersion, api.path ? : @""];
-    } else {
-        requestURLString = [NSString stringWithFormat:@"%@/%@", baseUrlStr, api.path ? : @""];
-    }
-    return [NSURL URLWithString:requestURLString].absoluteString;
-}
-
-// Request Protocol
-
-/**
- 根据API获取请求参数
-
- @param api 调用的API
-
- @return 请求参数字典
- */
-- (NSDictionary<NSString *, NSObject *> *)requestParamsWithAPI:(HLAPI *)api {
-    NSParameterAssert(api);
-    NSMutableDictionary *params = [NSMutableDictionary dictionaryWithDictionary:api.parameters];
-    if (self.config.defaultParams && api.useDefaultParams) {
-        [params addEntriesFromDictionary:self.config.defaultParams];
-    }
-    return [params copy];
-}
-
-#pragma mark - AFSessionManager
-/**
- 根据API的BaseURL创建AFSessionManager
-
- @param api 调用的API
-
- @return AFHTTPSessionManager
- */
-- (AFHTTPSessionManager *)sessionManagerWithAPI:(HLAPI *)api {
-    NSParameterAssert(api);
-    // Request 序列化工具
-    AFHTTPRequestSerializer *requestSerializer = [self requestSerializerForAPI:api];
     if (!requestSerializer) {
         return nil;
     }
     
-    // Response 序列化工具
-    AFHTTPResponseSerializer *responseSerializer = [self responseSerializerForAPI:api];
+    // Response 序列化
+    AFHTTPResponseSerializer *responseSerializer;
+    switch (api.responseSerializerType) {
+        case ResponseHTTP:
+            responseSerializer = [AFHTTPResponseSerializer serializer];
+            break;
+        case ResponseJSON:
+            responseSerializer = [AFJSONResponseSerializer serializer];
+            break;
+        case ResponsePlist:
+            responseSerializer = [AFPropertyListResponseSerializer serializer];
+            break;
+        case ResponseXML:
+            responseSerializer = [AFXMLParserResponseSerializer serializer];
+            break;
+        default:
+            break;
+    }
+    responseSerializer.acceptableContentTypes = api.accpetContentTypes;
     if (!responseSerializer) {
         return nil;
     }
     
-    NSString *baseUrlStr = [self requestBaseUrlStringWithAPI:api];
-    // AFHTTPSession
-    AFHTTPSessionManager *sessionManager;
-    sessionManager = [self.sessionManagerCache objectForKey:baseUrlStr];
-    if (!sessionManager) {
-        sessionManager = [self newSessionManagerWithBaseUrlStr:baseUrlStr];
-        [self.sessionManagerCache setObject:sessionManager forKey:baseUrlStr];
-    }
-    
-    sessionManager.requestSerializer = requestSerializer;
-    sessionManager.responseSerializer = responseSerializer;
-    sessionManager.securityPolicy = [self securityPolicyWithAPI:api];
-    
-    return sessionManager;
-}
-
-/**
- 根据传入的BaseURL创建新的SessionManager
-
- @param baseUrlStr 传入的BaseURL
-
- @return AFHTTPSessionManager
- */
-- (AFHTTPSessionManager *)newSessionManagerWithBaseUrlStr:(NSString *)baseUrlStr {
-    NSURLSessionConfiguration *sessionConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
-    if (self.config) {
-        sessionConfig.HTTPMaximumConnectionsPerHost = self.config.maxHttpConnectionPerHost;
+    NSString *baseUrlStr;
+    // 如果定义了自定义的cURL, 则直接使用
+    NSURL *cURL = [NSURL URLWithString:api.cURL];
+    if (cURL) {
+        baseUrlStr = [NSString stringWithFormat:@"%@://%@", cURL.scheme, cURL.host];
     } else {
-        sessionConfig.HTTPMaximumConnectionsPerHost = MAX_HTTP_CONNECTION_PER_HOST;
+        NSAssert(api.baseURL != nil || self.config.baseURL != nil,
+                 @"api baseURL 和 self.config.baseurl 两者必须有一个有值");
+        
+        NSString *tmpStr = api.baseURL ? : self.config.baseURL;
+        
+        // 在某些情况下，一些用户会直接把整个url地址写进 baseUrl
+        // 因此，还需要对baseUrl 进行一次切割
+        NSURL *tmpURL = [NSURL URLWithString:tmpStr];
+        baseUrlStr = [NSString stringWithFormat:@"%@://%@", tmpURL.scheme, tmpURL.host];;
     }
-    return [[AFHTTPSessionManager alloc] initWithBaseURL:[NSURL URLWithString:baseUrlStr]
-                                    sessionConfiguration:sessionConfig];
-}
-
-/**
- 从API中获取securityPolicy（安全策略）
- 
- @param api 调用的API
- 
- @return securityPolicy
- */
-- (AFSecurityPolicy *)securityPolicyWithAPI:(HLAPI *)api {
+    
+    // 设置AFSecurityPolicy参数
     NSUInteger pinningMode                  = api.securityPolicy.SSLPinningMode;
     AFSecurityPolicy *securityPolicy        = [AFSecurityPolicy policyWithPinningMode:pinningMode];
     securityPolicy.allowInvalidCertificates = api.securityPolicy.allowInvalidCertificates;
@@ -272,67 +174,28 @@ static HLAPIManager *shared = nil;
     NSString *cerPath                       = api.securityPolicy.cerFilePath;
     NSData *certData                        = [NSData dataWithContentsOfFile:cerPath];
     securityPolicy.pinnedCertificates       = [NSSet setWithObject:certData];
-    return securityPolicy;
+    
+    // AFHTTPSession
+    AFHTTPSessionManager *sessionManager = [self.sessionManagerCache objectForKey:baseUrlStr];
+    if (!sessionManager) {
+        // 根据传入的BaseURL创建新的SessionManager
+        NSURLSessionConfiguration *sessionConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
+        sessionConfig.HTTPMaximumConnectionsPerHost = self.config.maxHttpConnectionPerHost;
+        sessionConfig.requestCachePolicy = api.cachePolicy ?: self.config.cachePolicy;
+        sessionConfig.timeoutIntervalForRequest = api.timeoutInterval ?: self.config.requestTimeoutInterval;
+        sessionConfig.URLCache = self.config.URLCache;
+        sessionManager = [[AFHTTPSessionManager alloc] initWithBaseURL:[NSURL URLWithString:baseUrlStr]
+                                                  sessionConfiguration:sessionConfig];
+        [self.sessionManagerCache setObject:sessionManager forKey:baseUrlStr];
+    }
+    sessionManager.requestSerializer = requestSerializer;
+    sessionManager.responseSerializer = responseSerializer;
+    sessionManager.securityPolicy = securityPolicy;
+    
+    return sessionManager;
 }
 
-#pragma mark - Response Handler
-
-/**
- API成功的方法
-
- @param responseObject 返回的对象
- @param api            调用的API
- @param completion 完成回调
- */
-- (void)handleSuccWithResponse:(id)responseObject andAPI:(HLAPI *)api completion:(void (^)())completion {
-    [self callAPICompletion:api obj:responseObject error:nil completion:completion];
-}
-
-/**
- API失败的方法
-
- @param error 返回的错误
- @param api   调用的API
- @param completion 完成回调
- */
-- (void)handleFailureWithError:(NSError *)error andAPI:(HLAPI *)api completion:(void (^)())completion  {
-    if (error) {
-        for (id<HLNetworkErrorProtocol> observer in self.errorObservers) {
-            [observer networkErrorInfo:error];
-        }
-    }
-    
-    // Error -999, representing API Cancelled
-    if ([error.domain isEqualToString: NSURLErrorDomain] &&
-        error.code == NSURLErrorCancelled) {
-        [self callAPICompletion:api obj:nil error:error completion:completion];
-        return;
-    }
-    
-    // 默认 "服务器连接错误，请稍候重试"
-    NSString *errorTypeStr = self.config.generalErrorTypeStr;
-    NSMutableDictionary *tmpUserInfo = [[NSMutableDictionary alloc]initWithDictionary:error.userInfo copyItems:NO];
-    if (![[tmpUserInfo allKeys] containsObject:NSLocalizedFailureReasonErrorKey]) {
-        [tmpUserInfo setValue: NSLocalizedString(errorTypeStr, nil) forKey:NSLocalizedFailureReasonErrorKey];
-    }
-    if (![[tmpUserInfo allKeys] containsObject:NSLocalizedRecoverySuggestionErrorKey]) {
-        [tmpUserInfo setValue: NSLocalizedString(errorTypeStr, nil)  forKey:NSLocalizedRecoverySuggestionErrorKey];
-    }
-    // 加上 networking error code
-    NSString *newErrorDescription = errorTypeStr;
-    if (self.config.isErrorCodeDisplayEnabled) {
-        newErrorDescription = [NSString stringWithFormat:@"%@ (%ld)", errorTypeStr, (long)error.code];
-    }
-    [tmpUserInfo setValue:NSLocalizedString(newErrorDescription, nil) forKey:NSLocalizedDescriptionKey];
-    
-    NSDictionary *userInfo = [tmpUserInfo copy];
-    NSError *err = [NSError errorWithDomain:error.domain
-                                       code:error.code
-                                   userInfo:userInfo];
-    
-    [self callAPICompletion:api obj:nil error:err completion:completion];
-}
-
+#pragma mark - Response Complete Handler
 /**
  API完成的回调方法
 
@@ -345,23 +208,57 @@ static HLAPIManager *shared = nil;
     if (api.objReformerDelegate) {
         obj = [api.objReformerDelegate objReformerWithAPI:api andResponseObject:obj andError:error];
     }
-    if ([api apiFailureHandler] && error != nil) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            api.apiFailureHandler(error);
-            api.apiFailureHandler = nil;
-        });
-    } else if ([api apiSuccessHandler] && error == nil) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            api.apiSuccessHandler(obj);
-            api.apiSuccessHandler = nil;
-        });
+    // 处理回调的block
+    NSError *netError = error;
+    if (error) {
+        // 如果不是reachability无法访问host或用户取消错误(NSURLErrorCancelled)，则对错误提示进行处理
+        if (![error.domain isEqualToString: NSURLErrorDomain] &&
+            error.code != NSURLErrorCancelled) {
+            // 使用KVC修改error内部属性
+            // 默认使用self.config.generalErrorTypeStr = "服务器连接错误，请稍候重试"
+            NSMutableDictionary *tmpUserInfo = [[NSMutableDictionary alloc]initWithDictionary:error.userInfo copyItems:NO];
+            if (![[tmpUserInfo allKeys] containsObject:NSLocalizedFailureReasonErrorKey]) {
+                tmpUserInfo[NSLocalizedFailureReasonErrorKey] = NSLocalizedString(self.config.generalErrorTypeStr, nil);
+            }
+            if (![[tmpUserInfo allKeys] containsObject:NSLocalizedRecoverySuggestionErrorKey]) {
+                tmpUserInfo[NSLocalizedRecoverySuggestionErrorKey] = NSLocalizedString(self.config.generalErrorTypeStr, nil);
+            }
+            // 加上 networking error code
+            NSString *newErrorDescription = self.config.generalErrorTypeStr;
+            if (self.config.isErrorCodeDisplayEnabled) {
+                newErrorDescription = [NSString stringWithFormat:@"%@, error code = (%ld)", self.config.generalErrorTypeStr, (long)error.code];
+            }
+            tmpUserInfo[NSLocalizedDescriptionKey] = NSLocalizedString(newErrorDescription, nil);
+            NSDictionary *userInfo = [tmpUserInfo copy];
+            netError = [NSError errorWithDomain:error.domain
+                                        code:error.code
+                                    userInfo:userInfo];
+        }
+        for (id<HLNetworkErrorProtocol> observer in self.errorObservers) {
+            [observer networkErrorInfo:netError];
+        }
+        if ([api apiFailureHandler]) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                api.apiFailureHandler(netError);
+                api.apiFailureHandler = nil;
+            });
+        }
+    } else {
+        if ([api apiSuccessHandler]) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                api.apiSuccessHandler(obj);
+                api.apiSuccessHandler = nil;
+            });
+        }
     }
+    
+    // 处理回调的delegate
     for (id<HLAPIResponseDelegate> obj in self.responseObservers) {
         dispatch_async(dispatch_get_main_queue(), ^{
             if ([obj.requestAPIs containsObject:api]) {
-                if (error) {
+                if (netError) {
                     if ([obj respondsToSelector:@selector(requestFailureWithResponseError:atAPI:)]) {
-                        [obj requestFailureWithResponseError:error atAPI:api];
+                        [obj requestFailureWithResponseError:netError atAPI:api];
                     }
                 } else {
                     if ([obj respondsToSelector:@selector(requestSucessWithResponseObject:atAPI:)]) {
@@ -376,7 +273,7 @@ static HLAPIManager *shared = nil;
     }
 }
 
-#pragma mark - Send Sync Batch Requests
+#pragma mark - Send Sync Chain Requests
 
 /**
  使用信号量做同步请求
@@ -385,8 +282,6 @@ static HLAPIManager *shared = nil;
  */
 - (void)sendChainAPIRequests:(nonnull HLAPIChainRequests *)apis {
     NSParameterAssert(apis);
-//    NSArray *array = [apis valueForKey:@"apiRequestsArray"];
-//    NSAssert([[array valueForKeyPath:@"hash"] count] == [array count], @"不能在集合中加入相同的 API");
     NSString *queueName = [NSString stringWithFormat:@"com.qkhl.networking.wangshiyu13.%lu", (unsigned long)apis.hash];
     __block dispatch_semaphore_t semaphore = dispatch_semaphore_create(1);
     
@@ -404,12 +299,12 @@ static HLAPIManager *shared = nil;
             }
             sessionManager.completionGroup = batch_api_group;
             
-            [self _sendSingleAPIRequest:api
-                           withSessionManager:sessionManager
-                           andCompletionGroup:batch_api_group
-                              completionBlock:^{
-                                  dispatch_semaphore_signal(semaphore);
-                              }];
+            [self sendSingleAPIRequest:api
+                    withSessionManager:sessionManager
+                    andCompletionGroup:batch_api_group
+                       completionBlock:^{
+                           dispatch_semaphore_signal(semaphore);
+                       }];
         }];
         dispatch_group_notify(batch_api_group, dispatch_get_main_queue(), ^{
             if (apis.delegate) {
@@ -422,10 +317,6 @@ static HLAPIManager *shared = nil;
 #pragma mark - Send Batch Requests
 - (void)sendBatchAPIRequests:(nonnull HLAPIBatchRequests *)apis {
     NSParameterAssert(apis);
-    
-//    NSAssert([[apis.apiRequestsSet valueForKeyPath:@"hash"] count] == [apis.apiRequestsSet count],
-//             @"不能在集合中加入相同的 API");
-    
     dispatch_group_t batch_api_group = dispatch_group_create();
     @weakify(self);
     [apis.apiRequestsSet enumerateObjectsUsingBlock:^(id api, BOOL * stop) {
@@ -438,10 +329,10 @@ static HLAPIManager *shared = nil;
         }
         sessionManager.completionGroup = batch_api_group;
         
-        [self _sendSingleAPIRequest:api
-                       withSessionManager:sessionManager
-                       andCompletionGroup:batch_api_group
-                          completionBlock:nil];
+        [self sendSingleAPIRequest:api
+                withSessionManager:sessionManager
+                andCompletionGroup:batch_api_group
+                   completionBlock:nil];
     }];
     dispatch_group_notify(batch_api_group, dispatch_get_main_queue(), ^{
         if (apis.delegate) {
@@ -451,37 +342,62 @@ static HLAPIManager *shared = nil;
 }
 
 #pragma mark - Send Request
-
 /**
  发送单个API
 
  @param api 需要发送的API
  */
 - (void)sendAPIRequest:(nonnull HLAPI *)api {
-    NSParameterAssert(api);
-    NSAssert(self.config, @"Config不能为空");
-    
     dispatch_async(qkhl_api_http_creation_queue(), ^{
         AFHTTPSessionManager *sessionManager = [self sessionManagerWithAPI:api];
         if (!sessionManager) {
             return;
         }
-        [self _sendSingleAPIRequest:api withSessionManager:sessionManager andCompletionGroup:nil completionBlock:nil];
+        [self sendSingleAPIRequest:api
+                withSessionManager:sessionManager
+                andCompletionGroup:nil
+                   completionBlock:nil];
     });
 }
 
-- (void)_sendSingleAPIRequest:(HLAPI *)api
-           withSessionManager:(AFHTTPSessionManager *)sessionManager
-           andCompletionGroup:(dispatch_group_t)completionGroup
-              completionBlock:(void (^)())completion {
+- (void)sendSingleAPIRequest:(HLAPI *)api
+          withSessionManager:(AFHTTPSessionManager *)sessionManager
+          andCompletionGroup:(dispatch_group_t)completionGroup
+             completionBlock:(void (^)())completion {
     NSParameterAssert(api);
     NSParameterAssert(sessionManager);
-    
     @weakify(self);
-    NSString *requestUrlStr = [self requestUrlStringWithAPI:api];
-    NSDictionary<NSString *,NSObject *> *requestParams = [self requestParamsWithAPI:api];
-    NSString *hashKey = [NSString stringWithFormat:@"%lu", (unsigned long)[api hash]];
     
+    NSString *requestURLString;
+    // 如果定义了自定义的cURL, 则直接使用
+    NSURL *cURL = [NSURL URLWithString:api.cURL];
+    if (cURL) {
+        requestURLString = cURL.absoluteString;
+    } else {
+        NSAssert(api.baseURL != nil || self.config.baseURL != nil,
+                 @"api baseURL 和 self.config.baseurl 两者必须有一个有值");
+        NSString *tmpBaseURLStr = api.baseURL ?: self.config.baseURL;
+        NSURL *tmpBaseURL = [NSURL URLWithString:tmpBaseURLStr];
+        // 使用BaseUrl + apiversion(可选) + path 组成 UrlString
+        // 如果有apiVersion，则在requestUrlStr中插入该参数
+        if (self.config.apiVersion && ![self.config.apiVersion isEqualToString:@""]) {
+            requestURLString = [NSString stringWithFormat:@"%@/%@", tmpBaseURL.absoluteString, self.config.apiVersion];
+        } else {
+            requestURLString = tmpBaseURL.absoluteString;
+        }
+        if (api.path || ![api.path isEqualToString:@""]) {
+            requestURLString = [NSString stringWithFormat:@"%@/%@", requestURLString, api.path];
+        }
+    }
+    NSAssert(requestURLString != nil || ![requestURLString isEqualToString:@""], @"请求的URL有误！");
+    
+    // 生成请求参数
+    NSMutableDictionary<NSString *, id> *requestParams = [NSMutableDictionary dictionaryWithDictionary:api.parameters];
+    if (self.config.defaultParams && api.useDefaultParams) {
+        [requestParams addEntriesFromDictionary:self.config.defaultParams];
+    }
+    
+    NSString *hashKey = [self hashStringWithAPI:api];
     // 如果缓存中已有当前task，则立即使api返回失败回调，错误信息为frequentRequestErrorStr，如果是apiBatch，则整组移除
     if ([self.sessionTasksCache objectForKey:hashKey]) {
         NSString *errorStr     = self.config.frequentRequestErrorStr;
@@ -505,7 +421,7 @@ static HLAPIManager *shared = nil;
     SCNetworkReachabilityRef hostReachable = SCNetworkReachabilityCreateWithName(NULL, [sessionManager.baseURL.host UTF8String]);
     SCNetworkReachabilityFlags flags;
     BOOL success = SCNetworkReachabilityGetFlags(hostReachable, &flags);
-    bool isReachable = success &&
+    BOOL isReachable = success &&
     (flags & kSCNetworkFlagsReachable) &&
     !(flags & kSCNetworkFlagsConnectionRequired);
     if (hostReachable) {
@@ -517,7 +433,7 @@ static HLAPIManager *shared = nil;
         NSString *errorStr     = self.config.networkNotReachableErrorStr;
         NSDictionary *userInfo = @{
                                    NSLocalizedDescriptionKey : errorStr,
-                                   NSLocalizedFailureReasonErrorKey : [NSString stringWithFormat:@"%@ 无法访问", sessionManager.baseURL.host]
+                                   NSLocalizedFailureReasonErrorKey : [NSString stringWithFormat:@"网络异常，%@ 无法访问", sessionManager.baseURL.host]
                                    };
         NSError *networkUnreachableError = [NSError errorWithDomain:NSURLErrorDomain
                                                                code:NSURLErrorCannotConnectToHost
@@ -538,7 +454,13 @@ static HLAPIManager *shared = nil;
         if (self.config.isNetworkingActivityIndicatorEnabled) {
             [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
         }
-        [self handleSuccWithResponse:responseObject andAPI:api completion:completion];
+#if DEBUG
+        if (api.apiDebugHandler) {
+            NSDictionary *dict = [self createDebugDictionaryWithAPI:api andTask:task andError:nil];
+            api.apiDebugHandler(dict);
+        }
+#endif
+        [self callAPICompletion:api obj:responseObject error:nil completion:completion];
         [self.sessionTasksCache removeObjectForKey:hashKey];
         if (completionGroup) {
             dispatch_group_leave(completionGroup);
@@ -554,7 +476,13 @@ static HLAPIManager *shared = nil;
         if (self.config.isNetworkingActivityIndicatorEnabled) {
             [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
         }
-        [self handleFailureWithError:error andAPI:api completion:completion];
+#if DEBUG
+        if (api.apiDebugHandler) {
+            NSDictionary *dict = [self createDebugDictionaryWithAPI:api andTask:task andError:error];
+            api.apiDebugHandler(dict);
+        }
+#endif
+        [self callAPICompletion:api obj:nil error:error completion:completion];
         [self.sessionTasksCache removeObjectForKey:hashKey];
         if (completionGroup) {
             dispatch_group_leave(completionGroup);
@@ -600,7 +528,7 @@ static HLAPIManager *shared = nil;
     switch (api.requestMethodType) {
         case GET: {
             dataTask =
-            [sessionManager GET:requestUrlStr
+            [sessionManager GET:requestURLString
                      parameters:requestParams
                        progress:progressBlock
                         success:successBlock
@@ -609,7 +537,7 @@ static HLAPIManager *shared = nil;
             break;
         case DELETE: {
             dataTask =
-            [sessionManager DELETE:requestUrlStr
+            [sessionManager DELETE:requestURLString
                         parameters:requestParams
                            success:successBlock
                            failure:failureBlock];
@@ -617,7 +545,7 @@ static HLAPIManager *shared = nil;
             break;
         case PATCH: {
             dataTask =
-            [sessionManager PATCH:requestUrlStr
+            [sessionManager PATCH:requestURLString
                        parameters:requestParams
                           success:successBlock
                           failure:failureBlock];
@@ -625,7 +553,7 @@ static HLAPIManager *shared = nil;
             break;
         case PUT: {
             dataTask =
-            [sessionManager PUT:requestUrlStr
+            [sessionManager PUT:requestURLString
                      parameters:requestParams
                         success:successBlock
                         failure:failureBlock];
@@ -633,7 +561,7 @@ static HLAPIManager *shared = nil;
             break;
         case HEAD: {
             dataTask =
-            [sessionManager HEAD:requestUrlStr
+            [sessionManager HEAD:requestURLString
                       parameters:requestParams
                          success:^(NSURLSessionDataTask * _Nonnull task) {
                              if (successBlock) {
@@ -649,7 +577,7 @@ static HLAPIManager *shared = nil;
         {
             if (![api apiRequestConstructingBodyBlock]) {
                 dataTask =
-                [sessionManager POST:requestUrlStr
+                [sessionManager POST:requestURLString
                           parameters:requestParams
                             progress:progressBlock
                              success:successBlock
@@ -659,7 +587,7 @@ static HLAPIManager *shared = nil;
                 = ^(id <AFMultipartFormData> formData) {
                     api.apiRequestConstructingBodyBlock((id<HLMultipartFormDataProtocol>)formData);
                 };
-                dataTask = [sessionManager POST:requestUrlStr
+                dataTask = [sessionManager POST:requestURLString
                                      parameters:requestParams
                       constructingBodyWithBlock:formDataBlock
                                        progress:progressBlock
@@ -670,7 +598,7 @@ static HLAPIManager *shared = nil;
             break;
         default:
             dataTask =
-            [sessionManager GET:requestUrlStr
+            [sessionManager GET:requestURLString
                      parameters:requestParams
                        progress:progressBlock
                         success:successBlock
@@ -678,7 +606,7 @@ static HLAPIManager *shared = nil;
             break;
     }
     if (dataTask) {
-        [self.sessionTasksCache setObject:dataTask forKey:hashKey];
+        self.sessionTasksCache[hashKey] = dataTask;
     }
     
 #pragma clang diagnostic push
@@ -697,10 +625,10 @@ static HLAPIManager *shared = nil;
 
 - (void)cancelAPIRequest:(nonnull HLAPI *)api {
     dispatch_async(qkhl_api_http_creation_queue(), ^{
-        NSString *hashKey = [NSString stringWithFormat:@"%lu", (unsigned long)[api hash]];
+        NSString *hashKey = [self hashStringWithAPI:api];
         NSURLSessionDataTask *dataTask = [self.sessionTasksCache objectForKey:hashKey];
-        [self.sessionTasksCache removeObjectForKey:hashKey];
         if (dataTask) {
+            [self.sessionTasksCache removeObjectForKey:hashKey];
             api.apiSuccessHandler = nil;
             api.apiFailureHandler = nil;
             api.apiProgressHandler = nil;
@@ -710,18 +638,45 @@ static HLAPIManager *shared = nil;
     });
 }
 
-#pragma mark - get task
-- (NSURLSessionDataTask * _Nullable)getAPIWithAPIHash:(NSUInteger)name {
-    NSString *hashKey = [NSString stringWithFormat:@"%lu", (unsigned long)name];
-    NSURLSessionDataTask *task = [self.sessionTasksCache objectForKey:hashKey];
-    return task;
+#pragma mark - private method
+- (NSDictionary *)createDebugDictionaryWithAPI:(HLAPI *)api
+                                       andTask:(NSURLSessionDataTask *)task
+                                      andError:(NSError *)error {
+    id mApi, mTask, response, originalRequest, currentRequest, debugError = [NSNull null];
+    if (mApi) {
+        mApi = [api mutableCopy];
+    }
+    if (task) {
+        mTask = [task mutableCopy];
+    }
+    if (task.response) {
+        response = [task.response mutableCopy];
+    }
+    if (task.originalRequest) {
+        originalRequest = [task.originalRequest mutableCopy];
+    }
+    if (task.currentRequest) {
+        currentRequest = [task.currentRequest mutableCopy];
+    }
+    if (error) {
+        debugError = [error mutableCopy];
+    }
+    return @{kHLAPIDebugKey: mApi,
+             kHLSessionTaskDebugKey: mTask,
+             kHLResponseDebugKey: response,
+             kHLOriginalRequestDebugKey: originalRequest,
+             kHLCurrentRequestDebugKey: currentRequest,
+             kHLErrorDebugKey: debugError};
+}
+
+- (NSString *)hashStringWithAPI:(HLAPI *)api {
+    return [NSString stringWithFormat:@"%lu", (unsigned long)[api hash]];
 }
 
 #pragma mark - Network Response Observer
 - (void)registerNetworkResponseObserver:(nonnull id<HLAPIResponseDelegate>)observer {
     [self.responseObservers addObject:observer];
 }
-
 
 - (void)removeNetworkResponseObserver:(nonnull id<HLAPIResponseDelegate>)observer {
     if ([self.responseObservers containsObject:observer]) {
@@ -734,25 +689,115 @@ static HLAPIManager *shared = nil;
     [self.errorObservers addObject:observer];
 }
 
-
 - (void)removeNetworkErrorObserver:(nonnull id<HLNetworkErrorProtocol>)observer {
     if ([self.errorObservers containsObject:observer]) {
         [self.errorObservers removeObject:observer];
     }
 }
 
-#pragma mark - lazy load getter
-- (NSCache *)sessionManagerCache {
-    if (!_sessionManagerCache) {
-        _sessionManagerCache = [[NSCache alloc] init];
-    }
-    return _sessionManagerCache;
+#pragma mark - sharedManager Static Method
++ (HLAPIManager *)sharedManager {
+    static HLAPIManager *shared = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        shared = [[self alloc] init];
+    });
+    return shared;
 }
 
-- (NSCache *)sessionTasksCache {
-    if (!_sessionTasksCache) {
-        _sessionTasksCache = [[NSCache alloc] init];
-    }
-    return _sessionTasksCache;
++ (void)sendAPIRequest:(nonnull HLAPI *)api {
+    return [[self sharedManager] sendAPIRequest:api];
 }
+
++ (void)cancelAPIRequest:(HLAPI *)api {
+    return [[self sharedManager] cancelAPIRequest:api];
+}
+
++ (void)sendBatchAPIRequests:(HLAPIBatchRequests *)apis {
+    return [[self sharedManager] sendBatchAPIRequests:apis];
+}
+
++ (void)sendChainAPIRequests:(HLAPIChainRequests *)apis {
+    return [[self sharedManager] sendChainAPIRequests:apis];
+}
+
++ (void)registerNetworkResponseObserver:(id<HLAPIResponseDelegate>)observer {
+    return [[self sharedManager] registerNetworkResponseObserver:observer];
+}
+
++ (void)removeNetworkResponseObserver:(id<HLAPIResponseDelegate>)observer {
+    return [[self sharedManager] removeNetworkResponseObserver:observer];
+}
+
++ (void)registerNetworkErrorObserver:(id<HLNetworkErrorProtocol>)observer {
+    return [[self sharedManager] registerNetworkErrorObserver:observer];
+}
+
++ (void)removeNetworkErrorObserver:(id<HLNetworkErrorProtocol>)observer {
+    return [[self sharedManager] removeNetworkErrorObserver:observer];
+}
+
+#pragma mark - reachability
+- (BOOL)isReachable {
+    return [self isReachableViaWWAN] || [self isReachableViaWiFi];
+}
+
+- (BOOL)isReachableViaWWAN {
+    return self.reachabilityStatus == HLReachabilityStatusReachableViaWWAN;
+}
+
+- (BOOL)isReachableViaWiFi {
+    return self.reachabilityStatus == HLReachabilityStatusReachableViaWiFi;
+}
+
++ (void)networkListening:(void (^)(HLReachabilityStatus))listener {
+    [[self sharedManager] networkListeningWithDomain:[self sharedManager].config.baseURL listeningBlock:listener];
+}
+
++ (void)stopListening {
+    [[self sharedManager] stopListeningWithDomain:[self sharedManager].config.baseURL];
+}
+
+- (void)networkListeningWithDomain:(NSString *)domain listeningBlock:(void (^)(HLReachabilityStatus))listener {
+    if (self.config.enableReachability) {
+        AFNetworkReachabilityManager *manager = [self.reachabilities objectForKey:domain];
+        if (!manager) {
+            manager = [AFNetworkReachabilityManager managerForDomain:domain];
+            self.reachabilities[domain] = manager;
+        }
+        [manager setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
+            HLReachabilityStatus result = HLReachabilityStatusUnknown;
+            switch (status) {
+                case AFNetworkReachabilityStatusUnknown:
+                    result = HLReachabilityStatusUnknown;
+                    break;
+                case AFNetworkReachabilityStatusNotReachable:
+                    result = HLReachabilityStatusNotReachable;
+                    break;
+                case AFNetworkReachabilityStatusReachableViaWWAN:
+                    result = HLReachabilityStatusReachableViaWWAN;
+                    break;
+                case AFNetworkReachabilityStatusReachableViaWiFi:
+                    result = HLReachabilityStatusReachableViaWiFi;
+                    break;
+                default:
+                    result = HLReachabilityStatusUnknown;
+                    break;
+            }
+            self.reachabilityStatus = result;
+            if (listener) {
+                listener(result);
+            }
+        }];
+        [manager startMonitoring];
+    }
+}
+
+- (void)stopListeningWithDomain:(NSString *)domain {
+    AFNetworkReachabilityManager *manager = [self.reachabilities objectForKey:domain];
+    if (manager) {
+        [manager stopMonitoring];
+    }
+}
+
 @end

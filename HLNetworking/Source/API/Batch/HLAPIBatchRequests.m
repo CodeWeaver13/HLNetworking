@@ -53,13 +53,13 @@ static NSString * const hint = @"API 必须是 HLAPI的子类";
 
 - (void)start {
     NSAssert([self.apiRequestsSet count] != 0, @"APIBatch元素不可小于1");
-    [[HLAPIManager shared] sendBatchAPIRequests:self];
+    [[HLAPIManager sharedManager] sendBatchAPIRequests:self];
 }
 
 - (void)cancel {
     NSAssert([self.apiRequestsSet count] != 0, @"APIBatch元素不可小于1");
     for (HLAPI *api in self.apiRequestsSet) {
-        [[HLAPIManager shared] cancelAPIRequest:api];
+        [[HLAPIManager sharedManager] cancelAPIRequest:api];
     }
     self.isCancel = YES;
 }

@@ -82,11 +82,11 @@
 }
 
 - (void)setupAPINetworkConfig {
-    HLNetworkConfig *config = [HLNetworkConfig config];
-    config.baseURL = @"https://httpbin.org/";
-    config.apiVersion = nil;
-    [[HLAPIManager shared] setConfig:config];
-    [[HLAPIManager shared] registerNetworkResponseObserver:self];
+    [HLAPIManager setupConfig:^(HLNetworkConfig * _Nonnull config) {
+        config.baseURL = @"https://httpbin.org/";
+        config.apiVersion = nil;
+    }];
+    [HLAPIManager registerNetworkResponseObserver:self];
 }
 
 - (void)testAPI {
@@ -203,7 +203,7 @@ HLAPIResponseDelegateRequestAPIs(self.api1, self.api2, self.api3)
 }
 
 - (void)dealloc {
-    [[HLAPIManager shared] removeNetworkResponseObserver:self];
+    [[HLAPIManager sharedManager] removeNetworkResponseObserver:self];
     [[HLTaskManager shared] removeNetworkResponseObserver:self];
 }
 @end

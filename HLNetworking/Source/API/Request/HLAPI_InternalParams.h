@@ -27,9 +27,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy) NSSet *accpetContentTypes;
 @property (nonatomic, copy) NSString *cURL;
 
-@property (nonatomic, copy, nullable) void (^apiSuccessHandler)(_Nonnull id responseObject);
-@property (nonatomic, copy, nullable) void (^apiFailureHandler)(NSError * _Nullable error);
-@property (nonatomic, copy, nullable) void (^apiProgressHandler)(NSProgress * _Nullable progress);
-@property (nonatomic, copy, nullable) void (^apiRequestConstructingBodyBlock)(id<HLMultipartFormDataProtocol> _Nonnull formData);
+@property (nonatomic, copy, nullable) HLSuccessBlock apiSuccessHandler;
+@property (nonatomic, copy, nullable) HLFailureBlock apiFailureHandler;
+@property (nonatomic, copy, nullable) HLProgressBlock apiProgressHandler;
+@property (nonatomic, copy, nullable) HLRequestConstructingBodyBlock apiRequestConstructingBodyBlock;
+@property (nonatomic, copy, nullable) HLDebugBlock apiDebugHandler;
 @end
 NS_ASSUME_NONNULL_END

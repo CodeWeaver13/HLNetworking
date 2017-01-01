@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
   spec.name             = 'HLNetworking'
-  spec.version          = '1.1.5'
+  spec.version          = '1.2.0'
   spec.license          = { :type => "MIT", :file => 'LICENSE' }
   spec.homepage         = 'https://github.com/QianKun-HanLin/HLNetworking'
   spec.authors          = {"wangshiyu13" => "wangshiyu13@163.com"}
@@ -18,13 +18,21 @@ Pod::Spec.new do |spec|
     
     core.dependency 'AFNetworking', '~> 3.1.0'
 
-    end
+  end
+
+  spec.subspec 'API' do |api|
+
+    api.source_files = 'HLNetworking/Source/HLNetworking.h', 'HLNetworking/Source/Config/**/*.{h,m}', 'HLNetworking/Source/API/**/*.{h,m}'
+
+    api.dependency 'AFNetworking', '~> 3.1.0'
+
+  end
 
   spec.subspec 'Center' do |center|
 
     center.source_files = 'HLNetworking/Source/Center/*.{h,m}'
 
-    center.dependency 'HLNetworking/Core'
+    center.dependency 'HLNetworking/API'
 
     center.dependency 'YYModel'
   end
