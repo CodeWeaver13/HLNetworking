@@ -16,52 +16,48 @@ NS_ASSUME_NONNULL_BEGIN
 @interface HLTaskManager : NSObject
 
 @property (nonatomic, strong) HLNetworkConfig *config;
+// 请使用manager
+- (instancetype)init NS_UNAVAILABLE;
++ (instancetype)new NS_UNAVAILABLE;
++ (instancetype)manager;
+// 发送Task请求
+- (void)send:(HLTask *)task;
 
-+ (nonnull HLTaskManager *)shared;
+// 取消Task，如果该请求已经发送或者正在发送，则不保证一定可以取消
+- (void)cancel:(HLTask *)task;
 
-/**
- *  发送API请求
- *
- *  @param task 要发送的task
- */
-- (void)sendTaskRequest:(HLTask *)task;
+// 恢复Task
+- (void)resume:(HLTask *)task;
 
-/**
- *  取消API请求
- *
- *  @description
- *      如果该请求已经发送或者正在发送，则无法取消
- *
- *  @param task 要取消的task
- */
-- (void)cancelTaskRequest:(HLTask *)task;
+// 暂停Task
+- (void)pause:(HLTask *)task;
 
-/**
- 暂停API请求
- 
- @param task 要暂停的请求
- */
-- (void)resumeTaskRequest:(HLTask *)task;
+// 注册网络请求监听者
+- (void)registerResponseObserver:(id<HLTaskResponseProtocol>)observer;
 
-/**
- 暂停API请求
+// 删除网络请求监听者
+- (void)removeResponseObserver:(id<HLTaskResponseProtocol>)observer;
 
- @param task 要暂停的请求
- */
-- (void)pauseTaskRequest:(HLTask *)task;
+#pragma mark - 单例下用的静态方法
+// 统一管理单例
++ (nonnull HLTaskManager *)sharedManager;
 
-/**
- 移除网络请求监听者
- 
- @param observer 监听者
- */
-- (void)registerNetworkResponseObserver:(id<HLTaskResponseProtocol>)observer;
+// 发送Task请求
++ (void)send:(HLTask *)task;
 
-/**
- 删除网络请求监听者
- 
- @param observer 监听者
- */
-- (void)removeNetworkResponseObserver:(id<HLTaskResponseProtocol>)observer;
+// 取消Task，如果该请求已经发送或者正在发送，则不保证一定可以取消
++ (void)cancel:(HLTask *)task;
+
+// 恢复Task
++ (void)resume:(HLTask *)task;
+
+// 暂停Task
++ (void)pause:(HLTask *)task;
+
+// 注册网络请求监听者
++ (void)registerResponseObserver:(id<HLTaskResponseProtocol>)observer;
+
+// 删除网络请求监听者
++ (void)removeResponseObserver:(id<HLTaskResponseProtocol>)observer;
 @end
 NS_ASSUME_NONNULL_END

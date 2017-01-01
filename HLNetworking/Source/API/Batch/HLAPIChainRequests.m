@@ -106,7 +106,7 @@ static NSString * const hint = @"API 必须是 HLAPI的子类";
 }
 
 #pragma mark - Add Requests
-- (void)addAPIRequest:(HLAPI *)api {
+- (void)add:(HLAPI *)api {
     NSParameterAssert(api);
     NSAssert([api isKindOfClass:[HLAPI class]], hint);
     if ([self.apiRequestsArray containsObject:api]) {
@@ -117,24 +117,24 @@ static NSString * const hint = @"API 必须是 HLAPI的子类";
     [self.apiRequestsArray addObject:api];
 }
 
-- (void)addChainAPIRequests:(nonnull NSArray<HLAPI *> *)apis {
+- (void)addAPIs:(nonnull NSArray<HLAPI *> *)apis {
     NSParameterAssert(apis);
     NSAssert([apis count] > 0, @"Api集合元素个数不可小于1");
     [apis enumerateObjectsUsingBlock:^(HLAPI * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        [self addAPIRequest:obj];
+        [self add:obj];
     }];
 }
 
 - (void)start {
     NSAssert([self.apiRequestsArray count] != 0, @"APIBatch元素不可小于1");
-    [[HLAPIManager sharedManager] sendChainAPIRequests:self];
+    [HLAPIManager sendChain:self];
     self.isCancel = NO;
 }
 
 - (void)cancel {
     NSAssert([self.apiRequestsArray count] != 0, @"APIBatch元素不可小于1");
     for (HLAPI *api in self.apiRequestsArray) {
-        [[HLAPIManager sharedManager] cancelAPIRequest:api];
+        [HLAPIManager cancel:api];
     }
     self.isCancel = YES;
 }

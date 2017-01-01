@@ -35,14 +35,14 @@
  
  @param api 新加入的请求
  */
-- (void)addAPIRequest:(nonnull HLAPI *)api;
+- (void)add:(nonnull HLAPI *)api;
 
 /**
  *  将带有API集合的Array 赋值
  *
  *  @param apis 新加入的请求Array
  */
-- (void)addChainAPIRequests:(nonnull NSArray<HLAPI *> *)apis;
+- (void)addAPIs:(nonnull NSArray<HLAPI *> *)apis;
 
 /**
  *  开启API 请求

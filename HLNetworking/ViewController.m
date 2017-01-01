@@ -50,8 +50,8 @@
     HLNetworkConfig *config = [HLNetworkConfig config];
     config.baseURL = @"https://httpbin.org";
     config.isBackgroundSession = NO;
-    [[HLTaskManager shared] setConfig:config];
-    [[HLTaskManager shared] registerNetworkResponseObserver:self];
+    [[HLTaskManager sharedManager] setConfig:config];
+    [[HLTaskManager sharedManager] registerResponseObserver:self];
 }
 
 #pragma mark - task reponse protocol
@@ -86,7 +86,7 @@
         config.baseURL = @"https://httpbin.org/";
         config.apiVersion = nil;
     }];
-    [HLAPIManager registerNetworkResponseObserver:self];
+    [HLAPIManager registerResponseObserver:self];
 }
 
 - (void)testAPI {
@@ -126,7 +126,7 @@
     
     HLAPIChainRequests *chain = [[HLAPIChainRequests alloc] init];
     chain.delegate = self;
-    [chain addChainAPIRequests:@[self.api1, self.api2, self.api3, self.api4]];
+    [chain addAPIs:@[self.api1, self.api2, self.api3, self.api4]];
     [chain start];
     for (id obj in chain) {
         NSLog(@"%@", obj);
@@ -203,7 +203,7 @@ HLAPIResponseDelegateRequestAPIs(self.api1, self.api2, self.api3)
 }
 
 - (void)dealloc {
-    [[HLAPIManager sharedManager] removeNetworkResponseObserver:self];
-    [[HLTaskManager shared] removeNetworkResponseObserver:self];
+    [HLAPIManager removeResponseObserver:self];
+    [HLTaskManager removeResponseObserver:self];
 }
 @end

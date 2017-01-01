@@ -57,6 +57,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (HLTask *(^)(NSString *filePath))setFilePath;
 
 #pragma mark - functory method
+// 请使用task
+- (instancetype)init NS_UNAVAILABLE;
++ (instancetype)new NS_UNAVAILABLE;
+
 + (nullable instancetype)task;
 
 

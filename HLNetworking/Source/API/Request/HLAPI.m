@@ -173,6 +173,11 @@ HLDebugKey const kHLResponseDebugKey = @"kHLResponseDebugKey";
 - (HLAPI* (^)(NSString *customURL))setCustomURL {
     return ^HLAPI* (NSString *customURL) {
         self.cURL = customURL;
+        NSURL *tmpURL = [NSURL URLWithString:customURL];
+        if (tmpURL) {
+            self.baseURL = [NSString stringWithFormat:@"%@://%@", tmpURL.scheme, tmpURL.host];
+            self.path = [NSString stringWithFormat:@"%@", tmpURL.query];
+        }
         return self;
     };
 }
@@ -226,12 +231,12 @@ HLDebugKey const kHLResponseDebugKey = @"kHLResponseDebugKey";
 }
 
 - (HLAPI *)start {
-    [[HLAPIManager sharedManager] sendAPIRequest:((HLAPI *)self)];
+    [HLAPIManager send:self];
     return self;
 }
 
 - (HLAPI *)cancel {
-    [[HLAPIManager sharedManager] cancelAPIRequest:((HLAPI *)self)];
+    [HLAPIManager cancel:self];
     return self;
 }
 

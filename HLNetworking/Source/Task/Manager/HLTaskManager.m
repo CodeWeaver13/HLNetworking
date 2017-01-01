@@ -13,7 +13,8 @@
 #import "HLNetworkConfig.h"
 #import "HLSecurityPolicyConfig.h"
 #import "HLAPIType.h"
-#import "AFURLSessionManager.h"
+#import "HLNetworkMacro.h"
+#import <AFNetworking/AFURLSessionManager.h>
 
 // 创建任务队列
 static dispatch_queue_t qkhl_task_session_creation_queue() {
@@ -21,21 +22,26 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         qkhl_task_session_creation_queue =
-        dispatch_queue_create("com.qkhl.pp.networking.wangshiyu13.task.creation", DISPATCH_QUEUE_SERIAL);
+        dispatch_queue_create("com.qkhl.pp.networking.wangshiyu13.task.callback.queue", DISPATCH_QUEUE_SERIAL);
     });
     return qkhl_task_session_creation_queue;
 }
-static HLTaskManager *shared = nil;
 
 @interface HLTaskManager ()
-@property (nonatomic, strong) NSCache *sessionManagerCache;
-@property (nonatomic, strong) NSCache *sessionTasksCache;
+@property (nonatomic, strong) NSMutableDictionary <NSString *, AFURLSessionManager *>*sessionManagerCache;
+@property (nonatomic, strong) NSMutableDictionary <NSString *, NSURLSessionDownloadTask *>*downloadTasksCache;
+@property (nonatomic, strong) NSMutableDictionary <NSString *, NSURLSessionUploadTask *>*uploadTasksCache;
 @property (nonatomic, strong) NSHashTable<id <HLTaskResponseProtocol>> *responseObservers;
 @end
 
 @implementation HLTaskManager
 #pragma mark - init method
-+ (HLTaskManager *)shared {
++ (instancetype)manager {
+    return [[self alloc] init];
+}
+
++ (HLTaskManager *)sharedManager {
+    static HLTaskManager *shared = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         shared = [[self alloc] init];
@@ -44,12 +50,15 @@ static HLTaskManager *shared = nil;
 }
 
 - (instancetype)init {
-    if (!shared) {
-        shared = [super init];
-        shared.config = [HLNetworkConfig config];
-        shared.responseObservers = [NSHashTable hashTableWithOptions:NSHashTableWeakMemory];
+    self = [super init];
+    if (self) {
+        _config = [HLNetworkConfig config];
+        _responseObservers = [NSHashTable hashTableWithOptions:NSHashTableWeakMemory];
+        _sessionManagerCache = [NSMutableDictionary dictionary];
+        _downloadTasksCache = [NSMutableDictionary dictionary];
+        _uploadTasksCache = [NSMutableDictionary dictionary];
     }
-    return shared;
+    return self;
 }
 
 #pragma mark - AFURLSessionManager
@@ -63,121 +72,60 @@ static HLTaskManager *shared = nil;
 - (AFURLSessionManager *)sessionManagerWithTask:(HLTask *)task {
     NSParameterAssert(task);
     
-    NSString *baseUrlStr = [self requestBaseURLStringWithTask:task];
-    // AFURLSessionManager
-    AFURLSessionManager *sessionManager;
-    sessionManager = [self.sessionManagerCache objectForKey:baseUrlStr];
-    if (!sessionManager) {
-        sessionManager = [self newSessionManagerWithTask:task];
-        [self.sessionManagerCache setObject:sessionManager forKey:baseUrlStr];
-    }
-    sessionManager.securityPolicy = [self securityPolicyWithTask:task];
-    return sessionManager;
-}
-
-/**
- 创建新的SessionManager
-
- @param task 执行的task
- @return AFHTTPSessionManager对象
- */
-- (AFURLSessionManager *)newSessionManagerWithTask:(HLTask *)task {
-    NSURLSessionConfiguration *sessionConfig;
-    if (self.config) {
-        if (self.config.isBackgroundSession) {
-            NSString *kBackgroundSessionID = [NSString stringWithFormat:@"com.wangshiyu13.backgroundSession.task.%@", [self requestBaseURLStringWithTask:task]];
-            NSString *kSharedContainerIdentifier = self.config.AppGroup ?: [NSString stringWithFormat:@"com.wangshiyu13.testApp"];
-            sessionConfig = [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:kBackgroundSessionID];
-            sessionConfig.sharedContainerIdentifier = kSharedContainerIdentifier;
-        } else {
-            sessionConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
-        }
-        sessionConfig.HTTPMaximumConnectionsPerHost = self.config.maxHttpConnectionPerHost;
+    // 拼接baseUrlStr
+    NSString *baseUrlStr;
+    // 如果定义了自定义的cURL, 则直接使用
+    NSURL *taskURL = [NSURL URLWithString:task.taskURL];
+    if (taskURL) {
+        baseUrlStr = [NSString stringWithFormat:@"%@://%@", taskURL.scheme, taskURL.host];
     } else {
-        sessionConfig.HTTPMaximumConnectionsPerHost = MAX_HTTP_CONNECTION_PER_HOST;
+        NSAssert(task.baseURL != nil || self.config.baseURL != nil,
+                 @"task baseURL 和 self.config.baseurl 两者必须有一个有值");
+        
+        NSString *tmpStr = task.baseURL ? : self.config.baseURL;
+        
+        // 在某些情况下，一些用户会直接把整个url地址写进 baseUrl
+        // 因此，还需要对baseUrl 进行一次切割
+        NSURL *tmpURL = [NSURL URLWithString:tmpStr];
+        baseUrlStr = [NSString stringWithFormat:@"%@://%@", tmpURL.scheme, tmpURL.host];;
     }
-    return [[AFURLSessionManager alloc] initWithSessionConfiguration:sessionConfig];
-}
-
-/**
- 从task中获取securityPolicy（安全策略）
- 
- @param task 调用的API
- 
- @return securityPolicy
- */
-- (AFSecurityPolicy *)securityPolicyWithTask:(HLTask *)task {
+    
+    // 设置session的安全策略
     NSUInteger pinningMode                  = task.securityPolicy.SSLPinningMode;
     AFSecurityPolicy *securityPolicy        = [AFSecurityPolicy policyWithPinningMode:pinningMode];
     securityPolicy.allowInvalidCertificates = task.securityPolicy.allowInvalidCertificates;
     securityPolicy.validatesDomainName      = task.securityPolicy.validatesDomainName;
-    return securityPolicy;
-}
-
-/**
- 从API中获取requestBaseURL
- 
- @param task 调用的API
- 
- @return baseURL
- */
-- (NSString *)requestBaseURLStringWithTask:(HLTask *)task {
-    NSParameterAssert(task);
+    NSString *cerPath                       = task.securityPolicy.cerFilePath;
+    NSData *certData                        = [NSData dataWithContentsOfFile:cerPath];
+    securityPolicy.pinnedCertificates       = [NSSet setWithObject:certData];
     
-    // 如果定义了自定义的cURL, 则直接使用
-    if (task.taskURL) {
-        NSURL *url  = [NSURL URLWithString:task.taskURL];
-        NSURL *root = [NSURL URLWithString:@"/" relativeToURL:url];
-        return [NSString stringWithFormat:@"%@", root.absoluteString];
-    }
-    
-    NSAssert(task.baseURL != nil || self.config.baseURL != nil,
-             @"api baseURL 和 self.config.baseurl 两者必须有一个有值");
-    
-    NSString *baseURL = task.baseURL ? : self.config.baseURL;
-    
-    // 在某些情况下，一些用户会直接把整个url地址写进 baseUrl
-    // 因此，还需要对baseUrl 进行一次切割
-    NSURL *theUrl = [NSURL URLWithString:baseURL];
-    NSURL *root   = [NSURL URLWithString:@"/" relativeToURL:theUrl];
-    return [NSString stringWithFormat:@"%@", root.absoluteString];
-}
-
-/**
- 从API中获取requestURL
- 
- @param task 调用的API
- 
- @return requestURL
- */
-- (NSString *)requestURLStringWithTask:(HLTask *)task {
-    NSParameterAssert(task);
-    if (task.taskURL) {
-        return task.taskURL;
-    }
-    NSAssert(task.baseURL != nil || self.config.baseURL != nil,
-             @"api baseURL 和 self.config.baseurl 两者必须有一个有值");
-    
-    // 如果啥都没定义，则使用BaseUrl + requestMethod 组成 UrlString
-    // 即，直接返回requestMethod
-    NSURL *requestURL = [NSURL URLWithString:[NSString stringWithFormat:@"%@/%@", task.baseURL ? : self.config.baseURL, task.path ? : @""]];
-    return requestURL.absoluteString;
-}
-
-//获取已下载的文件大小
-- (unsigned long long)fileSizeForPath:(NSString *)path {
-    signed long long fileSize = 0;
-    NSFileManager *fileManager = [NSFileManager new]; // default is not thread safe
-    if ([fileManager fileExistsAtPath:path]) {
-        NSError *error = nil;
-        NSDictionary *fileDict = [fileManager attributesOfItemAtPath:path error:&error];
-        if (!error && fileDict) {
-            fileSize = [fileDict fileSize];
+    // AFURLSessionManager
+    AFURLSessionManager *sessionManager;
+    sessionManager = [self.sessionManagerCache objectForKey:baseUrlStr];
+    // 如果缓存中取不到对应的sessionManager，则创建一个新的SessionManager
+    if (!sessionManager) {
+        NSURLSessionConfiguration *sessionConfig;
+        if (self.config) {
+            if (self.config.isBackgroundSession) {
+                NSString *kBackgroundSessionID = [NSString stringWithFormat:@"com.wangshiyu13.backgroundSession.task.%@", baseUrlStr];
+                NSString *kSharedContainerIdentifier = self.config.AppGroup ?: [NSString stringWithFormat:@"com.wangshiyu13.testApp"];
+                sessionConfig = [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:kBackgroundSessionID];
+                sessionConfig.sharedContainerIdentifier = kSharedContainerIdentifier;
+            } else {
+                sessionConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
+            }
+            sessionConfig.HTTPMaximumConnectionsPerHost = self.config.maxHttpConnectionPerHost;
+        } else {
+            sessionConfig.HTTPMaximumConnectionsPerHost = MAX_HTTP_CONNECTION_PER_HOST;
         }
+        sessionManager = [[AFURLSessionManager alloc] initWithSessionConfiguration:sessionConfig];
+        [self.sessionManagerCache setObject:sessionManager forKey:baseUrlStr];
     }
-    return fileSize;
+    sessionManager.securityPolicy = securityPolicy;
+    return sessionManager;
 }
 
+#pragma mark - Response Complete Handler
 /**
  API完成的回调方法
 
@@ -187,12 +135,39 @@ static HLTaskManager *shared = nil;
  @param completion 完成回调
  */
 - (void)callTaskCompletion:(HLTask *)task obj:(id)obj error:(NSError *)error completion:(void (^)())completion {
+    // 处理回调的block
+    NSError *netError = error;
+    if (error) {
+        // 如果不是reachability无法访问host或用户取消错误(NSURLErrorCancelled)，则对错误提示进行处理
+        if (![error.domain isEqualToString: NSURLErrorDomain] &&
+            error.code != NSURLErrorCancelled) {
+            // 使用KVC修改error内部属性
+            // 默认使用self.config.generalErrorTypeStr = "服务器连接错误，请稍候重试"
+            NSMutableDictionary *tmpUserInfo = [[NSMutableDictionary alloc]initWithDictionary:error.userInfo copyItems:NO];
+            if (![[tmpUserInfo allKeys] containsObject:NSLocalizedFailureReasonErrorKey]) {
+                tmpUserInfo[NSLocalizedFailureReasonErrorKey] = NSLocalizedString(self.config.generalErrorTypeStr, nil);
+            }
+            if (![[tmpUserInfo allKeys] containsObject:NSLocalizedRecoverySuggestionErrorKey]) {
+                tmpUserInfo[NSLocalizedRecoverySuggestionErrorKey] = NSLocalizedString(self.config.generalErrorTypeStr, nil);
+            }
+            // 加上 networking error code
+            NSString *newErrorDescription = self.config.generalErrorTypeStr;
+            if (self.config.isErrorCodeDisplayEnabled) {
+                newErrorDescription = [NSString stringWithFormat:@"%@, error code = (%ld)", self.config.generalErrorTypeStr, (long)error.code];
+            }
+            tmpUserInfo[NSLocalizedDescriptionKey] = NSLocalizedString(newErrorDescription, nil);
+            NSDictionary *userInfo = [tmpUserInfo copy];
+            netError = [NSError errorWithDomain:error.domain
+                                           code:error.code
+                                       userInfo:userInfo];
+        }
+    }
     for (id<HLTaskResponseProtocol> delegate in self.responseObservers) {
         dispatch_async(dispatch_get_main_queue(), ^{
             if ([[delegate requestTasks] containsObject:task]) {
-                if (error) {
+                if (netError) {
                     if ([delegate respondsToSelector:@selector(requestFailureWithResponseError:atTask:)]) {
-                        [delegate requestFailureWithResponseError:error atTask:task];
+                        [delegate requestFailureWithResponseError:netError atTask:task];
                     }
                 } else {
                     if ([delegate respondsToSelector:@selector(requestSucessWithResponseObject:atTask:)]) {
@@ -204,91 +179,39 @@ static HLTaskManager *shared = nil;
     }
 }
 
-/**
- API成功的方法
- 
- @param responseObject 返回的对象
- @param task 调用的API
- @param completion 完成回调
- */
-- (void)handleSuccWithResponse:(id)responseObject andTask:(HLTask *)task completion:(void (^)())completion {
-    [self callTaskCompletion:task obj:responseObject error:nil completion:completion];
-}
-
-/**
- API失败的方法
- 
- @param error 返回的错误
- @param task 调用的API
- @param completion 完成回调
- */
-- (void)handleFailureWithError:(NSError *)error andTask:(HLTask *)task completion:(void (^)())completion  {
-    
-    // Error -999, representing API Cancelled
-    if ([error.domain isEqualToString: NSURLErrorDomain] &&
-        error.code == NSURLErrorCancelled) {
-        [self callTaskCompletion:task obj:nil error:error completion:completion];
-        return;
-    }
-    
-    // 默认 "服务器连接错误，请稍候重试"
-    NSString *errorTypeStr = self.config.generalErrorTypeStr;
-    NSMutableDictionary *tmpUserInfo = [[NSMutableDictionary alloc]initWithDictionary:error.userInfo copyItems:NO];
-    if (![[tmpUserInfo allKeys] containsObject:NSLocalizedFailureReasonErrorKey]) {
-        [tmpUserInfo setValue: NSLocalizedString(errorTypeStr, nil) forKey:NSLocalizedFailureReasonErrorKey];
-    }
-    if (![[tmpUserInfo allKeys] containsObject:NSLocalizedRecoverySuggestionErrorKey]) {
-        [tmpUserInfo setValue: NSLocalizedString(errorTypeStr, nil)  forKey:NSLocalizedRecoverySuggestionErrorKey];
-    }
-    // 加上 networking error code
-    NSString *newErrorDescription = errorTypeStr;
-    if (self.config.isErrorCodeDisplayEnabled) {
-        newErrorDescription = [NSString stringWithFormat:@"%@ (%ld)", errorTypeStr, (long)error.code];
-    }
-    [tmpUserInfo setValue:NSLocalizedString(newErrorDescription, nil) forKey:NSLocalizedDescriptionKey];
-    
-    NSDictionary *userInfo = [tmpUserInfo copy];
-    NSError *err = [NSError errorWithDomain:error.domain
-                                       code:error.code
-                                   userInfo:userInfo];
-    
-    [self callTaskCompletion:task obj:nil error:err completion:nil];
-}
-
-/**
- 发送单个Task
- 
- @param task 需要发送的API
- */
-- (void)sendTaskRequest:(nonnull HLTask *)task {
-    NSParameterAssert(task);
-    NSAssert(self.config, @"Config不能为空");
-    
-    dispatch_async(qkhl_task_session_creation_queue(), ^{
-        AFURLSessionManager *sessionManager = [self sessionManagerWithTask:task];
-        if (!sessionManager) {
-            return;
-        }
-        [self _sendSingleTaskRequest:task withSessionManager:sessionManager andCompletionGroup:nil completionBlock:nil];
-    });
-}
-
-- (void)_sendSingleTaskRequest:(HLTask *)task
+- (void)sendSingleTaskRequest:(HLTask *)task
            withSessionManager:(AFURLSessionManager *)sessionManager
            andCompletionGroup:(dispatch_group_t)completionGroup
               completionBlock:(void (^)())completion {
     NSParameterAssert(task);
     NSParameterAssert(sessionManager);
+    @weakify(self);
     
-    __weak typeof(self) weakSelf = self;
-    NSString *host = [self requestBaseURLStringWithTask:task];
-    NSString *requestURLStr = [self requestURLStringWithTask:task];
+    BOOL isDownloadTask = task.requestTaskType == Upload;
+    
+    NSString *host;
+    NSURL *requestURL;
+    NSURL *taskURL = [NSURL URLWithString:task.taskURL];
+    if (taskURL) {
+        host = [NSString stringWithFormat:@"%@://%@", taskURL.scheme, taskURL.host];
+        requestURL = taskURL;
+    } else {
+        // 如果taskURL没定义，则使用BaseUrl + requestMethod 组成 UrlString
+        NSAssert(task.baseURL != nil || self.config.baseURL != nil,
+                 @"api baseURL 和 self.config.baseurl 两者必须有一个有值");
+        NSString *tmpStr = [NSString stringWithFormat:@"%@/%@", task.baseURL ?: self.config.baseURL, task.path ?: @""];
+        NSURL *tmpBaseURL = [NSURL URLWithString:tmpStr];
+        host = [NSString stringWithFormat:@"%@://%@", tmpBaseURL.scheme, tmpBaseURL.host];
+        requestURL = tmpBaseURL;
+    }
+    NSAssert(requestURL != nil, @"请求的URL有误！");
+    
     NSString *hashKey = [NSString stringWithFormat:@"%lu", (unsigned long)[task hash]];
-    NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:requestURLStr]];
+    NSURLRequest *request = [NSURLRequest requestWithURL:requestURL];
     __block NSURL *fileURL = task.filePath ? [NSURL fileURLWithPath:task.filePath] : nil;
     
     // 如果缓存中已有当前task，则立即使api返回失败回调，错误信息为frequentRequestErrorStr，如果是apiBatch，则整组移除
-    if ([self.sessionTasksCache objectForKey:hashKey]) {
+    if ([self.downloadTasksCache objectForKey:hashKey] || [self.uploadTasksCache objectForKey:hashKey]) {
         NSString *errorStr     = self.config.frequentRequestErrorStr;
         NSDictionary *userInfo = @{
                                    NSLocalizedDescriptionKey : errorStr
@@ -365,16 +288,14 @@ static HLTaskManager *shared = nil;
     
     void (^donwloadCompleteBlcok)(NSURLResponse * _Nonnull response, NSURL * _Nullable filePath, NSError * _Nullable error)
     = ^(NSURLResponse * _Nonnull response, NSURL * _Nullable filePath, NSError * _Nullable error) {
-        __strong typeof (weakSelf) strongSelf = weakSelf;
-        if (strongSelf.config.isNetworkingActivityIndicatorEnabled) {
+        @strongify(self);
+        if (self.config.isNetworkingActivityIndicatorEnabled) {
             [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
         }
-        if (error) {
-            [self handleFailureWithError:error andTask:task completion:completion];
-        } else {
-            [self handleSuccWithResponse:filePath andTask:task completion:completion];
+        [self callTaskCompletion:task obj:filePath error:error completion:completion];
+        if (isDownloadTask) {
+            [self.downloadTasksCache removeObjectForKey:hashKey];
         }
-        [strongSelf.sessionTasksCache removeObjectForKey:hashKey];
         if (completionGroup) {
             dispatch_group_leave(completionGroup);
         }
@@ -404,16 +325,14 @@ static HLTaskManager *shared = nil;
                                                     fromFile:fileURL
                                                     progress:progressBlock
                                            completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
-                                               __strong typeof (weakSelf) strongSelf = weakSelf;
-                                               if (strongSelf.config.isNetworkingActivityIndicatorEnabled) {
+                                               @strongify(self);
+                                               if (self.config.isNetworkingActivityIndicatorEnabled) {
                                                    [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
                                                }
-                                               if (error) {
-                                                   [self handleFailureWithError:error andTask:task completion:completion];
-                                               } else {
-                                                   [self handleSuccWithResponse:responseObject andTask:task completion:completion];
+                                               [self callTaskCompletion:task obj:responseObject error:error completion:completion];
+                                               if (!isDownloadTask) {
+                                                   [self.uploadTasksCache removeObjectForKey:hashKey];
                                                }
-                                               [strongSelf.sessionTasksCache removeObjectForKey:hashKey];
                                                if (completionGroup) {
                                                    dispatch_group_leave(completionGroup);
                                                }
@@ -440,7 +359,11 @@ static HLTaskManager *shared = nil;
     
     if (dataTask) {
         [dataTask resume];
-        [self.sessionTasksCache setObject:dataTask forKey:hashKey];
+        if (isDownloadTask) {
+            [self.downloadTasksCache setObject:(NSURLSessionDownloadTask *)dataTask forKey:hashKey];
+        } else {
+            [self.uploadTasksCache setObject:(NSURLSessionUploadTask *)dataTask forKey:hashKey];
+        }
     }
     
 #pragma clang diagnostic push
@@ -457,58 +380,77 @@ static HLTaskManager *shared = nil;
 #pragma clang diagnostic pop
 }
 
-- (void)cancelTaskRequest:(HLTask *)task {
+/**
+ 发送单个Task
+ 
+ @param task 需要发送的API
+ */
+- (void)send:(nonnull HLTask *)task {
+    NSParameterAssert(task);
+    NSAssert(self.config, @"Config不能为空");
+    
+    dispatch_async(qkhl_task_session_creation_queue(), ^{
+        AFURLSessionManager *sessionManager = [self sessionManagerWithTask:task];
+        if (!sessionManager) {
+            return;
+        }
+        [self sendSingleTaskRequest:task withSessionManager:sessionManager andCompletionGroup:nil completionBlock:nil];
+    });
+}
+
+- (void)cancel:(HLTask *)task {
     dispatch_async(qkhl_task_session_creation_queue(), ^{
         NSString *hashKey = [NSString stringWithFormat:@"%lu", (unsigned long)task.hash];
         if (task.requestTaskType == Download) {
-            NSURLSessionDownloadTask *downloadTask = [self.sessionTasksCache objectForKey:hashKey];
+            NSURLSessionDownloadTask *downloadTask = [self.downloadTasksCache objectForKey:hashKey];
             if (downloadTask) {
                 [downloadTask cancelByProducingResumeData:^(NSData * _Nullable resumeData) {
                     [resumeData writeToFile:task.resumePath atomically:YES];
                 }];
+                [self.downloadTasksCache removeObjectForKey:hashKey];
             }
         } else {
-            NSURLSessionUploadTask *task = [self.sessionTasksCache objectForKey:hashKey];
-            [self.sessionTasksCache removeObjectForKey:hashKey];
+            NSURLSessionUploadTask *task = [self.uploadTasksCache objectForKey:hashKey];
             if (task) {
                 [task cancel];
+                [self.uploadTasksCache removeObjectForKey:hashKey];
             }
         }
     });
 }
 
-- (void)resumeTaskRequest:(HLTask *)task {
+- (void)resume:(HLTask *)task {
     dispatch_async(qkhl_task_session_creation_queue(), ^{
         NSString *hashKey = [NSString stringWithFormat:@"%lu", (unsigned long)task.hash];
         if (task.requestTaskType == Download) {
-            NSURLSessionDownloadTask *downloadTask = [self.sessionTasksCache objectForKey:hashKey];
+            NSURLSessionDownloadTask *downloadTask = [self.downloadTasksCache objectForKey:hashKey];
             if (downloadTask) {
                 [downloadTask resume];
             } else {
-                [self sendTaskRequest:task];
+                [self send:task];
             }
         } else {
-            NSURLSessionUploadTask *uploadTask = [self.sessionTasksCache objectForKey:hashKey];
+            NSURLSessionUploadTask *uploadTask = [self.uploadTasksCache objectForKey:hashKey];
             if (uploadTask) {
                 [uploadTask resume];
             } else {
-                [self.sessionTasksCache setObject:uploadTask forKey:hashKey];
+                [self.uploadTasksCache setObject:uploadTask forKey:hashKey];
                 [uploadTask resume];
             }
         }
     });
 }
 
-- (void)pauseTaskRequest:(HLTask *)task {
+- (void)pause:(HLTask *)task {
     dispatch_async(qkhl_task_session_creation_queue(), ^{
         NSString *hashKey = [NSString stringWithFormat:@"%lu", (unsigned long)[task hash]];
         if (task.requestTaskType == Download) {
-            NSURLSessionDownloadTask *downloadTask = [self.sessionTasksCache objectForKey:hashKey];
+            NSURLSessionDownloadTask *downloadTask = [self.downloadTasksCache objectForKey:hashKey];
             if (downloadTask) {
                 [downloadTask suspend];
             }
         } else {
-            NSURLSessionUploadTask *uploadTask = [self.sessionTasksCache objectForKey:hashKey];
+            NSURLSessionUploadTask *uploadTask = [self.uploadTasksCache objectForKey:hashKey];
             if (uploadTask) {
                 [uploadTask suspend];
             }
@@ -517,29 +459,61 @@ static HLTaskManager *shared = nil;
 }
 
 #pragma mark - Network Response Observer
-- (void)registerNetworkResponseObserver:(nonnull id<HLTaskResponseProtocol>)observer {
+- (void)registerResponseObserver:(nonnull id<HLTaskResponseProtocol>)observer {
     [self.responseObservers addObject:observer];
 }
 
 
-- (void)removeNetworkResponseObserver:(nonnull id<HLTaskResponseProtocol>)observer {
+- (void)removeResponseObserver:(nonnull id<HLTaskResponseProtocol>)observer {
     if ([self.responseObservers containsObject:observer]) {
         [self.responseObservers removeObject:observer];
     }
 }
 
-#pragma mark - lazy load getter
-- (NSCache *)sessionManagerCache {
-    if (!_sessionManagerCache) {
-        _sessionManagerCache = [[NSCache alloc] init];
-    }
-    return _sessionManagerCache;
+#pragma mark - 单例用的静态方法
+// 发送Task请求
++ (void)send:(HLTask *)task {
+    [[self sharedManager] send:task];
 }
 
-- (NSCache *)sessionTasksCache {
-    if (!_sessionTasksCache) {
-        _sessionTasksCache = [[NSCache alloc] init];
+// 取消Task，如果该请求已经发送或者正在发送，则不保证一定可以取消
++ (void)cancel:(HLTask *)task {
+    [[self sharedManager] cancel:task];
+}
+
+// 恢复Task
++ (void)resume:(HLTask *)task {
+    [[self sharedManager] resume:task];
+}
+
+// 暂停Task
++ (void)pause:(HLTask *)task {
+    [[self sharedManager] pause:task];
+}
+
+// 注册网络请求监听者
++ (void)registerResponseObserver:(id<HLTaskResponseProtocol>)observer {
+    [[self sharedManager] registerResponseObserver:observer];
+}
+
+// 删除网络请求监听者
++ (void)removeResponseObserver:(id<HLTaskResponseProtocol>)observer {
+    [[self sharedManager] removeResponseObserver:observer];
+}
+
+#pragma mark - private method 
+
+//获取已下载的文件大小
+- (unsigned long long)fileSizeForPath:(NSString *)path {
+    signed long long fileSize = 0;
+    NSFileManager *fileManager = [NSFileManager new]; // default is not thread safe
+    if ([fileManager fileExistsAtPath:path]) {
+        NSError *error = nil;
+        NSDictionary *fileDict = [fileManager attributesOfItemAtPath:path error:&error];
+        if (!error && fileDict) {
+            fileSize = [fileDict fileSize];
+        }
     }
-    return _sessionTasksCache;
+    return fileSize;
 }
 @end

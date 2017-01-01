@@ -15,30 +15,48 @@
 @implementation HLTask
 
 #pragma mark - init
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _requestTaskType = Download;
+        _baseURL = [HLTaskManager sharedManager].config.baseURL;
+        NSString *baseResumePath = [[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:@"com.qkhl.HLNetworking/downloadDict"];
+        if (![[NSFileManager defaultManager] fileExistsAtPath:baseResumePath isDirectory:nil]) {
+            [[NSFileManager defaultManager] createDirectoryAtPath:baseResumePath withIntermediateDirectories:YES attributes:nil error:nil];
+        }
+        _resumePath = [baseResumePath stringByAppendingPathComponent:[NSString stringWithFormat:@"%lu.arc", (unsigned long)self.hash]];
+#ifdef DEBUG
+        _securityPolicy = [HLSecurityPolicyConfig policyWithPinningMode:HLSSLPinningModeNone];
+#else
+        _securityPolicy = [HLSecurityPolicyConfig policyWithPinningMode:HLSSLPinningModePublicKey];
+#endif
+    }
+    return self;
+}
+
 + (instancetype)task {
-    HLTask *task = [[HLTask alloc] init];
-    return task;
+    return [[self alloc] init];
 }
 
 #pragma mark - Process
 
 - (HLTask *)start {
-    [[HLTaskManager shared] sendTaskRequest:((HLTask *)self)];
+    [HLTaskManager send:self];
     return self;
 }
 
 - (HLTask *)cancel {
-    [[HLTaskManager shared] cancelTaskRequest:((HLTask *)self)];
+    [HLTaskManager cancel:self];
     return self;
 }
 
 - (HLTask *)resume {
-    [[HLTaskManager shared] resumeTaskRequest:((HLTask *)self)];
+    [HLTaskManager resume:self];
     return self;
 }
 
 - (HLTask *)pause {
-    [[HLTaskManager shared] pauseTaskRequest:((HLTask *)self)];
+    [HLTaskManager pause:self];
     return self;
 }
 
@@ -66,7 +84,16 @@
 - (NSString *)description {
     NSString *desc;
 #if DEBUG
-    desc = [NSString stringWithFormat:@"\n===============HLTask===============\nClass: %@\nBaseURL: %@\nPath: %@\nTaskURL: %@\nResumePath: %@\nCachePath: %@\nTimeoutInterval: %f\nSecurityPolicy: %@\nRequestTaskType: %lu\nCachePolicy: %lu\n===============end===============\n\n", self.class, self.baseURL ?: [HLTaskManager shared].config.baseURL, self.path ?: @"未设置", self.taskURL ?: @"未设置", self.resumePath, self.filePath, self.timeoutInterval, self.securityPolicy, self.requestTaskType, self.cachePolicy];
+    desc = [NSString stringWithFormat:@"\n===============HLTask===============\nClass: %@\nBaseURL: %@\nPath: %@\nTaskURL: %@\nResumePath: %@\nCachePath: %@\nTimeoutInterval: %f\nSecurityPolicy: %@\nRequestTaskType: %lu\nCachePolicy: %lu\n===============end===============\n\n",
+            self.class, self.baseURL ?: [HLTaskManager sharedManager].config.baseURL,
+            self.path ?: @"未设置",
+            self.taskURL ?: @"未设置",
+            self.resumePath,
+            self.filePath,
+            self.timeoutInterval,
+            self.securityPolicy,
+            self.requestTaskType,
+            self.cachePolicy];
 #else
     desc = @"";
 #endif
@@ -87,6 +114,11 @@
 - (HLTask *(^)(NSString *taskURL))setTaskURL {
     return ^HLTask* (NSString *taskURL) {
         self.taskURL = taskURL;
+        NSURL *tmpURL = [NSURL URLWithString:taskURL];
+        if (tmpURL) {
+            self.baseURL = [NSString stringWithFormat:@"%@://%@", tmpURL.scheme, tmpURL.host];
+            self.path = [NSString stringWithFormat:@"%@", tmpURL.query];
+        }
         return self;
     };
 }
@@ -128,56 +160,6 @@
 - (void)requestDidSent {
     if ([self.delegate respondsToSelector:@selector(requestDidSentWithTask:)]) {
         [self.delegate requestDidSentWithTask:self];
-    }
-}
-
-#pragma mark - getter / lazy load
-- (NSString *)baseURL {
-    if (!_baseURL) {
-        _baseURL = [HLTaskManager shared].config.baseURL;
-    }
-    return _baseURL;
-}
-
-- (NSString *)path {
-    return nil;
-}
-
-- (NSString *)resumePath {
-    if (!_resumePath) {
-        NSString *baseResumePath = [[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:@"com.qkhl.HLNetworking/downloadDict"];
-        if (![[NSFileManager defaultManager] fileExistsAtPath:baseResumePath isDirectory:nil]) {
-            [[NSFileManager defaultManager] createDirectoryAtPath:baseResumePath withIntermediateDirectories:YES attributes:nil error:nil];
-        }
-        _resumePath = [baseResumePath stringByAppendingPathComponent:[NSString stringWithFormat:@"%lu.arc", (unsigned long)self.hash]];
-        
-    }
-    return _resumePath;
-}
-
-/**
- *  为了方便，在Debug模式下使用None来保证用Charles之类可以抓到HTTPS报文
- *  Production下，则用Pinning Certification PublicKey 来防止中间人攻击
- */
-- (nonnull HLSecurityPolicyConfig *)securityPolicy {
-    if (_securityPolicy) {
-        return _securityPolicy;
-    } else {
-        HLSecurityPolicyConfig *securityPolicy;
-#ifdef DEBUG
-        securityPolicy = [HLSecurityPolicyConfig policyWithPinningMode:HLSSLPinningModeNone];
-#else
-        securityPolicy = [HLSecurityPolicyConfig policyWithPinningMode:HLSSLPinningModePublicKey];
-#endif
-        return securityPolicy;
-    }
-}
-
-- (HLRequestTaskType)requestTaskType {
-    if (_requestTaskType) {
-        return _requestTaskType;
-    } else {
-        return Download;
     }
 }
 @end

@@ -41,14 +41,14 @@
 
  @param api 新加入的请求
  */
-- (void)addAPIRequest:(HLAPI * _Nonnull)api;
+- (void)add:(HLAPI * _Nonnull)api;
 
 /**
  *  将带有API集合的Sets 赋值
  *
  *  @param apis 新加入的请求Set
  */
-- (void)addBatchAPIRequests:(nonnull NSSet<HLAPI *> *)apis;
+- (void)addAPIs:(nonnull NSSet<HLAPI *> *)apis;
 
 /**
  *  开启API 请求
