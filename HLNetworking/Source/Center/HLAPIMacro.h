@@ -11,14 +11,13 @@
 
 #import <objc/runtime.h>
 
-#define HLAPIDefaultCenter [HLAPICenter defaultCenter]
-
 #define metamacro_concat(A, B) \
 metamacro_concat_(A, B)
 #define metamacro_concat_(A, B) A ## B
 
 #define HLStrongProperty(name) \
-@property (nonatomic, strong, setter=set__nonuse__##name:, getter=__nonuse__##name) HLAPI *name;
+@property (nonatomic, strong, setter=set__nonuse__##name:, getter=__nonuse__##name) HLAPI *name; \
++ (HLAPI *)name;
 
 #define HLStrongSynthesize(name, api) \
 static void *name##AssociatedKey = #name "associated"; \
@@ -32,6 +31,9 @@ if (!_##name) { \
 _##name = api; \
 } \
 return _##name; \
+} \
++ (HLAPI *)name { \
+return [[self defaultCenter] __nonuse__##name];\
 }
 
 #endif /* HLAPIMacro_h */

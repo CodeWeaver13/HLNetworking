@@ -440,10 +440,52 @@ HLObserverTasks(self.task1)
 
 ### Center相关
 
-``HLAPICenter``提供一种离散式API的组织模版，通过``HLAPIMacro``中定义的宏，可以快速设置模块所需的API
+- ``HLAPICenter``提供一种离散式API的组织模版，其核心理念是通过category分散APICenter内的API对象；
+- ``HLBaseObjReformer``提供了基于YYModel的JSON->Model的模版；
+- 通过``HLAPIMacro``中定义的宏，可以快速设置模块所需的API
 
 #### 范例
+- 根据API相关中的设置，配置HLAPIManager的相关Config
+- 根据模块创建``HLAPICenter``的category，例如``HLAPICenter+home``
+- 在HLAPICenter+home.h中使用HLStrongProperty(name)宏，name为方法名，形如：
 
+```objc
+#import "HLAPICenter.h"
+
+@interface HLAPICenter (home)
+HLStrongProperty(home)
+@end
+```
+
+- 在HLAPICenter+home.m中使用HLStrongSynthesize(name, api)宏，name为方法名，api为API对象，形如：
+
+```objc
+#import "HLAPICenter+home.h"
+
+@implementation HLAPICenter (home)
+HLStrongSynthesize(home, [HLAPI API]
+                   .setMethod(GET)
+                   // 根据需要设置Path、BaseURL、CustomURL
+                   .setPath(@"index.php?r=home")
+                   // 如果该api对应的model可以直接通过yymodel转换的话，则指定需转换的模型类型名
+                   .setResponseClass(@"HLHomeModel")
+                   // 这里使用self.defaultReformer即通过yymodel转换
+                   .setObjReformerDelegate(self.defaultReformer))
+@end
+```
+
+- 然后就可以愉快的使用了，在控制器中```#import "HLAPICenter+home.h"```，按如下方法使用即可：
+
+```objc
+- (void)testHome {
+    [HLAPICenter.home.setParams(@{@"user_id": @self.myUserID})
+    .success(^(HLHomeModel *model) {
+        self.model = model;
+    }).failure(^(NSError *obj){
+        NSLog(@"----%@", obj);
+    }) start];
+}
+```
 
 ## 环境要求
 
@@ -469,7 +511,7 @@ pod "HLNetworking/API"
      - HLNetworking/Task (1.2.0)
      - HLNetworking/Center (1.2.0) 
 
-其中Core包含API和Task的所有代码，API和Task相互独立，Center则依赖于API
+其中`Core`包含`API`和`Task`的所有代码，`API`和`Task`相互独立，`Center`则依赖于`API`
 
 
 ## 作者

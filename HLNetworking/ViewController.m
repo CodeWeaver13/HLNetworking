@@ -8,6 +8,7 @@
 #import "ViewController.h"
 #import "HLNetworking.h"
 #import "AFNetworking.h"
+#import "HLAPICenter+home.h"
 
 static dispatch_queue_t my_api_queue() {
     static dispatch_queue_t my_api_queue;
@@ -26,6 +27,8 @@ static dispatch_queue_t my_api_queue() {
 @property(nonatomic, strong)HLTask *task1;
 
 @property(nonatomic, assign)BOOL isPause;
+
+@property(nonatomic, strong) id model;
 @end
 
 @implementation ViewController
@@ -34,6 +37,15 @@ static dispatch_queue_t my_api_queue() {
     [super viewDidLoad];
     [self setupAPINetworkConfig];
     [self testAPI];
+    [self testHome];
+}
+
+- (void)testHome {
+    [HLAPICenter.home.success(^(id responce) {
+        self.model = responce;
+    }).failure(^(NSError *obj){
+        NSLog(@"----%@", obj);
+    }) start];
 }
 
 - (void)pause {
