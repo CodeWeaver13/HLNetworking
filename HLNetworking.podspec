@@ -7,10 +7,12 @@ Pod::Spec.new do |spec|
   spec.summary          = '基于AFNetworking的多范式网络请求管理器'
   spec.source           =  {
       :git => 'https://github.com/QianKun-HanLin/HLNetworking.git',
-      :tag => spec.version 
+      :tag => spec.version,
+      :submodules => true
    }
   spec.requires_arc     = true
   spec.ios.deployment_target = '8.0'
+  spec.default_subspec = 'Core'
 
   spec.subspec 'Core' do |core|
 
@@ -25,6 +27,14 @@ Pod::Spec.new do |spec|
     api.source_files = 'HLNetworking/Source/HLNetworking.h', 'HLNetworking/Source/Config/**/*.{h,m}', 'HLNetworking/Source/API/**/*.{h,m}'
 
     api.dependency 'AFNetworking', '~> 3.1.0'
+
+  end
+
+  spec.subspec 'Task' do |task|
+
+    task.source_files = 'HLNetworking/Source/HLNetworking.h', 'HLNetworking/Source/Config/**/*.{h,m}', 'HLNetworking/Source/Task/**/*.{h,m}'
+
+    task.dependency 'AFNetworking', '~> 3.1.0'
 
   end
 
