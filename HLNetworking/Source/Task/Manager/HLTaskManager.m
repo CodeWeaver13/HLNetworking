@@ -27,6 +27,7 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
 }
 
 @interface HLTaskManager ()
+@property (nonatomic, strong, readwrite) HLNetworkConfig *config;
 @property (nonatomic, strong) NSMutableDictionary <NSString *, AFURLSessionManager *>*sessionManagerCache;
 @property (nonatomic, strong) NSMutableDictionary <NSString *, NSURLSessionDownloadTask *>*downloadTasksCache;
 @property (nonatomic, strong) NSMutableDictionary <NSString *, NSURLSessionUploadTask *>*uploadTasksCache;
@@ -34,6 +35,15 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
 @end
 
 @implementation HLTaskManager
+#pragma mark - SetupConfig
+- (void)setupConfig:(void (^)(HLNetworkConfig * _Nonnull config))configBlock {
+    HL_SAFE_BLOCK(configBlock, self.config);
+}
+
++ (void)setupConfig:(void (^)(HLNetworkConfig * _Nonnull config))configBlock {
+    return [[self sharedManager] setupConfig:configBlock];
+}
+
 #pragma mark - init method
 + (instancetype)manager {
     return [[self alloc] init];

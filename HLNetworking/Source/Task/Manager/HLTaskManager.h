@@ -15,11 +15,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface HLTaskManager : NSObject
 
-@property (nonatomic, strong) HLNetworkConfig *config;
+@property (nonatomic, strong, readonly) HLNetworkConfig *config;
 // 请使用manager
 - (instancetype)init NS_UNAVAILABLE;
 + (instancetype)new NS_UNAVAILABLE;
 + (instancetype)manager;
+// 配置设置
+- (void)setupConfig:(void(^)(HLNetworkConfig *config))configBlock;
+
 // 发送Task请求
 - (void)send:(HLTask *)task;
 
@@ -41,6 +44,9 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - 单例下用的静态方法
 // 统一管理单例
 + (nonnull HLTaskManager *)sharedManager;
+
+// 为sharedManager单例配置设置
++ (void)setupConfig:(void(^)(HLNetworkConfig *config))configBlock;
 
 // 发送Task请求
 + (void)send:(HLTask *)task;

@@ -47,11 +47,11 @@
 }
 
 - (void)setupTaskNetworkConfig {
-    HLNetworkConfig *config = [HLNetworkConfig config];
-    config.baseURL = @"https://httpbin.org";
-    config.isBackgroundSession = NO;
-    [[HLTaskManager sharedManager] setConfig:config];
-    [[HLTaskManager sharedManager] registerResponseObserver:self];
+    [HLTaskManager setupConfig:^(HLNetworkConfig * _Nonnull config) {
+        config.baseURL = @"https://httpbin.org";
+        config.isBackgroundSession = NO;
+    }];
+    [HLTaskManager registerResponseObserver:self];
 }
 
 #pragma mark - task reponse protocol
