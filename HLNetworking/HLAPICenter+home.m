@@ -11,7 +11,7 @@
 @implementation HLAPICenter (home)
 HLStrongSynthesize(home, [HLAPI API]
                    .setMethod(GET)
-                   .setPath(@"get")
+                   .setCustomURL(@"get")
                    .setObjReformerDelegate(self.defaultReformer))
 
 @end

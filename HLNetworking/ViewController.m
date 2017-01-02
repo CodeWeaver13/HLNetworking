@@ -107,7 +107,7 @@ static dispatch_queue_t my_api_queue() {
 
 - (void)setupAPINetworkConfig {
     [HLAPIManager setupConfig:^(HLNetworkConfig * _Nonnull config) {
-        config.request.baseURL = @"https://httpbin.org/";
+//        config.request.baseURL = @"https://httpbin.org/";
         config.request.apiVersion = nil;
         config.request.apiCallbackQueue = my_api_queue();
     }];

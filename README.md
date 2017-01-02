@@ -43,8 +43,8 @@ HLNetworking整体结构如图所示，是一套基于[AFNetworking 3.1.0](https
 
 ```objc
 [HLAPIManager setupConfig:^(HLNetworkConfig * _Nonnull config) {
-	config.baseURL = @"https://httpbin.org/";
-	config.apiVersion = nil;
+	config.request.baseURL = @"https://httpbin.org/";
+	config.request.apiVersion = nil;
 }];
 ```
 
@@ -170,11 +170,13 @@ HLObserverAPIs(self.api1, self.api2)
 
 **注意1：**设置请求URL时，`setCustomURL`的优先级最高，其次是API中的`setBaseURL`，最后才是全局config中的`baseURL`，另无论是哪种`baseURL`都需要配合`setPath`使用。
 
-**注意2：**一个请求对象的回调 block (success/failure/progress/debug) 是非必需的（默认为 `nil`）。另外，需要注意的是，success/failure/debug等回调 Block 会在 config 设置的 `apiCallbackQueue ` 队列中被执行，但 progress 回调 Block 将在 NSURLSession 自己的队列中执行，而不是 `apiCallbackQueue `，但是所有的回调结果都会回落到主线程。
+**注意2：**一次请求必须有`{customURL}`或者`{config.baseURL | api.baseURL}``{api.path}`，如果`{customURL}`的参数错写成`{api.path}`中的无host urlString，也会被自动识别成`{api.path}`。
 
-**注意3：**请求的delegate回调之所以这样设置，是为了可以跨类获取请求回调，因此使用起来稍微麻烦一些，如果只需要在当前类拿到回调，使用block方式即可。
+**注意3：**一个请求对象的回调 block (success/failure/progress/debug) 是非必需的（默认为 `nil`）。另外，需要注意的是，success/failure/debug等回调 Block 会在 config 设置的 `apiCallbackQueue ` 队列中被执行，但 progress 回调 Block 将在 NSURLSession 自己的队列中执行，而不是 `apiCallbackQueue `，但是所有的回调结果都会回落到主线程。
 
-**注意4：**HLAPI 同样支持其他 HTTP 方法，比如：`HEAD`, `DELETE`, `PUT`, `PATCH` 等，使用方式与上述类似，不再赘述。
+**注意4：**请求的delegate回调之所以这样设置，是为了可以跨类获取请求回调，因此使用起来稍微麻烦一些，如果只需要在当前类拿到回调，使用block方式即可。
+
+**注意5：**HLAPI 同样支持其他 HTTP 方法，比如：`HEAD`, `DELETE`, `PUT`, `PATCH` 等，使用方式与上述类似，不再赘述。
 
 详见 `HLNetworkConfig`、`HLSecurityPolicyConfig`、`HLAPI`、`HLAPIType` 、`HLAPIManager` 、`HLFormDataConfig`、`HLDebugMessage` 等几个文件中的代码和注释，可选参数基本可以覆盖大多数需求。
 
@@ -488,6 +490,18 @@ HLStrongSynthesize(home, [HLAPI API]
         NSLog(@"----%@", obj);
     }) start];
 }
+```
+
+### 更新日志
+**1.2.2**
+
+```
+新增：
+1. 拆分了HLNetworkConfig内的参数，现分为tips、request、policy、defaultSecurityPolicy、enableReachability这五个大选项
+修复：
+1. 修复了HLObserverAPIs(...)和HLObserverTasks(...)内传入nil引起的崩溃错误
+2. 修复了HLAPI中setResponseClass方法传入无效类名引起的崩溃错误，当该类名无效时，HLBaseObjReformer将不会做任何操作，直接返回nil
+3. 修复了HLAPI中setCustomURL方法传入无效urlString引起的崩溃错误
 ```
 
 ## 环境要求
