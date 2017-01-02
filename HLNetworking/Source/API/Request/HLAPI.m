@@ -36,7 +36,7 @@ HLDebugKey const kHLQueueDebugKey = @"kHLQueueDebugKey";
                                @"application/json",
                                @"text/javascript",
                                @"text/plain", nil];
-        _header = [HLAPIManager sharedManager].config.defaultHeaders;
+        _header = [HLAPIManager sharedManager].config.request.defaultHeaders;
         _parameters = nil;
         _timeoutInterval = HL_API_REQUEST_TIME_OUT;
         _cachePolicy = NSURLRequestUseProtocolCachePolicy;
@@ -86,7 +86,12 @@ HLDebugKey const kHLQueueDebugKey = @"kHLQueueDebugKey";
 
 - (HLAPI *(^)(NSString *clzName))setResponseClass {
     return ^HLAPI* (NSString *clzName) {
-        self.objClz = NSClassFromString(clzName);
+        Class clz = NSClassFromString(clzName);
+        if (clz) {
+            self.objClz = clz;
+        } else {
+            self.objClz = nil;
+        }
         return self;
     };
 }
@@ -195,8 +200,8 @@ HLDebugKey const kHLQueueDebugKey = @"kHLQueueDebugKey";
     return ^HLAPI* (NSString *customURL) {
         self.cURL = customURL;
         NSURL *tmpURL = [NSURL URLWithString:customURL];
-        if (tmpURL) {
-            self.baseURL = [NSString stringWithFormat:@"%@://%@", tmpURL.scheme, tmpURL.host];
+        if (tmpURL.host) {
+            self.baseURL = [NSString stringWithFormat:@"%@://%@", tmpURL.scheme ?: @"https", tmpURL.host];
             self.path = [NSString stringWithFormat:@"%@", tmpURL.query];
         }
         return self;
@@ -286,8 +291,8 @@ HLDebugKey const kHLQueueDebugKey = @"kHLQueueDebugKey";
     NSString *desc;
 #if DEBUG
     desc = [NSString stringWithFormat:@"\n===============HLAPI===============\nAPIVersion: %@\nClass: %@\nBaseURL: %@\nPath: %@\nCustomURL: %@\nParameters: %@\nHeader: %@\nContentTypes: %@\nTimeoutInterval: %f\nSecurityPolicy: %@\nRequestMethodType: %@\nRequestSerializerType: %@\nResponseSerializerType: %@\nCachePolicy: %@\n===============end===============\n\n",
-            [HLAPIManager sharedManager].config.apiVersion ?: @"未设置",
-            self.class, self.baseURL ?: [HLAPIManager sharedManager].config.baseURL,
+            [HLAPIManager sharedManager].config.request.apiVersion ?: @"未设置",
+            self.class, self.baseURL ?: [HLAPIManager sharedManager].config.request.baseURL,
             self.path, self.cURL ?: @"未设置",
             self.parameters ?: @"未设置", self.header ?: @"未设置",
             self.accpetContentTypes,

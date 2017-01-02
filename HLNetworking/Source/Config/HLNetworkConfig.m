@@ -8,27 +8,14 @@
 
 #import "HLNetworkConfig.h"
 
-NSString * const HLDefaultGeneralErrorString            = @"服务器连接错误，请稍候重试";
-NSString * const HLDefaultFrequentRequestErrorString    = @"请求发送速度太快, 请稍候重试";
-NSString * const HLDefaultNetworkNotReachableString     = @"网络不可用，请稍后重试";
-
 @implementation HLNetworkConfig
 
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _apiCallbackQueue = nil;
-        _generalErrorTypeStr = HLDefaultGeneralErrorString;
-        _frequentRequestErrorStr = HLDefaultFrequentRequestErrorString;
-        _networkNotReachableErrorStr = HLDefaultNetworkNotReachableString;
-        _isNetworkingActivityIndicatorEnabled = YES;
-        _isErrorCodeDisplayEnabled = YES;
-        _maxHttpConnectionPerHost = MAX_HTTP_CONNECTION_PER_HOST;
-        _requestTimeoutInterval = HL_API_REQUEST_TIME_OUT;
-        _cachePolicy = NSURLRequestUseProtocolCachePolicy;
-        _URLCache = [NSURLCache sharedURLCache];
-        _apiVersion = [self getCurrentVersion];
-        _isJudgeVersion = [[NSUserDefaults standardUserDefaults] boolForKey:@"isR"] ? : YES;
+        _tips = [HLNetworkTipsConfig config];
+        _request = [HLNetworkRequestConfig config];
+        _policy = [HLNetworkPolicyConfig config];
         _enableReachability = NO;
 #ifdef DEBUG
         _defaultSecurityPolicy = [HLSecurityPolicyConfig policyWithPinningMode:HLSSLPinningModeNone];
@@ -43,26 +30,15 @@ NSString * const HLDefaultNetworkNotReachableString     = @"网络不可用，�
     return [[self alloc] init];
 }
 
-- (NSString *)getCurrentVersion {
-    NSString *origin = [[NSBundle mainBundle].infoDictionary[@"CFBundleShortVersionString"] stringByReplacingOccurrencesOfString:@"." withString:@""];
-    if (self.isJudgeVersion) {
-        return [NSString stringWithFormat:@"v%@r", origin];
-    } else {
-        return [NSString stringWithFormat:@"v%@", origin];
-    }
-}
-
 - (id)copyWithZone:(NSZone *)zone {
     HLNetworkConfig *config = [[[self class] alloc] init];
     if (config) {
-        config.generalErrorTypeStr = [_generalErrorTypeStr copyWithZone:zone];
-        config.frequentRequestErrorStr = [_frequentRequestErrorStr copyWithZone:zone];
-        config.networkNotReachableErrorStr = [_networkNotReachableErrorStr copyWithZone:zone];
-        config.isErrorCodeDisplayEnabled = _isErrorCodeDisplayEnabled;
-        config.baseURL = [_baseURL copyWithZone:zone];
-        config.apiVersion = [_apiVersion copyWithZone:zone];
-        config.userAgent = [_userAgent copyWithZone:zone];
-        config.maxHttpConnectionPerHost = _maxHttpConnectionPerHost;
+        config.tips = [_tips copyWithZone:zone];
+        config.request = [_request copyWithZone:zone];
+        config.policy = [_policy copyWithZone:zone];
+        config.defaultSecurityPolicy = [_defaultSecurityPolicy copyWithZone:zone];
+        config.enableReachability = _enableReachability;
+        config.defaultSecurityPolicy = _defaultSecurityPolicy;
     }
     return config;
 }

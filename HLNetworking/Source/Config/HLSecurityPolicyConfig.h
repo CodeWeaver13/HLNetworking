@@ -18,7 +18,7 @@ typedef NS_ENUM(NSUInteger, HLSSLPinningMode) {
     HLSSLPinningModeCertificate
 };
 
-@interface HLSecurityPolicyConfig : NSObject
+@interface HLSecurityPolicyConfig : NSObject<NSCopying>
 // SSL Pinning证书的校验模式，默认为 HLSSLPinningModeNone
 @property (readonly, nonatomic, assign) HLSSLPinningMode SSLPinningMode;
 

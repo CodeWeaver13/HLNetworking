@@ -11,10 +11,14 @@
 
 @implementation HLBaseObjReformer
 - (id)objReformerWithAPI:(HLAPI *)api andResponseObject:(id)responseObject andError:(NSError *)error {
-    if (responseObject) {
-        return [api.objClz yy_modelWithJSON:responseObject];
-    } else {
-        return [[api.objClz alloc] init];
+    if (api.objClz && ![NSStringFromClass(api.objClz) isEqualToString:@"NSObject"]) {
+        if (responseObject) {
+            return [api.objClz yy_modelWithJSON:responseObject];
+        }
     }
+#if DEBUG
+    NSLog(@"该对象无法转换，api = %@", api);
+#endif
+    return nil;
 }
 @end

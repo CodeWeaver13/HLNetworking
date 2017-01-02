@@ -19,7 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
  */
 #define HLObserverTasks(...) \
 - (NSArray <HLTask *>* _Nonnull)requestTasks { \
-    return @[ __VA_ARGS__ ]; \
+    return [NSArray arrayWithObjects:__VA_ARGS__, nil]; \
 }
 
 @required

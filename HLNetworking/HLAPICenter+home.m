@@ -11,8 +11,7 @@
 @implementation HLAPICenter (home)
 HLStrongSynthesize(home, [HLAPI API]
                    .setMethod(GET)
-                   .setPath(@"index.php?r=resource/index-app")
-                   .setResponseClass(@"HLHomeModel")
+                   .setPath(@"get")
                    .setObjReformerDelegate(self.defaultReformer))
 
 @end

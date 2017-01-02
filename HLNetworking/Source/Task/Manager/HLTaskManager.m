@@ -88,10 +88,10 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
     if (taskURL) {
         baseUrlStr = [NSString stringWithFormat:@"%@://%@", taskURL.scheme, taskURL.host];
     } else {
-        NSAssert(task.baseURL != nil || self.config.baseURL != nil,
+        NSAssert(task.baseURL != nil || self.config.request.baseURL != nil,
                  @"task baseURL 和 self.config.baseurl 两者必须有一个有值");
         
-        NSString *tmpStr = task.baseURL ? : self.config.baseURL;
+        NSString *tmpStr = task.baseURL ? : self.config.request.baseURL;
         
         // 在某些情况下，一些用户会直接把整个url地址写进 baseUrl
         // 因此，还需要对baseUrl 进行一次切割
@@ -115,15 +115,15 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
     if (!sessionManager) {
         NSURLSessionConfiguration *sessionConfig;
         if (self.config) {
-            if (self.config.isBackgroundSession) {
+            if (self.config.policy.isBackgroundSession) {
                 NSString *kBackgroundSessionID = [NSString stringWithFormat:@"com.wangshiyu13.backgroundSession.task.%@", baseUrlStr];
-                NSString *kSharedContainerIdentifier = self.config.AppGroup ?: [NSString stringWithFormat:@"com.wangshiyu13.testApp"];
+                NSString *kSharedContainerIdentifier = self.config.policy.AppGroup ?: [NSString stringWithFormat:@"com.wangshiyu13.testApp"];
                 sessionConfig = [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:kBackgroundSessionID];
                 sessionConfig.sharedContainerIdentifier = kSharedContainerIdentifier;
             } else {
                 sessionConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
             }
-            sessionConfig.HTTPMaximumConnectionsPerHost = self.config.maxHttpConnectionPerHost;
+            sessionConfig.HTTPMaximumConnectionsPerHost = self.config.request.maxHttpConnectionPerHost;
         } else {
             sessionConfig.HTTPMaximumConnectionsPerHost = MAX_HTTP_CONNECTION_PER_HOST;
         }
@@ -153,15 +153,15 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
             // 默认使用self.config.generalErrorTypeStr = "服务器连接错误，请稍候重试"
             NSMutableDictionary *tmpUserInfo = [[NSMutableDictionary alloc]initWithDictionary:error.userInfo copyItems:NO];
             if (![[tmpUserInfo allKeys] containsObject:NSLocalizedFailureReasonErrorKey]) {
-                tmpUserInfo[NSLocalizedFailureReasonErrorKey] = NSLocalizedString(self.config.generalErrorTypeStr, nil);
+                tmpUserInfo[NSLocalizedFailureReasonErrorKey] = NSLocalizedString(self.config.tips.generalErrorTypeStr, nil);
             }
             if (![[tmpUserInfo allKeys] containsObject:NSLocalizedRecoverySuggestionErrorKey]) {
-                tmpUserInfo[NSLocalizedRecoverySuggestionErrorKey] = NSLocalizedString(self.config.generalErrorTypeStr, nil);
+                tmpUserInfo[NSLocalizedRecoverySuggestionErrorKey] = NSLocalizedString(self.config.tips.generalErrorTypeStr, nil);
             }
             // 加上 networking error code
-            NSString *newErrorDescription = self.config.generalErrorTypeStr;
-            if (self.config.isErrorCodeDisplayEnabled) {
-                newErrorDescription = [NSString stringWithFormat:@"%@, error code = (%ld)", self.config.generalErrorTypeStr, (long)error.code];
+            NSString *newErrorDescription = self.config.tips.generalErrorTypeStr;
+            if (self.config.policy.isErrorCodeDisplayEnabled) {
+                newErrorDescription = [NSString stringWithFormat:@"%@, error code = (%ld)", self.config.tips.generalErrorTypeStr, (long)error.code];
             }
             tmpUserInfo[NSLocalizedDescriptionKey] = NSLocalizedString(newErrorDescription, nil);
             NSDictionary *userInfo = [tmpUserInfo copy];
@@ -203,9 +203,9 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
         requestURL = taskURL;
     } else {
         // 如果taskURL没定义，则使用BaseUrl + requestMethod 组成 UrlString
-        NSAssert(task.baseURL != nil || self.config.baseURL != nil,
+        NSAssert(task.baseURL != nil || self.config.request.baseURL != nil,
                  @"api baseURL 和 self.config.baseurl 两者必须有一个有值");
-        NSString *tmpStr = [NSString stringWithFormat:@"%@/%@", task.baseURL ?: self.config.baseURL, task.path ?: @""];
+        NSString *tmpStr = [NSString stringWithFormat:@"%@/%@", task.baseURL ?: self.config.request.baseURL, task.path ?: @""];
         NSURL *tmpBaseURL = [NSURL URLWithString:tmpStr];
         host = [NSString stringWithFormat:@"%@://%@", tmpBaseURL.scheme, tmpBaseURL.host];
         requestURL = tmpBaseURL;
@@ -218,7 +218,7 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
     
     // 如果缓存中已有当前task，则立即使api返回失败回调，错误信息为frequentRequestErrorStr，如果是apiBatch，则整组移除
     if ([self.downloadTasksCache objectForKey:hashKey] || [self.uploadTasksCache objectForKey:hashKey]) {
-        NSString *errorStr     = self.config.frequentRequestErrorStr;
+        NSString *errorStr     = self.config.tips.frequentRequestErrorStr;
         NSDictionary *userInfo = @{
                                    NSLocalizedDescriptionKey : errorStr
                                    };
@@ -242,7 +242,7 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
     
     // 如果无网络，则立即使api响应失败回调，错误信息是networkNotReachableErrorStr，如果是apiBatch，则整组移除
     if (!isReachable) {
-        NSString *errorStr     = self.config.networkNotReachableErrorStr;
+        NSString *errorStr     = self.config.tips.networkNotReachableErrorStr;
         NSDictionary *userInfo = @{
                                    NSLocalizedDescriptionKey : errorStr,
                                    NSLocalizedFailureReasonErrorKey : [NSString stringWithFormat:@"%@ 无法访问", host]
@@ -288,7 +288,7 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
     void (^donwloadCompleteBlcok)(NSURLResponse * _Nonnull response, NSURL * _Nullable filePath, NSError * _Nullable error)
     = ^(NSURLResponse * _Nonnull response, NSURL * _Nullable filePath, NSError * _Nullable error) {
         @strongify(self);
-        if (self.config.isNetworkingActivityIndicatorEnabled) {
+        if (self.config.tips.isNetworkingActivityIndicatorEnabled) {
             [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
         }
         [self callTaskCompletion:task obj:filePath error:error];
@@ -310,7 +310,7 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
     }
 #pragma clang diagnostic pop
     
-    if (self.config.isNetworkingActivityIndicatorEnabled) {
+    if (self.config.tips.isNetworkingActivityIndicatorEnabled) {
         [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:YES];
     }
     NSURLSessionTask *dataTask;
@@ -322,7 +322,7 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
                                                     progress:progressBlock
                                            completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
                                                @strongify(self);
-                                               if (self.config.isNetworkingActivityIndicatorEnabled) {
+                                               if (self.config.tips.isNetworkingActivityIndicatorEnabled) {
                                                    [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
                                                }
                                                [self callTaskCompletion:task obj:responseObject error:error];

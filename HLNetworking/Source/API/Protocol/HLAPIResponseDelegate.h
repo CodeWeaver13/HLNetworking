@@ -20,7 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
  */
 #define HLObserverAPIs(...) \
 - (NSArray <HLAPI *>*)requestAPIs { \
-    return @[ __VA_ARGS__ ]; \
+return [NSArray arrayWithObjects:__VA_ARGS__, nil];; \
 }
 
 @required

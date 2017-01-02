@@ -19,7 +19,7 @@
     self = [super init];
     if (self) {
         _requestTaskType = Download;
-        _baseURL = [HLTaskManager sharedManager].config.baseURL;
+        _baseURL = [HLTaskManager sharedManager].config.request.baseURL;
         NSString *baseResumePath = [[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:@"com.qkhl.HLNetworking/downloadDict"];
         if (![[NSFileManager defaultManager] fileExistsAtPath:baseResumePath isDirectory:nil]) {
             [[NSFileManager defaultManager] createDirectoryAtPath:baseResumePath withIntermediateDirectories:YES attributes:nil error:nil];
@@ -85,7 +85,7 @@
     NSString *desc;
 #if DEBUG
     desc = [NSString stringWithFormat:@"\n===============HLTask===============\nClass: %@\nBaseURL: %@\nPath: %@\nTaskURL: %@\nResumePath: %@\nCachePath: %@\nTimeoutInterval: %f\nSecurityPolicy: %@\nRequestTaskType: %lu\nCachePolicy: %lu\n===============end===============\n\n",
-            self.class, self.baseURL ?: [HLTaskManager sharedManager].config.baseURL,
+            self.class, self.baseURL ?: [HLTaskManager sharedManager].config.request.baseURL,
             self.path ?: @"未设置",
             self.taskURL ?: @"未设置",
             self.resumePath,

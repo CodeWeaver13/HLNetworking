@@ -35,4 +35,15 @@
 #endif
     return desc;
 }
+
+- (id)copyWithZone:(NSZone *)zone {
+    HLSecurityPolicyConfig *config = [[[self class] alloc] init];
+    if (config) {
+        config.SSLPinningMode = _SSLPinningMode;
+        config.allowInvalidCertificates = _allowInvalidCertificates;
+        config.validatesDomainName = _validatesDomainName;
+        config.cerFilePath = [_cerFilePath copyWithZone:zone];
+    }
+    return config;
+}
 @end

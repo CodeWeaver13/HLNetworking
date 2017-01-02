@@ -36,7 +36,7 @@ static dispatch_queue_t my_api_queue() {
 - (void)viewDidLoad {
     [super viewDidLoad];
     [self setupAPINetworkConfig];
-    [self testAPI];
+//    [self testAPI];
     [self testHome];
 }
 
@@ -72,8 +72,8 @@ static dispatch_queue_t my_api_queue() {
 
 - (void)setupTaskNetworkConfig {
     [HLTaskManager setupConfig:^(HLNetworkConfig * _Nonnull config) {
-        config.baseURL = @"https://httpbin.org";
-        config.isBackgroundSession = NO;
+        config.request.baseURL = @"https://httpbin.org";
+        config.policy.isBackgroundSession = NO;
     }];
     [HLTaskManager registerResponseObserver:self];
 }
@@ -107,9 +107,9 @@ static dispatch_queue_t my_api_queue() {
 
 - (void)setupAPINetworkConfig {
     [HLAPIManager setupConfig:^(HLNetworkConfig * _Nonnull config) {
-        config.baseURL = @"https://httpbin.org/";
-        config.apiVersion = nil;
-        config.apiCallbackQueue = my_api_queue();
+        config.request.baseURL = @"https://httpbin.org/";
+        config.request.apiVersion = nil;
+        config.request.apiCallbackQueue = my_api_queue();
     }];
     [HLAPIManager registerResponseObserver:self];
 }
@@ -120,7 +120,8 @@ static dispatch_queue_t my_api_queue() {
     chain.delegate = self;
     
     self.api1 = [HLAPI API].setMethod(GET)
-    .setCustomURL(@"https://api.lovek12.com/v200/index.php?r=user/user-info&device_type=ad1&user_id=74")
+    .setCustomURL(@"get")
+//    .setPath(@"get")
     .setDelegate(self)
     .setObjReformerDelegate(self)
     .success(^(id obj) {
@@ -217,7 +218,8 @@ static dispatch_queue_t my_api_queue() {
 HLObserverAPIs(self.api1, self.api2, self.api3)
 
 //- (NSArray<HLAPI *> *)requestAPIs {
-//    return @[self.api1, self.api2, self.api3, self.api4];
+//    NSArray *array = [NSArray arrayWithObjects:self.api1, self.api2, self.api3, self.api4, nil];
+//    return array;
 //}
 
 - (void)requestSucessWithResponseObject:(id)responseObject atAPI:(HLAPI *)api {

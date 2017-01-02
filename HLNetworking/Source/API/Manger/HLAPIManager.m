@@ -66,7 +66,7 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
     self = [super init];
     if (self) {
         _config = [HLNetworkConfig config];
-        _currentQueue = _config.apiCallbackQueue ?: qkhl_api_http_creation_queue();
+        _currentQueue = _config.request.apiCallbackQueue ?: qkhl_api_http_creation_queue();
         _reachabilityStatus = HLReachabilityStatusUnknown;
         _reachabilities = [NSMutableDictionary dictionary];
         _sessionManagerCache = [NSMutableDictionary dictionary];
@@ -80,7 +80,7 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
 #pragma mark - SetupConfig
 - (void)setupConfig:(void (^)(HLNetworkConfig * _Nonnull config))configBlock {
     HL_SAFE_BLOCK(configBlock, self.config);
-    self.currentQueue = self.config.apiCallbackQueue ?: qkhl_api_http_creation_queue();
+    self.currentQueue = self.config.request.apiCallbackQueue ?: qkhl_api_http_creation_queue();
 }
 
 + (void)setupConfig:(void (^)(HLNetworkConfig * _Nonnull config))configBlock {
@@ -116,8 +116,8 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
     requestSerializer.timeoutInterval      = api.timeoutInterval;
     NSDictionary *requestHeaderFieldParams = api.header;
     if (![[requestHeaderFieldParams allKeys] containsObject:@"User-Agent"] &&
-        self.config.userAgent) {
-        [requestSerializer setValue:self.config.userAgent forHTTPHeaderField:@"User-Agent"];
+        self.config.request.userAgent) {
+        [requestSerializer setValue:self.config.request.userAgent forHTTPHeaderField:@"User-Agent"];
     }
     if (requestHeaderFieldParams) {
         [requestHeaderFieldParams enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
@@ -154,18 +154,18 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
     NSString *baseUrlStr;
     // 如果定义了自定义的cURL, 则直接使用
     NSURL *cURL = [NSURL URLWithString:api.cURL];
-    if (cURL) {
-        baseUrlStr = [NSString stringWithFormat:@"%@://%@", cURL.scheme, cURL.host];
+    if (cURL.host) {
+        baseUrlStr = [NSString stringWithFormat:@"%@://%@", cURL.scheme ?: @"https", cURL.host];
     } else {
-        NSAssert(api.baseURL != nil || self.config.baseURL != nil,
+        NSAssert(api.baseURL != nil || self.config.request.baseURL != nil,
                  @"api baseURL 和 self.config.baseurl 两者必须有一个有值");
         
-        NSString *tmpStr = api.baseURL ? : self.config.baseURL;
+        NSString *tmpStr = api.baseURL ? : self.config.request.baseURL;
         
         // 在某些情况下，一些用户会直接把整个url地址写进 baseUrl
         // 因此，还需要对baseUrl 进行一次切割
         NSURL *tmpURL = [NSURL URLWithString:tmpStr];
-        baseUrlStr = [NSString stringWithFormat:@"%@://%@", tmpURL.scheme, tmpURL.host];;
+        baseUrlStr = [NSString stringWithFormat:@"%@://%@", tmpURL.scheme ?: @"https", tmpURL.host];;
     }
     
     // 设置AFSecurityPolicy参数
@@ -188,10 +188,10 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
     if (!sessionManager) {
         // 根据传入的BaseURL创建新的SessionManager
         NSURLSessionConfiguration *sessionConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
-        sessionConfig.HTTPMaximumConnectionsPerHost = self.config.maxHttpConnectionPerHost;
-        sessionConfig.requestCachePolicy = api.cachePolicy ?: self.config.cachePolicy;
-        sessionConfig.timeoutIntervalForRequest = api.timeoutInterval ?: self.config.requestTimeoutInterval;
-        sessionConfig.URLCache = self.config.URLCache;
+        sessionConfig.HTTPMaximumConnectionsPerHost = self.config.request.maxHttpConnectionPerHost;
+        sessionConfig.requestCachePolicy = api.cachePolicy ?: self.config.policy.cachePolicy;
+        sessionConfig.timeoutIntervalForRequest = api.timeoutInterval ?: self.config.request.requestTimeoutInterval;
+        sessionConfig.URLCache = self.config.policy.URLCache;
         sessionManager = [[AFHTTPSessionManager alloc] initWithBaseURL:[NSURL URLWithString:baseUrlStr]
                                                   sessionConfiguration:sessionConfig];
         [self.sessionManagerCache setObject:sessionManager forKey:baseUrlStr];
@@ -230,15 +230,15 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
             // 默认使用self.config.generalErrorTypeStr = "服务器连接错误，请稍候重试"
             NSMutableDictionary *tmpUserInfo = [[NSMutableDictionary alloc]initWithDictionary:error.userInfo copyItems:NO];
             if (![[tmpUserInfo allKeys] containsObject:NSLocalizedFailureReasonErrorKey]) {
-                tmpUserInfo[NSLocalizedFailureReasonErrorKey] = NSLocalizedString(self.config.generalErrorTypeStr, nil);
+                tmpUserInfo[NSLocalizedFailureReasonErrorKey] = NSLocalizedString(self.config.tips.generalErrorTypeStr, nil);
             }
             if (![[tmpUserInfo allKeys] containsObject:NSLocalizedRecoverySuggestionErrorKey]) {
-                tmpUserInfo[NSLocalizedRecoverySuggestionErrorKey] = NSLocalizedString(self.config.generalErrorTypeStr, nil);
+                tmpUserInfo[NSLocalizedRecoverySuggestionErrorKey] = NSLocalizedString(self.config.tips.generalErrorTypeStr, nil);
             }
             // 加上 networking error code
-            NSString *newErrorDescription = self.config.generalErrorTypeStr;
-            if (self.config.isErrorCodeDisplayEnabled) {
-                newErrorDescription = [NSString stringWithFormat:@"%@, error code = (%ld)", self.config.generalErrorTypeStr, (long)error.code];
+            NSString *newErrorDescription = self.config.tips.generalErrorTypeStr;
+            if (self.config.policy.isErrorCodeDisplayEnabled) {
+                newErrorDescription = [NSString stringWithFormat:@"%@, error code = (%ld)", self.config.tips.generalErrorTypeStr, (long)error.code];
             }
             tmpUserInfo[NSLocalizedDescriptionKey] = NSLocalizedString(newErrorDescription, nil);
             NSDictionary *userInfo = [tmpUserInfo copy];
@@ -300,14 +300,14 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
     if (cURL) {
         requestURLString = cURL.absoluteString;
     } else {
-        NSAssert(api.baseURL != nil || self.config.baseURL != nil,
+        NSAssert(api.baseURL != nil || self.config.request.baseURL != nil,
                  @"api baseURL 和 self.config.baseurl 两者必须有一个有值");
-        NSString *tmpBaseURLStr = api.baseURL ?: self.config.baseURL;
+        NSString *tmpBaseURLStr = api.baseURL ?: self.config.request.baseURL;
         NSURL *tmpBaseURL = [NSURL URLWithString:tmpBaseURLStr];
         // 使用BaseUrl + apiversion(可选) + path 组成 UrlString
         // 如果有apiVersion，则在requestUrlStr中插入该参数
-        if (self.config.apiVersion && ![self.config.apiVersion isEqualToString:@""]) {
-            requestURLString = [NSString stringWithFormat:@"%@/%@", tmpBaseURL.absoluteString, self.config.apiVersion];
+        if (self.config.request.apiVersion && ![self.config.request.apiVersion isEqualToString:@""]) {
+            requestURLString = [NSString stringWithFormat:@"%@/%@", tmpBaseURL.absoluteString, self.config.request.apiVersion];
         } else {
             requestURLString = tmpBaseURL.absoluteString;
         }
@@ -319,14 +319,14 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
     
     // 生成请求参数
     NSMutableDictionary<NSString *, id> *requestParams = [NSMutableDictionary dictionaryWithDictionary:api.parameters];
-    if (self.config.defaultParams && api.useDefaultParams) {
-        [requestParams addEntriesFromDictionary:self.config.defaultParams];
+    if (self.config.request.defaultParams && api.useDefaultParams) {
+        [requestParams addEntriesFromDictionary:self.config.request.defaultParams];
     }
     
     NSString *hashKey = [self hashStringWithAPI:api];
     // 如果缓存中已有当前task，则立即使api返回失败回调，错误信息为frequentRequestErrorStr，如果是apiBatch，则整组移除
     if ([self.sessionTasksCache objectForKey:hashKey]) {
-        NSString *errorStr     = self.config.frequentRequestErrorStr;
+        NSString *errorStr     = self.config.tips.frequentRequestErrorStr;
         NSDictionary *userInfo = @{
                                    NSLocalizedDescriptionKey : errorStr
                                    };
@@ -362,7 +362,7 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
     
     // 如果无网络，则立即使api响应失败回调，错误信息是networkNotReachableErrorStr，如果是apiBatch，则整组移除
     if (!isReachable) {
-        NSString *errorStr     = self.config.networkNotReachableErrorStr;
+        NSString *errorStr     = self.config.tips.networkNotReachableErrorStr;
         NSDictionary *userInfo = @{
                                    NSLocalizedDescriptionKey : errorStr,
                                    NSLocalizedFailureReasonErrorKey : [NSString stringWithFormat:@"网络异常，%@ 无法访问", sessionManager.baseURL.host]
@@ -395,7 +395,7 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
     void (^successBlock)(NSURLSessionDataTask *task, id responseObject)
     = ^(NSURLSessionDataTask * task, id responseObject) {
         @strongify(self);
-        if (self.config.isNetworkingActivityIndicatorEnabled) {
+        if (self.config.tips.isNetworkingActivityIndicatorEnabled) {
             [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
         }
 #if DEBUG
@@ -420,7 +420,7 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
     void (^failureBlock)(NSURLSessionDataTask * task, NSError * error)
     = ^(NSURLSessionDataTask * task, NSError * error) {
         @strongify(self);
-        if (self.config.isNetworkingActivityIndicatorEnabled) {
+        if (self.config.tips.isNetworkingActivityIndicatorEnabled) {
             [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
         }
 #if DEBUG
@@ -473,7 +473,7 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
     }
 #pragma clang diagnostic pop
     
-    if (self.config.isNetworkingActivityIndicatorEnabled) {
+    if (self.config.tips.isNetworkingActivityIndicatorEnabled) {
         [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:YES];
     }
     NSURLSessionDataTask *dataTask;
@@ -687,7 +687,12 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
                                      andError:(NSError *)error
                              andCallbackQueue:(dispatch_queue_t)queue
 {
-    id mTask, response, originalRequest, currentRequest, debugError = [NSNull null];
+    id mTask = [NSNull null];
+    id response = [NSNull null];
+    id originalRequest = [NSNull null];
+    id currentRequest = [NSNull null];
+    id debugError = [NSNull null];
+    
     if (task) {
         mTask = task;
     }
@@ -811,11 +816,11 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
 }
 
 + (void)listening:(void (^)(HLReachabilityStatus))listener {
-    [[self sharedManager] listeningWithDomain:[self sharedManager].config.baseURL listeningBlock:listener];
+    [[self sharedManager] listeningWithDomain:[self sharedManager].config.request.baseURL listeningBlock:listener];
 }
 
 + (void)stopListening {
-    [[self sharedManager] stopListeningWithDomain:[self sharedManager].config.baseURL];
+    [[self sharedManager] stopListeningWithDomain:[self sharedManager].config.request.baseURL];
 }
 
 - (void)listeningWithDomain:(NSString *)domain listeningBlock:(void (^)(HLReachabilityStatus))listener {

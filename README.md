@@ -1,7 +1,7 @@
 ![HLNetworking: Multi paradigm network request manager based on AFNetworking](https://raw.githubusercontent.com/QianKun-HanLin/HLNetworking/master/loge.png)
 #### 基于AFNetworking的多范式网络请求管理器
 [![License MIT](https://img.shields.io/badge/license-MIT-green.svg?style=flat)](https://github.com/wangshiyu13/HLQRCodeScanner/blob/master/LICENSE)
-[![CI Status](https://img.shields.io/badge/build-1.2.1-brightgreen.svg)](https://travis-ci.org/wangshiyu13/HLQRCodeScanner)
+[![CI Status](https://img.shields.io/badge/build-1.2.2-brightgreen.svg)](https://travis-ci.org/wangshiyu13/HLQRCodeScanner)
 [![CocoaPods](https://img.shields.io/badge/platform-iOS-lightgrey.svg)](http://cocoapods.org/?q= HLQRCodeScanner)
 [![Support](https://img.shields.io/badge/support-iOS%208%2B-blue.svg)](https://www.apple.com/nl/ios/)
 
@@ -50,30 +50,33 @@ HLNetworking整体结构如图所示，是一套基于[AFNetworking 3.1.0](https
 
 通过调用`HLAPIManager`的`+setupConfig:`方法，修改block中传入的`HLNetworkConfig`对象来配置全局网络请求信息，其中可修改的参数如下：
 
-- **apiCallbackQueue**：自定义的请求队列，如果不设置则自动使用HLAPIManager默认的队列
-- **defaultParams**：默认的parameters，可以在HLAPI中选择是否使用，默认开启，该参数不会被覆盖，HLAPI中使用`setParams()`后，请求的params中依然会有该参数
-- **defaultHeaders**：默认的header，可以在HLAPI中覆盖
-- **AppGroup**：后台模式所用的GroupID，该选项只对Task有影响
-- **isBackgroundSession**：是否为后台模式，该选项只对Task有影响
-- **generalErrorTypeStr**：出现网络请求时使用的错误提示文字，该文字在failure block中的NSError对象返回；默认为：`服务器连接错误，请稍候重试`
-- **frequentRequestErrorStr**：用户频繁发送同一个请求，使用的错误提示文字；默认为：`请求发送速度太快, 请稍候重试`
-- **networkNotReachableErrorStr**：网络请求开始时，会先检测相应网络域名的Reachability，如果不可达，则直接返回该错误提示；默认为：`网络不可用，请稍后重试`
-- **isErrorCodeDisplayEnabled**：出现网络请求错误时，是否在请求错误的文字后加上`{code}`，默认为YES
-- **baseURL**：全局的baseURL，HLAPI的baseURL会覆盖该参数
-- **apiVersion**：api版本，用于拼接在请求的Path上，默认为infoPlist中的`CFBundleShortVersionString`，格式为`v{version}{r}`，审核版本为r，例：http://www.baidu.com/v5/s?ie=UTF-8&wd=abc
-- **isJudgeVersion**：是否为审核版本，作用于apiVersion，存储在NSUserDefaults中，key为isR
-- **userAgent**：UserAgent，request header中的UA，默认为nil
-- **maxHttpConnectionPerHost**：每个Host的最大连接数，默认为5
-- **requestTimeoutInterval**：请求超时时间，默认为15秒
-- **cachePolicy**：请求缓存策略，默认为NSURLRequestUseProtocolCachePolicy
-- **URLCache**：URLCache设置
-- **isNetworkingActivityIndicatorEnabled**：请求时是否显示网络指示器（状态栏），默认为YES
-- **enableReachability**：是否启用reachability，baseURL为domain
+- **tips**：提示相关参数
+	- **generalErrorTypeStr**：出现网络请求时使用的错误提示文字，该文字在failure block中的NSError对象返回；默认为：`服务器连接错误，请稍候重试`
+	- **frequentRequestErrorStr**：用户频繁发送同一个请求，使用的错误提示文字；默认为：`请求发送速度太快, 请稍候重试`
+	- **networkNotReachableErrorStr**：网络请求开始时，会先检测相应网络域名的Reachability，如果不可达，则直接返回该错误提示；默认为：`网络不可用，请稍后重试`
+	- **isNetworkingActivityIndicatorEnabled**：请求时是否显示网络指示器（状态栏），默认为 `YES`
+- **request**：请求相关参数
+	- **apiCallbackQueue**：自定义的请求队列，如果不设置则自动使用HLAPIManager默认的队列，该参数默认为 `nil`
+	- **defaultParams**：默认的parameters，可以在HLAPI中选择是否使用，默认开启，该参数不会被覆盖，HLAPI中使用`setParams()`后，请求的params中依然会有该参数，默认为 `nil`
+	- **defaultHeaders**：默认的header，可以在HLAPI中覆盖，默认为 `nil`
+	- **baseURL**：全局的baseURL，HLAPI的baseURL会覆盖该参数，默认为 `nil`
+	- **apiVersion**：api版本，用于拼接在请求的Path上，默认为infoPlist中的`CFBundleShortVersionString`，格式为`v{version}{r}`，审核版本为r，例：http://www.baidu.com/v5/s?ie=UTF-8&wd=abc，默认为 `nil`
+	- **isJudgeVersion**：是否为审核版本，作用于apiVersion，存储在NSUserDefaults中，key为isR，默认为 `NO`
+	- **userAgent**：UserAgent，request header中的UA，默认为 `nil`
+	- **maxHttpConnectionPerHost**：每个Host的最大连接数，默认为 `5`
+	- **requestTimeoutInterval**：请求超时时间，默认为 `15` 秒
+- **policy**：网络策略相关参数	
+	- **AppGroup**：后台模式所用的GroupID，该选项只对Task有影响，默认为 `nil`
+	- **isBackgroundSession**：是否为后台模式，该选项只对Task有影响，默认为 `NO`
+	- **isErrorCodeDisplayEnabled**：出现网络请求错误时，是否在请求错误的文字后加上`{code}`，默认为YES
+	- **cachePolicy**：请求缓存策略，默认为 `NSURLRequestUseProtocolCachePolicy`
+	- **URLCache**：URLCache设置，默认为 `[NSURLCache sharedURLCache]`
 - **defaultSecurityPolicy**：默认的安全策略配置，该配置在debug模式下默认为`HLSSLPinningModeNone`，release模式下默认为`HLSSLPinningModePublicKey`，其中详细参数如下：
 	- **SSLPinningMode**：SSL Pinning证书的校验模式，默认为 `HLSSLPinningModeNone`
-	- **allowInvalidCertificates**：是否允许使用Invalid 证书，默认为 NO
-	- **validatesDomainName**：是否校验在证书 CN 字段中的 domain name，默认为 YES
-	- **cerFilePath**：cer证书文件路径
+	- **allowInvalidCertificates**：是否允许使用Invalid 证书，默认为 `NO`
+	- **validatesDomainName**：是否校验在证书 CN 字段中的 domain name，默认为 `YES`
+	- **cerFilePath**：cer证书文件路径，默认为 `nil`
+- **enableReachability**：是否启用reachability，baseURL为domain，默认为 `NO`
 
 ### API相关
 
@@ -139,7 +142,7 @@ HLAPI *formData = [HLAPI API].formData(^(id<HLMultipartFormDataProtocol> formDat
 HLObserverAPIs(self.api1, self.api2)
 // 或者用-requestAPIs这个代理方法，这两个完全等效
 - (NSArray<HLAPI *> *)requestAPIs {
-    return @[self.api1, self.api2, self.api3, self.api4];
+    return [NSArray arrayWithObjects:self.api1, self.api2, self.api3, self.api4, nil];
 }
 
 // 在下面三个代理方法中获取回调结果
@@ -415,7 +418,7 @@ HLTask *task = [[HLTask task].setDelegate(self)
 HLObserverTasks(self.task1)
 // 等同于HLObserverTasks(...)
 - (NSArray <HLTask *>*)requestTasks {
-    return @[self.task1];
+    return [NSArray arrayWithObjects:self.task1, nil];
 }
 
 // 下载/上传进度回调
