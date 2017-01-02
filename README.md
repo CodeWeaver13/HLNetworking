@@ -523,10 +523,10 @@ pod "HLNetworking/API"
 
 目前有四个模块可供选择：
 
-     - HLNetworking/Core (1.2.0)
-     - HLNetworking/API (1.2.0)
-     - HLNetworking/Task (1.2.0)
-     - HLNetworking/Center (1.2.0) 
+     - HLNetworking/Core
+     - HLNetworking/API
+     - HLNetworking/Task
+     - HLNetworking/Center
 
 其中`Core`包含`API`和`Task`的所有代码，`API`和`Task`相互独立，`Center`则依赖于`API`
 
