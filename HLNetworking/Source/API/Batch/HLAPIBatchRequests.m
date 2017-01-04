@@ -10,16 +10,55 @@
 #import "HLAPIManager.h"
 #import "HLAPI.h"
 
+@interface HLAPIBatchRequestsEnumerator : NSEnumerator
+{
+    HLAPIBatchRequests *_enumerableClassInstanceToEnumerate;
+}
+- (id)initWithEnumerableClass:(HLAPIBatchRequests *)anEnumerableClass;
+@end
+
+@implementation HLAPIBatchRequestsEnumerator
+
+- (id)initWithEnumerableClass:(HLAPIBatchRequests *)anEnumerableClass {
+    self = [super init];
+    if (self) {
+        _enumerableClassInstanceToEnumerate = anEnumerableClass;
+    }
+    return self;
+}
+@end
+
 static NSString * const hint = @"API 必须是 HLAPI的子类";
 
 @interface HLAPIBatchRequests ()
 
 @property (nonatomic, assign, readwrite) BOOL isCancel;
-@property (nonatomic, strong, readwrite) NSMutableSet<HLAPI *> *apiSet;
+@property (nonatomic, strong) NSMutableSet<HLAPI *> *apiSet;
 
 @end
 
 @implementation HLAPIBatchRequests
+
+#pragma mark - NSFastEnumeration
+
+- (NSUInteger)count {
+    return _apiSet.count;
+}
+
+- (void)enumerateObjectsUsingBlock:(void (^)(HLAPI *api, BOOL *stop))block {
+    [_apiSet enumerateObjectsUsingBlock:block];
+}
+
+- (NSEnumerator *)objectEnumerator {
+    return [_apiSet objectEnumerator];
+}
+
+- (NSUInteger)countByEnumeratingWithState:(NSFastEnumerationState *)state
+                                  objects:(id  _Nullable __unsafe_unretained [])buffer
+                                    count:(NSUInteger)len
+{
+    return [_apiSet countByEnumeratingWithState:state objects:buffer count:len];
+}
 
 #pragma mark - Init
 - (instancetype)init {

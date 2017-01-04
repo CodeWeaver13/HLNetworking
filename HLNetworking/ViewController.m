@@ -24,6 +24,10 @@ static dispatch_queue_t my_api_queue() {
 @property(nonatomic, strong)HLAPI *api2;
 @property(nonatomic, strong)HLAPI *api3;
 @property(nonatomic, strong)HLAPI *api4;
+@property(nonatomic, strong)HLAPI *api5;
+@property(nonatomic, strong)HLAPI *api6;
+@property(nonatomic, strong)HLAPI *api7;
+
 @property(nonatomic, strong)HLTask *task1;
 
 @property(nonatomic, assign)BOOL isPause;
@@ -36,8 +40,8 @@ static dispatch_queue_t my_api_queue() {
 - (void)viewDidLoad {
     [super viewDidLoad];
     [self setupAPINetworkConfig];
-//    [self testAPI];
-    [self testHome];
+    [self testAPI];
+//    [self testHome];
 }
 
 - (void)testHome {
@@ -107,7 +111,7 @@ static dispatch_queue_t my_api_queue() {
 
 - (void)setupAPINetworkConfig {
     [HLAPIManager setupConfig:^(HLNetworkConfig * _Nonnull config) {
-//        config.request.baseURL = @"https://httpbin.org/";
+        config.request.baseURL = @"https://httpbin.org/";
         config.request.apiVersion = nil;
         config.request.apiCallbackQueue = my_api_queue();
     }];
@@ -115,87 +119,89 @@ static dispatch_queue_t my_api_queue() {
 }
 
 - (void)testAPI {
+    __block int i = 0;
     HLAPIChainRequests *chain = [[HLAPIChainRequests alloc] init];
-    [chain setupChainQueue:@"mychain"];
     chain.delegate = self;
+    HLAPIBatchRequests *asyncBatch = [[HLAPIBatchRequests alloc] init];
+    asyncBatch.delegate = self;
     
     self.api1 = [HLAPI API].setMethod(GET)
-    .setCustomURL(@"get")
-//    .setPath(@"get")
+    .setPath(@"user-agent")
     .setDelegate(self)
     .setObjReformerDelegate(self)
     .success(^(id obj) {
-        NSLog(@"\napi1 --- 已回调\n %@ \n----", obj);
+        NSLog(@"\napi 1 --- 已回调 %@ \n----", obj);
+        NSLog(@"%d", i++);
+        self.api4.setParams(@{@"show_env": @(i)});
     })
-    .debug(^(HLDebugMessage *message){
-        NSLog(@"\n debug参数：\n \
-              sessionTask = %@\n \
-              api = %@\n \
-              error = %@\n \
-              originRequest = %@\n \
-              currentRequest = %@\n \
-              response = %@\n \
-              queue = %@\n \
-              chainQueue = %@\n",
-              message.sessionTask,
-              message.requestObject,
-              message.error,
-              message.originRequest,
-              message.currentRequest,
-              message.response,
-              message.queueName,
-              chain.customChainQueue);
-    });
-//    .formData([HLFormDataConfig configWithData:[NSData data]
-//                                          name:@"name"
-//                                      fileName:@"fileName"
-//                                      mimeType:@"mimeType"]);
+//    .debug(^(HLDebugMessage *message){
+//        NSLog(@"\ndebugMessage : %@\n",
+//              message);
+//    })
+    ;
     
-    self.api2 = [HLAPI API].setMethod(GET)
-    .setPath(@"ip")
+    self.api2 = [HLAPI API].setMethod(HEAD)
+    .setPath(@"headers")
     .setDelegate(self)
-    .success(^(id  _Nonnull responseObject) {
-        NSLog(@"\napi 2 --- 已回调 \n----");
+    .success(^(id obj) {
+        NSLog(@"\napi 2 --- 已回调 %@ \n----", obj);
+        NSLog(@"%d", i++);
     });
     
     self.api3 = [HLAPI API].setMethod(GET)
-    .setPath(@"status/418")
-    .setParams(@{@"user_id": @194})
-    .setDelegate(self)
-    .success(^(id  _Nonnull responseObject) {
-        NSLog(@"\napi 3 --- 已回调 \n----");
-    });
-    
-    self.api4 = [HLAPI API].setMethod(GET)
     .setPath(@"get")
-    .setParams(@{@"show_env": @1})
+    .setParams(@{@"a": @(i)})
     .setDelegate(self)
-    .success(^(id  _Nonnull responseObject) {
-        NSLog(@"\napi 4 --- 已回调 \n----");
+    .success(^(id obj) {
+        NSLog(@"\napi 3 --- 已回调 %@ \n----", obj);
+        NSLog(@"%d", i++);
     });
     
-    [chain addAPIs:@[self.api1, self.api2, self.api3, self.api4]];
+    self.api4 = [HLAPI API].setMethod(POST)
+    .setPath(@"post")
+    .setDelegate(self)
+    .success(^(id  obj) {
+        NSLog(@"\napi 4 --- 已回调 %@ \n----", obj);
+        NSLog(@"%d", i++);
+    });
+    
+    self.api5 = [HLAPI API].setMethod(PATCH)
+    .setPath(@"patch")
+    .setDelegate(self)
+    .success(^(id obj) {
+        NSLog(@"\napi 5 --- 已回调 %@ \n----", obj);
+        NSLog(@"%d", i++);
+    });
+    
+    self.api6 = [HLAPI API].setMethod(PUT)
+    .setPath(@"put")
+    .setDelegate(self)
+    .success(^(id obj) {
+        NSLog(@"\napi 6 --- 已回调 %@ \n----",obj);
+        NSLog(@"%d", i++);
+    });
+    
+    self.api7 = [HLAPI API].setMethod(DELETE)
+    .setPath(@"delete")
+    .setDelegate(self)
+    .success(^(id obj) {
+        NSLog(@"\napi 7 --- 已回调 %@ \n----",obj);
+        NSLog(@"%d", i++);
+    });
+    
+    [self.api1 start];
+    [chain addAPIs:@[self.api1, self.api2, self.api3, self.api4, self.api5, self.api6, self.api7]];
     [chain start];
-    for (id obj in chain) {
-        NSLog(@"%@", obj);
-    }
-    HLAPI *api = chain[0];
-    NSLog(@"%@", api);
-//        HLAPIBatchRequests *asyncBatch = [[HLAPIBatchRequests alloc] init];
-//        asyncBatch.delegate = self;
-//        [asyncBatch addBatchAPIRequests:[NSSet setWithObjects:self.api1, self.api2, self.api3, self.api4, self.api5, nil]];
-//        [asyncBatch start];
     
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5), dispatch_get_main_queue(), ^{
-        [chain cancel];
-    });
+//    [asyncBatch addAPIs:[NSSet setWithObjects:self.api1, self.api2, self.api3, self.api4, self.api5, self.api6, self.api7, nil]];
+//    [asyncBatch start];
 }
 
 - (void)chainRequestsAllDidFinished:(HLAPIChainRequests *)chainApis {
-    NSLog(@"batchRequestsAllDidFinished");
+    NSLog(@"chainRequestsAllDidFinished");
 }
 
-- (void)batchAPIRequestsDidFinished:(HLAPIBatchRequests * _Nonnull)batchApis {
+- (void)batchAPIRequestsDidFinished:(HLAPIBatchRequests *)batchApis {
     NSLog(@"batchAPIRequestsDidFinished");
 }
 

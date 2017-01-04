@@ -283,11 +283,11 @@
 - (NSString *)description {
     NSMutableString *desc = [NSMutableString string];
 #if DEBUG
-    [desc appendString:@"\n===============HLAPI Start==============="];
+    [desc appendString:@"\n===============HLAPI Start===============\n"];
     [desc appendFormat:@"APIVersion: %@\n", [HLAPIManager sharedManager].config.request.apiVersion ?: @"未设置"];
-    [desc appendFormat:@"Class: %@\n", self.class];
+    [desc appendFormat:@"Class: %@\n", self.objClz];
     [desc appendFormat:@"BaseURL: %@\n", self.baseURL ?: [HLAPIManager sharedManager].config.request.baseURL];
-    [desc appendFormat:@"Path: %@\n", self.path];
+    [desc appendFormat:@"Path: %@\n", self.path ?: @"未设置"];
     [desc appendFormat:@"CustomURL: %@\n", self.cURL ?: @"未设置"];
     [desc appendFormat:@"Parameters: %@\n", self.parameters ?: @"未设置"];
     [desc appendFormat:@"Header: %@\n", self.header ?: @"未设置"];
@@ -298,7 +298,7 @@
     [desc appendFormat:@"RequestSerializerType: %@\n", [self getRequestSerializerTypeString: self.requestSerializerType]];
     [desc appendFormat:@"ResponseSerializerType: %@\n", [self getResponseSerializerTypeString: self.responseSerializerType]];
     [desc appendFormat:@"CachePolicy: %@\n", [self getCachePolicy:self.cachePolicy]];
-    [desc appendString:@"===================End===================\n\n"];
+    [desc appendString:@"=================HLAPI End================\n"];
 #else
     desc = @"";
 #endif

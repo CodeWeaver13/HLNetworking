@@ -9,25 +9,63 @@
 #import "HLURLResult.h"
 
 @interface HLURLResult ()
-@property (nonatomic, strong, readwrite) id responseObject;
-@property (nonatomic, strong, readwrite) NSData *responseData;
+@property (nonatomic, strong, readwrite) id resultObject;
 @property (nonatomic, strong, readwrite) NSError *error;
-@property (nonatomic, copy, readwrite) NSString *responseString;
+@property (nonatomic, assign, readwrite) HLURLResultStatus status;
 @end
 
 @implementation HLURLResult
 
-- (instancetype)initWithData:(NSData *)responseData andObject:(id)responseObject andError:(NSError *)error {
+- (instancetype)initWithObject:(id)resultObject andError:(NSError *)error {
     self = [super init];
     if (self) {
-        _responseData = responseData;
-        _responseObject = responseObject;
-        if (responseObject) {
-            _responseString = [NSString stringWithFormat:@"%@", responseObject];
-        }
+        _resultObject = resultObject;
         _error = error;
+        _status = [self resultStatusWithError:error];
     }
     return self;    
+}
+
+- (HLURLResultStatus)resultStatusWithError:(NSError *)error {
+    if (error) {
+        HLURLResultStatus result = HLURLResultStatusErrorNotReachable;
+        
+        // 除了超时以外，所有错误都当成是无网络
+        if (error.code == NSURLErrorTimedOut) {
+            result = HLURLResultStatusErrorTimeout;
+        }
+        return result;
+    } else {
+        return HLURLResultStatusSuccess;
+    }
+}
+
+- (NSString *)description {
+    NSMutableString *desc = [NSMutableString string];
+    [desc appendString:@"\n---------HLURLResult Start---------\n"];
+    [desc appendFormat:@"Status : %@\n", [self getHLURLResultStatusString:self.status]];
+    [desc appendFormat:@"Object : %@\n", self.resultObject];
+    [desc appendFormat:@"Error : %@\n", self.error ?: @"成功"];
+    [desc appendString:@"----------HLURLResult End----------"];
+    return desc;
+}
+
+
+- (NSString *)getHLURLResultStatusString:(HLURLResultStatus)status {
+    switch (status) {
+        case HLURLResultStatusSuccess:
+            return @"HLURLResultStatusSuccess";
+            break;
+        case HLURLResultStatusErrorTimeout:
+            return @"HLURLResultStatusErrorTimeout";
+            break;
+        case HLURLResultStatusErrorNotReachable:
+            return @"HLURLResultStatusErrorNotReachable";
+            break;
+        default:
+            return @"HLURLResultStatusErrorUnknown";
+            break;
+    }
 }
 
 @end

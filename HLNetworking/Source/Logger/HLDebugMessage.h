@@ -15,12 +15,14 @@ typedef NSString *HLDebugKey;
 // 获取NSURLSessionTask
 FOUNDATION_EXPORT HLDebugKey const kHLSessionTaskDebugKey;
 // 获取HLAPI
-FOUNDATION_EXPORT HLDebugKey const kHLAPIDebugKey;
+FOUNDATION_EXPORT HLDebugKey const kHLRequestDebugKey;
 // 获取NSURLResponse
 FOUNDATION_EXPORT HLDebugKey const kHLResponseDebugKey;
 // 获取执行的队列名
 FOUNDATION_EXPORT HLDebugKey const kHLQueueDebugKey;
 
+// 请求对象，HLAPI或HLTask
+@property (nonatomic, strong, readonly)id requestObject;
 // 获取NSURLSessionTask
 @property (nonatomic, strong, readonly)NSURLSessionTask *sessionTask;
 // 获取RequestObject

@@ -29,12 +29,12 @@
 - (NSString *)description {
     NSMutableString *desc = [NSMutableString string];
 #if DEBUG
-    [desc appendString:@"\n----HLSecurityPolicyConfig Start----\n"];
+    [desc appendString:@"\n\n----HLSecurityPolicyConfig Start----\n"];
     [desc appendFormat:@"SSLPinningMode: %@\n", [self getpinningModeString:self.SSLPinningMode]];
     [desc appendFormat:@"AllowInvalidCertificates: %@\n", self.allowInvalidCertificates ? @"YES" : @"NO"];
     [desc appendFormat:@"ValidatesDomainName: %@\n", self.validatesDomainName ? @"YES" : @"NO"];
     [desc appendFormat:@"CerFilePath: %@\n", self.cerFilePath ?: @"未设置"];
-    [desc appendString:@"--------Config End--------"];
+    [desc appendString:@"------HLSecurityPolicyConfig End------\n"];
 #else
     desc = @"";
 #endif

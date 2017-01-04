@@ -9,10 +9,7 @@
 #import "HLDebugMessage.h"
 
 HLDebugKey const kHLSessionTaskDebugKey = @"kHLSessionTaskDebugKey";
-HLDebugKey const kHLAPIDebugKey = @"kHLAPIDebugKey";
-HLDebugKey const kHLErrorDebugKey = @"kHLErrorDebugKey";
-HLDebugKey const kHLOriginalRequestDebugKey = @"kHLOriginalRequestDebugKey";
-HLDebugKey const kHLCurrentRequestDebugKey = @"kHLCurrentRequestDebugKey";
+HLDebugKey const kHLRequestDebugKey = @"kHLRequestDebugKey";
 HLDebugKey const kHLResponseDebugKey = @"kHLResponseDebugKey";
 HLDebugKey const kHLQueueDebugKey = @"kHLQueueDebugKey";
 
@@ -21,16 +18,12 @@ HLDebugKey const kHLQueueDebugKey = @"kHLQueueDebugKey";
 @property (nonatomic, strong, readwrite)NSURLSessionTask *sessionTask;
 // 获取HLAPI
 @property (nonatomic, strong, readwrite)id requestObject;
-// 获取NSError
-@property (nonatomic, strong, readwrite)NSError *error;
-// 获取NSURLRequest
-@property (nonatomic, strong, readwrite)NSURLRequest *originRequest;
-// 获取NSURLRequest
-@property (nonatomic, strong, readwrite)NSURLRequest *currentRequest;
 // 获取NSURLResponse
-@property (nonatomic, strong, readwrite)NSURLResponse *response;
+@property (nonatomic, strong, readwrite)HLURLResponse *response;
 // 执行的队列名
 @property (nonatomic, strong, readwrite)dispatch_queue_t queueName;
+// 生成时间
+@property (nonatomic, copy) NSString *timeString;
 @end
 
 @implementation HLDebugMessage
@@ -38,26 +31,32 @@ HLDebugKey const kHLQueueDebugKey = @"kHLQueueDebugKey";
 - (instancetype)initWithDict:(NSDictionary *)dict {
     self = [super init];
     if (self) {
+        NSDateFormatter *myFormatter = [[NSDateFormatter alloc] init];
+        [myFormatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
+        _timeString = [myFormatter stringFromDate:[NSDate date]];
         _sessionTask = dict[kHLSessionTaskDebugKey];
-        _requestObject = dict[kHLAPIDebugKey];
-        _error = dict[kHLErrorDebugKey];
-        _originRequest = dict[kHLOriginalRequestDebugKey];
-        _currentRequest = dict[kHLCurrentRequestDebugKey];
+        _requestObject = dict[kHLRequestDebugKey];
         _response = dict[kHLResponseDebugKey];
         _queueName = dict[kHLQueueDebugKey];
     }
     return self;
 }
 
+- (NSDictionary *)toDictionary {
+    NSMutableDictionary <NSString *, NSString *>*dictionary = [NSMutableDictionary dictionary];
+    dictionary[@"Time"] = self.timeString;
+    dictionary[@"RequestObject"] = self.requestObject;
+    dictionary[@"SessionTask"] = [self.sessionTask description];
+    return dictionary;
+}
+
 - (NSString *)description {
     NSMutableString *desc = [NSMutableString string];
     [desc appendString:@"\n****************Debug Message Start****************\n"];
+    [desc appendFormat:@"Time : %@\n", self.timeString];
     [desc appendFormat:@"RequestObject : %@\n", self.requestObject ?: @"无参数"];
     [desc appendFormat:@"SessionTask : %@\n", self.sessionTask ?: @"无参数"];
-    [desc appendFormat:@"OriginRequest : %@\n", self.originRequest ?: @"无参数"];
-    [desc appendFormat:@"CurrentRequest : %@\n", self.currentRequest ?: @"无参数"];
     [desc appendFormat:@"Response : %@\n", self.response ?: @"无参数"];
-    [desc appendFormat:@"Error : %@\n", self.error ?: @"无参数"];
     [desc appendFormat:@"Queue : %@", self.queueName ?: @"无参数"];
     [desc appendString:@"\n****************Debug Message End****************\n"];
     return desc;

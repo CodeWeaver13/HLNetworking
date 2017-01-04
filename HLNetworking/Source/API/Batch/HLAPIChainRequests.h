@@ -45,7 +45,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (readonly) NSUInteger count;
 
-- (void)enumerateObjectsUsingBlock:(void (^_Nonnull)(id _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop))block;
+- (void)enumerateObjectsUsingBlock:(void (^)(HLAPI *api, NSUInteger idx, BOOL * stop))block;
 
 - (nonnull NSEnumerator*)objectEnumerator;
 

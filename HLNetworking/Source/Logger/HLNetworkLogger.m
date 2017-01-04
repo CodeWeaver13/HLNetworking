@@ -23,7 +23,9 @@
 }
 
 + (void)logInfoWithDebugMessage:(HLDebugMessage *)debugMessage {
-    
+#if DEBUG
+    NSLog(@"%@", debugMessage);
+#endif
 }
 
 #pragma mark - setupConfig

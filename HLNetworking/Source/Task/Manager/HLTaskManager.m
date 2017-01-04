@@ -191,7 +191,7 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
            withSessionManager:(AFURLSessionManager *)sessionManager {
     NSParameterAssert(task);
     NSParameterAssert(sessionManager);
-    @weakify(self);
+    @hl_weakify(self);
     
     BOOL isDownloadTask = task.requestTaskType == Upload;
     
@@ -287,7 +287,7 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
     
     void (^donwloadCompleteBlcok)(NSURLResponse * _Nonnull response, NSURL * _Nullable filePath, NSError * _Nullable error)
     = ^(NSURLResponse * _Nonnull response, NSURL * _Nullable filePath, NSError * _Nullable error) {
-        @strongify(self);
+        @hl_strongify(self);
         if (self.config.tips.isNetworkingActivityIndicatorEnabled) {
             [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
         }
@@ -321,7 +321,7 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
                                                     fromFile:fileURL
                                                     progress:progressBlock
                                            completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
-                                               @strongify(self);
+                                               @hl_strongify(self);
                                                if (self.config.tips.isNetworkingActivityIndicatorEnabled) {
                                                    [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
                                                }

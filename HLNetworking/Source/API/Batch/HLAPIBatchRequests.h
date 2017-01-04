@@ -10,7 +10,7 @@
 
 @class HLAPI;
 @class HLAPIBatchRequests;
-
+NS_ASSUME_NONNULL_BEGIN
 @protocol HLAPIBatchRequestsProtocol <NSObject>
 
 /**
@@ -22,13 +22,10 @@
 
 @end
 
-@interface HLAPIBatchRequests : NSObject
+@interface HLAPIBatchRequests : NSObject<NSFastEnumeration>
 
 // 已经被全部取消
 @property (nonatomic, assign, readonly)BOOL isCancel;
-
-// Batch 执行的API Requests 集合
-@property (nonatomic, strong, readonly, nullable) NSMutableSet<HLAPI *> *apiSet;
 
 // Batch Requests 执行完成之后调用的delegate
 @property (nonatomic, weak, nullable) id<HLAPIBatchRequestsProtocol> delegate;
@@ -44,4 +41,12 @@
 
 // 取消请求所有请求
 - (void)cancel;
+
+#pragma mark - NSFastEnumeration
+@property (readonly) NSUInteger count;
+
+- (void)enumerateObjectsUsingBlock:(void (^)(HLAPI *api, BOOL *stop))block;
+
+- (nonnull NSEnumerator*)objectEnumerator;
 @end
+NS_ASSUME_NONNULL_END

@@ -16,6 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - HLObjReformerProtocol
 @protocol HLObjReformerProtocol <NSObject>
+@required
 /**
  一般用来进行JSON -> Model 数据的转换工作。返回的id，如果没有error，则为转换成功后的Model数据。如果有error， 则直接返回传参中的responseObject
 

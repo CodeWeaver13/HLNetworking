@@ -22,38 +22,10 @@ static dispatch_queue_t qkhl_api_chain_queue(const char * queueName) {
     return mix(qkhl_api_chain_queue_, queueName);
 }
 
-@interface HLAPIChainRequestsEnumerator : NSEnumerator
-{
-    HLAPIChainRequests *_enumerableClassInstanceToEnumerate;
-    NSUInteger _currentIndex;
-}
-- (id)initWithEnumerableClass:(HLAPIChainRequests *)anEnumerableClass;
-@end
-
-
-@implementation HLAPIChainRequestsEnumerator
-
-- (id)initWithEnumerableClass:(HLAPIChainRequests *)anEnumerableClass {
-    self = [super init];
-    if (self) {
-        _enumerableClassInstanceToEnumerate = anEnumerableClass;
-        _currentIndex = 0;
-    }
-    return self;
-}
-
-- (id)nextObject {
-    if (_currentIndex >= _enumerableClassInstanceToEnumerate.count)
-        return nil;
-    
-    return _enumerableClassInstanceToEnumerate[_currentIndex++];
-}
-@end
-
 static NSString * const hint = @"API 必须是 HLAPI的子类";
 @interface HLAPIChainRequests ()
 
-@property (nonatomic, strong, readwrite) NSMutableArray *apiRequestsArray;
+@property (nonatomic, strong, readwrite) NSMutableArray <HLAPI *>*apiRequestsArray;
 @property (nonatomic, assign, readwrite)BOOL isCancel;
 // 自定义的同步请求所在的串行队列
 @property (nonatomic, strong, readwrite) dispatch_queue_t customChainQueue;
@@ -83,40 +55,19 @@ static NSString * const hint = @"API 必须是 HLAPI的子类";
     return _apiRequestsArray[idx];
 }
 
-- (void)enumerateObjectsUsingBlock:(void (^)(id obj, NSUInteger idx, BOOL *stop))block {
+- (void)enumerateObjectsUsingBlock:(void (^)(HLAPI *api, NSUInteger idx, BOOL *stop))block {
     [_apiRequestsArray enumerateObjectsUsingBlock:block];
 }
 
 - (NSEnumerator*)objectEnumerator {
-    return [[HLAPIChainRequestsEnumerator alloc] initWithEnumerableClass:self];
+    return [_apiRequestsArray objectEnumerator];
 }
 
 - (NSUInteger)countByEnumeratingWithState:(NSFastEnumerationState *)state
-                                  objects:(id __unsafe_unretained [])stackbuf
-                                    count:(NSUInteger)stackbufLength {
-    NSUInteger count = 0;
-    
-    unsigned long countOfItemsAlreadyEnumerated = state->state;
-    
-    if(countOfItemsAlreadyEnumerated == 0) {
-        state->mutationsPtr = &state->extra[0];
-    }
-    
-    if(countOfItemsAlreadyEnumerated < _apiRequestsArray.count) {
-        state->itemsPtr = stackbuf;
-        while((countOfItemsAlreadyEnumerated < _apiRequestsArray.count) && (count < stackbufLength)) {
-            stackbuf[count] = _apiRequestsArray[countOfItemsAlreadyEnumerated];
-            countOfItemsAlreadyEnumerated++;
-            
-            count++;
-        }
-    } else {
-        count = 0;
-    }
-    
-    state->state = countOfItemsAlreadyEnumerated;
-    
-    return count;
+                                  objects:(id  _Nullable __unsafe_unretained [])buffer
+                                    count:(NSUInteger)len
+{
+    return [_apiRequestsArray countByEnumeratingWithState:state objects:buffer count:len];
 }
 
 #pragma mark - Add Requests
