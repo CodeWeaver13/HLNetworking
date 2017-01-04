@@ -61,8 +61,7 @@ typedef void(^HLProgressBlock)(NSProgress * __nullable progress);
 typedef void(^HLRequestConstructingBodyBlock)(id<HLMultipartFormDataProtocol> __nullable formData);
 // debug回调
 typedef void(^HLDebugBlock)(HLDebugMessage * __nonnull debugMessage);
-// debugKey
-typedef NSString *HLDebugKey;
+
 
 
 #endif /* HLAPIType_h */

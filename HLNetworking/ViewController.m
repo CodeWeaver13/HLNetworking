@@ -138,7 +138,7 @@ static dispatch_queue_t my_api_queue() {
               queue = %@\n \
               chainQueue = %@\n",
               message.sessionTask,
-              message.api,
+              message.requestObject,
               message.error,
               message.originRequest,
               message.currentRequest,

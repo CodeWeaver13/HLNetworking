@@ -211,10 +211,13 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
  @param obj   返回的对象
  @param error 返回的错误
  @param semaphore 完成的信号量
+
  */
 - (void)callAPICompletion:(HLAPI *)api
-                      obj:(id)obj
-                    error:(NSError *)error
+                  andTask:(NSURLSessionDataTask *)task
+        andResponseObject:(id)obj
+          andRequestError:(NSError *)error
+         andCallbackQueue:(dispatch_queue_t)queue
         completeSemaphore:(dispatch_semaphore_t)semaphore
 {
     if (api.objReformerDelegate) {
@@ -246,6 +249,20 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
                                         code:error.code
                                     userInfo:userInfo];
         }
+    }
+#if DEBUG
+    if (api.apiDebugHandler) {
+        HLDebugMessage *msg = [self createDebugMessageWithAPI:api
+                                                      andTask:nil
+                                                     andError:netError
+                                             andCallbackQueue:self.currentQueue];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            api.apiDebugHandler(msg);
+            api.apiDebugHandler = nil;
+        });
+    }
+#endif
+    if (netError) {
         for (id<HLNetworkErrorProtocol> observer in self.errorObservers) {
             [observer networkErrorInfo:netError];
         }
@@ -333,19 +350,15 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
         NSError *cancelError = [NSError errorWithDomain:NSURLErrorDomain
                                                    code:NSURLErrorCancelled
                                                userInfo:userInfo];
-        [self callAPICompletion:api obj:nil error:cancelError completeSemaphore:semaphore];
+        [self callAPICompletion:api
+                        andTask:nil
+              andResponseObject:nil
+                andRequestError:cancelError
+               andCallbackQueue:self.currentQueue
+              completeSemaphore:semaphore];
         if (completionGroup) {
             dispatch_group_leave(completionGroup);
         }
-#if DEBUG
-        if (api.apiDebugHandler) {
-            HLDebugMessage *msg = [self createDebugMessageWithAPI:api
-                                                          andTask:nil
-                                                         andError:cancelError
-                                                 andCallbackQueue:self.currentQueue];
-            api.apiDebugHandler(msg);
-        }
-#endif
         return;
     }
     
@@ -371,21 +384,14 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
                                                                code:NSURLErrorCannotConnectToHost
                                                            userInfo:userInfo];
         [self callAPICompletion:api
-                            obj:nil
-                          error:networkUnreachableError
+                        andTask:nil
+              andResponseObject:nil
+                andRequestError:networkUnreachableError
+               andCallbackQueue:self.currentQueue
               completeSemaphore:semaphore];
         if (completionGroup) {
             dispatch_group_leave(completionGroup);
         }
-#if DEBUG
-        if (api.apiDebugHandler) {
-            HLDebugMessage *msg = [self createDebugMessageWithAPI:api
-                                                          andTask:nil
-                                                         andError:networkUnreachableError
-                                                 andCallbackQueue:self.currentQueue];
-            api.apiDebugHandler(msg);
-        }
-#endif
         return;
     }
     
@@ -398,16 +404,12 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
         if (self.config.tips.isNetworkingActivityIndicatorEnabled) {
             [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
         }
-#if DEBUG
-        if (api.apiDebugHandler) {
-            HLDebugMessage *msg = [self createDebugMessageWithAPI:api
-                                                          andTask:task
-                                                         andError:nil
-                                                 andCallbackQueue:self.currentQueue];
-            api.apiDebugHandler(msg);
-        }
-#endif
-        [self callAPICompletion:api obj:responseObject error:nil completeSemaphore:semaphore];
+        [self callAPICompletion:api
+                        andTask:task
+              andResponseObject:responseObject
+                andRequestError:nil
+               andCallbackQueue:self.currentQueue
+              completeSemaphore:semaphore];
         [self.sessionTasksCache removeObjectForKey:hashKey];
         if (completionGroup) {
             dispatch_group_leave(completionGroup);
@@ -423,18 +425,11 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
         if (self.config.tips.isNetworkingActivityIndicatorEnabled) {
             [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
         }
-#if DEBUG
-        if (api.apiDebugHandler) {
-            HLDebugMessage *msg = [self createDebugMessageWithAPI:api
-                                                          andTask:task
-                                                         andError:error
-                                                 andCallbackQueue:self.currentQueue];
-            api.apiDebugHandler(msg);
-        }
-#endif
         [self callAPICompletion:api
-                            obj:nil
-                          error:error
+                        andTask:task
+              andResponseObject:nil
+                andRequestError:error
+               andCallbackQueue:self.currentQueue
               completeSemaphore:semaphore];
         [self.sessionTasksCache removeObjectForKey:hashKey];
         if (completionGroup) {
@@ -603,6 +598,7 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
             api.apiSuccessHandler = nil;
             api.apiFailureHandler = nil;
             api.apiProgressHandler = nil;
+            api.apiDebugHandler = nil;
             api.apiRequestConstructingBodyBlock = nil;
             [dataTask cancel];
         }

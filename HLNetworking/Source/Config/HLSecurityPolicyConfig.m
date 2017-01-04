@@ -27,13 +27,33 @@
 }
 
 - (NSString *)description {
-    NSString *desc;
+    NSMutableString *desc = [NSMutableString string];
 #if DEBUG
-    desc = [NSString stringWithFormat:@"\n----HLSecurityPolicyConfig----\nSSLPinningMode: %lu\nAllowInvalidCertificates: %@\nValidatesDomainName: %@\n--------ConfigEnd--------", self.SSLPinningMode, self.allowInvalidCertificates ? @"YES" : @"NO", self.validatesDomainName ? @"YES" : @"NO"];
+    [desc appendString:@"\n----HLSecurityPolicyConfig Start----\n"];
+    [desc appendFormat:@"SSLPinningMode: %@\n", [self getpinningModeString:self.SSLPinningMode]];
+    [desc appendFormat:@"AllowInvalidCertificates: %@\n", self.allowInvalidCertificates ? @"YES" : @"NO"];
+    [desc appendFormat:@"ValidatesDomainName: %@\n", self.validatesDomainName ? @"YES" : @"NO"];
+    [desc appendFormat:@"CerFilePath: %@\n", self.cerFilePath ?: @"未设置"];
+    [desc appendString:@"--------Config End--------"];
 #else
     desc = @"";
 #endif
     return desc;
+}
+
+- (NSString *)getpinningModeString:(HLSSLPinningMode)mode {
+    switch (mode) {
+        case HLSSLPinningModeNone:
+            return @"HLSSLPinningModeNone";
+            break;
+        case HLSSLPinningModePublicKey:
+            return @"HLSSLPinningModePublicKey";
+        case HLSSLPinningModeCertificate:
+            return @"HLSSLPinningModeCertificate";
+        default:
+            return @"HLSSLPinningModeNone";
+            break;
+    }
 }
 
 - (id)copyWithZone:(NSZone *)zone {

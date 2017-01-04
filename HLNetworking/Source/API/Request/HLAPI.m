@@ -13,13 +13,6 @@
 #import "HLSecurityPolicyConfig.h"
 #import "HLAPIRequestDelegate.h"
 
-HLDebugKey const kHLSessionTaskDebugKey = @"kHLSessionTaskDebugKey";
-HLDebugKey const kHLAPIDebugKey = @"kHLAPIDebugKey";
-HLDebugKey const kHLErrorDebugKey = @"kHLErrorDebugKey";
-HLDebugKey const kHLOriginalRequestDebugKey = @"kHLOriginalRequestDebugKey";
-HLDebugKey const kHLCurrentRequestDebugKey = @"kHLCurrentRequestDebugKey";
-HLDebugKey const kHLResponseDebugKey = @"kHLResponseDebugKey";
-HLDebugKey const kHLQueueDebugKey = @"kHLQueueDebugKey";
 
 @implementation HLAPI
 
@@ -288,20 +281,24 @@ HLDebugKey const kHLQueueDebugKey = @"kHLQueueDebugKey";
 }
 
 - (NSString *)description {
-    NSString *desc;
+    NSMutableString *desc = [NSMutableString string];
 #if DEBUG
-    desc = [NSString stringWithFormat:@"\n===============HLAPI===============\nAPIVersion: %@\nClass: %@\nBaseURL: %@\nPath: %@\nCustomURL: %@\nParameters: %@\nHeader: %@\nContentTypes: %@\nTimeoutInterval: %f\nSecurityPolicy: %@\nRequestMethodType: %@\nRequestSerializerType: %@\nResponseSerializerType: %@\nCachePolicy: %@\n===============end===============\n\n",
-            [HLAPIManager sharedManager].config.request.apiVersion ?: @"未设置",
-            self.class, self.baseURL ?: [HLAPIManager sharedManager].config.request.baseURL,
-            self.path, self.cURL ?: @"未设置",
-            self.parameters ?: @"未设置", self.header ?: @"未设置",
-            self.accpetContentTypes,
-            self.timeoutInterval,
-            self.securityPolicy,
-            [self getRequestMethodString:self.requestMethodType],
-            [self getRequestSerializerTypeString: self.requestSerializerType],
-            [self getResponseSerializerTypeString: self.responseSerializerType],
-            [self getCachePolicy:self.cachePolicy]];
+    [desc appendString:@"\n===============HLAPI Start==============="];
+    [desc appendFormat:@"APIVersion: %@\n", [HLAPIManager sharedManager].config.request.apiVersion ?: @"未设置"];
+    [desc appendFormat:@"Class: %@\n", self.class];
+    [desc appendFormat:@"BaseURL: %@\n", self.baseURL ?: [HLAPIManager sharedManager].config.request.baseURL];
+    [desc appendFormat:@"Path: %@\n", self.path];
+    [desc appendFormat:@"CustomURL: %@\n", self.cURL ?: @"未设置"];
+    [desc appendFormat:@"Parameters: %@\n", self.parameters ?: @"未设置"];
+    [desc appendFormat:@"Header: %@\n", self.header ?: @"未设置"];
+    [desc appendFormat:@"ContentTypes: %@\n", self.accpetContentTypes];
+    [desc appendFormat:@"TimeoutInterval: %f\n", self.timeoutInterval];
+    [desc appendFormat:@"SecurityPolicy: %@\n", self.securityPolicy];
+    [desc appendFormat:@"RequestMethodType: %@\n", [self getRequestMethodString:self.requestMethodType]];
+    [desc appendFormat:@"RequestSerializerType: %@\n", [self getRequestSerializerTypeString: self.requestSerializerType]];
+    [desc appendFormat:@"ResponseSerializerType: %@\n", [self getResponseSerializerTypeString: self.responseSerializerType]];
+    [desc appendFormat:@"CachePolicy: %@\n", [self getCachePolicy:self.cachePolicy]];
+    [desc appendString:@"===================End===================\n\n"];
 #else
     desc = @"";
 #endif

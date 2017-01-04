@@ -14,22 +14,6 @@
 @protocol HLAPIRequestDelegate;
 NS_ASSUME_NONNULL_BEGIN
 
-#pragma mark - DebugKey
-// 获取NSURLSessionTask
-FOUNDATION_EXPORT HLDebugKey const kHLSessionTaskDebugKey;
-// 获取HLAPI
-FOUNDATION_EXPORT HLDebugKey const kHLAPIDebugKey;
-// 获取NSError
-FOUNDATION_EXPORT HLDebugKey const kHLErrorDebugKey;
-// 获取NSURLRequest
-FOUNDATION_EXPORT HLDebugKey const kHLOriginalRequestDebugKey;
-// 获取NSURLRequest
-FOUNDATION_EXPORT HLDebugKey const kHLCurrentRequestDebugKey;
-// 获取NSURLResponse
-FOUNDATION_EXPORT HLDebugKey const kHLResponseDebugKey;
-// 获取执行的队列名
-FOUNDATION_EXPORT HLDebugKey const kHLQueueDebugKey;
-
 #pragma mark - HLObjReformerProtocol
 @protocol HLObjReformerProtocol <NSObject>
 /**

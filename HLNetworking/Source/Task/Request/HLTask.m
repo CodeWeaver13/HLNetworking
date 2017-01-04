@@ -82,22 +82,64 @@
 }
 
 - (NSString *)description {
-    NSString *desc;
+    NSMutableString *desc = [NSMutableString string];
 #if DEBUG
-    desc = [NSString stringWithFormat:@"\n===============HLTask===============\nClass: %@\nBaseURL: %@\nPath: %@\nTaskURL: %@\nResumePath: %@\nCachePath: %@\nTimeoutInterval: %f\nSecurityPolicy: %@\nRequestTaskType: %lu\nCachePolicy: %lu\n===============end===============\n\n",
-            self.class, self.baseURL ?: [HLTaskManager sharedManager].config.request.baseURL,
-            self.path ?: @"未设置",
-            self.taskURL ?: @"未设置",
-            self.resumePath,
-            self.filePath,
-            self.timeoutInterval,
-            self.securityPolicy,
-            self.requestTaskType,
-            self.cachePolicy];
+    [desc appendString:@"\n===============HLTask Start===============\n"];
+    [desc appendFormat:@"Class: %@\n", self.class];
+    [desc appendFormat:@"BaseURL: %@\n", self.baseURL ?: [HLTaskManager sharedManager].config.request.baseURL];
+    [desc appendFormat:@"Path: %@\n", self.path ?: @"未设置"];
+    [desc appendFormat:@"TaskURL: %@\n", self.taskURL ?: @"未设置"];
+    [desc appendFormat:@"ResumePath: %@", self.resumePath];
+    [desc appendFormat:@"CachePath: %@", self.filePath];
+    [desc appendFormat:@"TimeoutInterval: %f\n", self.timeoutInterval];
+    [desc appendFormat:@"SecurityPolicy: %@\n", self.securityPolicy];
+    [desc appendFormat:@"RequestTaskType: %@\n", [self getRequestTaskTypeString:self.requestTaskType]];
+    [desc appendFormat:@"CachePolicy: %@\n", [self getCachePolicyString:self.cachePolicy]];
+    [desc appendString:@"===============End===============\n"];
 #else
     desc = @"";
 #endif
     return desc;
+}
+
+- (NSString *)getRequestTaskTypeString:(HLRequestTaskType)type {
+    switch (type) {
+        case Download:
+            return @"Download";
+            break;
+        case Upload:
+            return @"Upload";
+            break;
+        default:
+            return @"Download";
+            break;
+    }
+}
+
+- (NSString *)getCachePolicyString:(NSURLRequestCachePolicy)policy {
+    switch (policy) {
+        case NSURLRequestUseProtocolCachePolicy:
+            return @"NSURLRequestUseProtocolCachePolicy";
+            break;
+        case NSURLRequestReloadIgnoringLocalCacheData:
+            return @"NSURLRequestReloadIgnoringLocalCacheData";
+            break;
+        case NSURLRequestReloadIgnoringLocalAndRemoteCacheData:
+            return @"NSURLRequestReloadIgnoringLocalAndRemoteCacheData";
+            break;
+        case NSURLRequestReturnCacheDataElseLoad:
+            return @"NSURLRequestReturnCacheDataElseLoad";
+            break;
+        case NSURLRequestReturnCacheDataDontLoad:
+            return @"NSURLRequestReturnCacheDataDontLoad";
+            break;
+        case NSURLRequestReloadRevalidatingCacheData:
+            return @"NSURLRequestReloadRevalidatingCacheData";
+            break;
+        default:
+            return @"NSURLRequestUseProtocolCachePolicy";
+            break;
+    }
 }
 
 #pragma mark - setter
