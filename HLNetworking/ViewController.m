@@ -9,6 +9,7 @@
 #import "HLNetworking.h"
 #import "AFNetworking.h"
 #import "HLAPICenter+home.h"
+#import "HLNetworkLogger.h"
 
 static dispatch_queue_t my_api_queue() {
     static dispatch_queue_t my_api_queue;
@@ -114,6 +115,10 @@ static dispatch_queue_t my_api_queue() {
         config.request.baseURL = @"https://httpbin.org/";
         config.request.apiVersion = nil;
         config.request.apiCallbackQueue = my_api_queue();
+        config.enableGlobalLog = YES;
+    }];
+    [HLNetworkLogger setupConfig:^(HLNetworkLoggerConfig * _Nonnull config) {
+        config.enableLocalLog = YES;
     }];
     [HLAPIManager registerResponseObserver:self];
 }
@@ -130,9 +135,9 @@ static dispatch_queue_t my_api_queue() {
     .setDelegate(self)
     .setObjReformerDelegate(self)
     .success(^(id obj) {
-        NSLog(@"\napi 1 --- 已回调 %@ \n----", obj);
-        NSLog(@"%d", i++);
-        self.api4.setParams(@{@"show_env": @(i)});
+//        NSLog(@"\napi 1 --- 已回调 %@ \n----", obj);
+//        NSLog(@"%d", i++);
+//        self.api4.setParams(@{@"show_env": @(i)});
     })
 //    .debug(^(HLDebugMessage *message){
 //        NSLog(@"\ndebugMessage : %@\n",
@@ -144,8 +149,8 @@ static dispatch_queue_t my_api_queue() {
     .setPath(@"headers")
     .setDelegate(self)
     .success(^(id obj) {
-        NSLog(@"\napi 2 --- 已回调 %@ \n----", obj);
-        NSLog(@"%d", i++);
+//        NSLog(@"\napi 2 --- 已回调 %@ \n----", obj);
+//        NSLog(@"%d", i++);
     });
     
     self.api3 = [HLAPI API].setMethod(GET)
@@ -153,40 +158,40 @@ static dispatch_queue_t my_api_queue() {
     .setParams(@{@"a": @(i)})
     .setDelegate(self)
     .success(^(id obj) {
-        NSLog(@"\napi 3 --- 已回调 %@ \n----", obj);
-        NSLog(@"%d", i++);
+//        NSLog(@"\napi 3 --- 已回调 %@ \n----", obj);
+//        NSLog(@"%d", i++);
     });
     
     self.api4 = [HLAPI API].setMethod(POST)
     .setPath(@"post")
     .setDelegate(self)
     .success(^(id  obj) {
-        NSLog(@"\napi 4 --- 已回调 %@ \n----", obj);
-        NSLog(@"%d", i++);
+//        NSLog(@"\napi 4 --- 已回调 %@ \n----", obj);
+//        NSLog(@"%d", i++);
     });
     
     self.api5 = [HLAPI API].setMethod(PATCH)
     .setPath(@"patch")
     .setDelegate(self)
     .success(^(id obj) {
-        NSLog(@"\napi 5 --- 已回调 %@ \n----", obj);
-        NSLog(@"%d", i++);
+//        NSLog(@"\napi 5 --- 已回调 %@ \n----", obj);
+//        NSLog(@"%d", i++);
     });
     
     self.api6 = [HLAPI API].setMethod(PUT)
     .setPath(@"put")
     .setDelegate(self)
     .success(^(id obj) {
-        NSLog(@"\napi 6 --- 已回调 %@ \n----",obj);
-        NSLog(@"%d", i++);
+//        NSLog(@"\napi 6 --- 已回调 %@ \n----",obj);
+//        NSLog(@"%d", i++);
     });
     
     self.api7 = [HLAPI API].setMethod(DELETE)
     .setPath(@"delete")
     .setDelegate(self)
     .success(^(id obj) {
-        NSLog(@"\napi 7 --- 已回调 %@ \n----",obj);
-        NSLog(@"%d", i++);
+//        NSLog(@"\napi 7 --- 已回调 %@ \n----",obj);
+//        NSLog(@"%d", i++);
     });
     
     [self.api1 start];

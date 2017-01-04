@@ -157,6 +157,8 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - functory method
 + (instancetype)API;
 
+- (NSDictionary *)toDictionary;
+
 #pragma mark - Process
 // 开启API 请求
 - (HLAPI *)start;

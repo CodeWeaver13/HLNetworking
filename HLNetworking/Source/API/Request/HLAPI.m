@@ -398,7 +398,23 @@
     }
 }
 
-#pragma mark - getter / lazy load
-
+- (NSDictionary *)toDictionary {
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    dict[@"APIVersion"] = [HLAPIManager sharedManager].config.request.apiVersion ?: @"未设置";
+    dict[@"Class"] = [NSString stringWithFormat:@"%@", self.objClz];
+    dict[@"BaseURL"] = self.baseURL ?: [HLAPIManager sharedManager].config.request.baseURL;
+    dict[@"Path"] = self.path ?: @"未设置";
+    dict[@"CustomURL"] = self.cURL ?: @"未设置";
+    dict[@"Parameters"] = self.parameters ?: @"未设置";
+    dict[@"Header"] = self.header ?: @"未设置";
+    dict[@"ContentTypes"] = [NSString stringWithFormat:@"%@", self.accpetContentTypes];
+    dict[@"TimeoutInterval"] = [NSString stringWithFormat:@"%f", self.timeoutInterval];
+    dict[@"SecurityPolicy"] = [self.securityPolicy toDictionary];
+    dict[@"RequestMethodType"] = [self getRequestMethodString:self.requestMethodType];
+    dict[@"RequestSerializerType"] = [self getRequestSerializerTypeString: self.requestSerializerType];
+    dict[@"ResponseSerializerType"] = [self getResponseSerializerTypeString: self.responseSerializerType];
+    dict[@"CachePolicy"] = [self getCachePolicy:self.cachePolicy];
+    return dict;
+}
 
 @end

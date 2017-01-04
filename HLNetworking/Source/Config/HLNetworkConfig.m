@@ -17,6 +17,7 @@
         _request = [HLNetworkRequestConfig config];
         _policy = [HLNetworkPolicyConfig config];
         _enableReachability = NO;
+        _enableGlobalLog = NO;
 #ifdef DEBUG
         _defaultSecurityPolicy = [HLSecurityPolicyConfig policyWithPinningMode:HLSSLPinningModeNone];
 #else

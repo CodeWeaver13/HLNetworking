@@ -50,6 +50,17 @@
     return desc;
 }
 
+- (NSString *)debugDescription {
+    return self.description;
+}
+
+- (NSDictionary *)toDictionary {
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    dict[@"Status"] = [self getHLURLResultStatusString:self.status];
+    dict[@"Object"] = [NSString stringWithFormat:@"%@", [self.resultObject class]];
+    dict[@"Error"] = self.error.localizedDescription ?: @"无错误";
+    return dict;
+}
 
 - (NSString *)getHLURLResultStatusString:(HLURLResultStatus)status {
     switch (status) {

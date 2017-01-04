@@ -41,6 +41,19 @@
     return desc;
 }
 
+- (NSDictionary *)toDictionary {
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    dict[@"SSLPinningMode"] = [self getpinningModeString:self.SSLPinningMode];
+    dict[@"AllowInvalidCertificates"] = self.allowInvalidCertificates ? @"YES" : @"NO";
+    dict[@"ValidatesDomainName"] = self.validatesDomainName ? @"YES" : @"NO";
+    dict[@"CerFilePath"] = self.cerFilePath ?: @"未设置";
+    return dict;
+}
+
+- (NSString *)debugDescription {
+    return self.description;
+}
+
 - (NSString *)getpinningModeString:(HLSSLPinningMode)mode {
     switch (mode) {
         case HLSSLPinningModeNone:

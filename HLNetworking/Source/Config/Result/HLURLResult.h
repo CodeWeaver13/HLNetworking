@@ -18,5 +18,7 @@ typedef NS_ENUM(NSUInteger, HLURLResultStatus) {
 @property (nonatomic, strong, readonly) NSError *error;
 @property (nonatomic, assign, readonly) HLURLResultStatus status;
 
+- (NSDictionary *)toDictionary;
+
 - (instancetype)initWithObject:(id)resultObject andError:(NSError *)error;
 @end

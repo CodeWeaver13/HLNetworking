@@ -14,6 +14,8 @@
 @property (nonatomic, assign, readonly) NSInteger requestId;
 @property (nonatomic, copy, readonly) NSURLRequest *request;
 
+- (NSDictionary *)toDictionary;
+
 - (instancetype)initWithResult:(HLURLResult *)result
                      requestId:(NSNumber *)requestId
                        request:(NSURLRequest *)request;

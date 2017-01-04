@@ -18,6 +18,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (void)logInfoWithDebugMessage:(HLDebugMessage *)debugMessage;
 
++ (void)addLogInfoWithDebugMessage:(HLDebugMessage *)debugMessage;
+
 + (void)setupConfig:(void(^)(HLNetworkLoggerConfig *config))configBlock;
 
 + (instancetype)sharedInstance;

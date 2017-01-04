@@ -18,13 +18,32 @@ typedef NS_OPTIONS(NSUInteger, HLNetworkLoggerLevel) {
 
 @interface HLNetworkLoggerConfig : NSObject
 
-// 是否使用本地日志
-@property (nonatomic, assign) BOOL enableWriteToFile;
+// 渠道ID
+@property (nonatomic, strong) NSString *channelID;
+
+// app标志
+@property (nonatomic, strong) NSString *appKey;
+
+// app名字
+@property (nonatomic, strong) NSString *appName;
+
+// app名字
+@property (nonatomic, strong) NSString *appVersion;
+
+// 服务名
+@property (nonatomic, assign) NSString *serviceType;
+
+// 是否开启本地日志
+@property (nonatomic, assign) BOOL enableLocalLog;
 
 // 日志文件路径
 @property (nonatomic, strong) NSString *logFilePath;
 
+// 日志自动保存数，默认为50次保存一次
+@property (nonatomic, assign) NSUInteger logAutoSaveCount;
+
 // 日志等级
 @property (nonatomic, assign) HLNetworkLoggerLevel loggerLevel;
 
++ (instancetype)config;
 @end

@@ -45,6 +45,14 @@
     return desc;
 }
 
+- (NSDictionary *)toDictionary {
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    dict[@"Result"] = [self.result toDictionary];
+    dict[@"Request"] = self.request.description;
+    dict[@"RequestId"] = [NSString stringWithFormat:@"%ld", (long)self.requestId];
+    return dict;
+}
+
 - (NSString *)debugDescription {
     return self.description;
 }

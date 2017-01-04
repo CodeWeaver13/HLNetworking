@@ -38,4 +38,6 @@ typedef NS_ENUM(NSUInteger, HLSSLPinningMode) {
  @return 新的SecurityPolicy
  */
 + (instancetype)policyWithPinningMode:(HLSSLPinningMode)pinningMode;
+
+- (NSDictionary *)toDictionary;
 @end

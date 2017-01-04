@@ -30,6 +30,9 @@ NS_ASSUME_NONNULL_BEGIN
 // 是否启用reachability，baseURL为domain
 @property (nonatomic, assign) BOOL enableReachability;
 
+// 是否开启网络debug日志，该选项会在控制台输出所有网络回调日志，并且在Release模式下无效
+@property (nonatomic, assign) BOOL enableGlobalLog;
+
 // 快速构建config
 + (HLNetworkConfig *)config;
 

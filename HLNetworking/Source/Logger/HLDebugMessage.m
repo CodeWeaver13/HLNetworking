@@ -43,10 +43,12 @@ HLDebugKey const kHLQueueDebugKey = @"kHLQueueDebugKey";
 }
 
 - (NSDictionary *)toDictionary {
-    NSMutableDictionary <NSString *, NSString *>*dictionary = [NSMutableDictionary dictionary];
+    NSMutableDictionary <NSString *, id>*dictionary = [NSMutableDictionary dictionary];
     dictionary[@"Time"] = self.timeString;
-    dictionary[@"RequestObject"] = self.requestObject;
+    dictionary[@"RequestObject"] = [self.requestObject toDictionary];
     dictionary[@"SessionTask"] = [self.sessionTask description];
+    dictionary[@"Response"] = [self.response toDictionary];
+    dictionary[@"Queue"] = [self.queueName description];
     return dictionary;
 }
 

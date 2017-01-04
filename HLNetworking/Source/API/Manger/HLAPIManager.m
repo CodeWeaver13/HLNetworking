@@ -19,6 +19,7 @@
 #import "HLAPI_InternalParams.h"
 #import "HLAPIBatchRequests.h"
 #import "HLAPIChainRequests.h"
+#import "HLNetworkLogger.h"
 
 BOOL HLJudgeVersion(void) {
   return [[NSUserDefaults standardUserDefaults] boolForKey:@"isR"];
@@ -258,17 +259,24 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
     HLURLResponse *response = [[HLURLResponse alloc] initWithResult:result
                                                           requestId:[NSNumber numberWithUnsignedInteger:[api hash]]
                                                             request:task.currentRequest];
+    
+    // 设置Debug及log信息
+    HLDebugMessage *msg = [self createDebugMessageWithAPI:api
+                                                  andTask:task
+                                              andResponse:response];
 #if DEBUG
     if ([api apiDebugHandler]) {
-        HLDebugMessage *msg = [self createDebugMessageWithAPI:api
-                                                      andTask:task
-                                                  andResponse:response];
         dispatch_async(dispatch_get_main_queue(), ^{
             api.apiDebugHandler(msg);
             api.apiDebugHandler = nil;
         });
     }
+    if (self.config.enableGlobalLog) {
+        [HLNetworkLogger logInfoWithDebugMessage:msg];
+    }
 #endif
+    [HLNetworkLogger addLogInfoWithDebugMessage:msg];
+    
     if (netError) {
         for (id<HLNetworkErrorProtocol> observer in self.errorObservers) {
             [observer networkErrorInfo:netError];
@@ -304,9 +312,12 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
             }
         });
     }
+    
+    // 完成后离组
     if (group) {
         dispatch_group_leave(group);
     }
+    // 完成后信号量加1
     if (semaphore) {
         dispatch_semaphore_signal(semaphore);
     }
@@ -617,7 +628,7 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
     
     dispatch_group_t chain_api_group = dispatch_group_create();
     @hl_weakify(self);
-    dispatch_async(self.currentQueue, ^{
+    dispatch_async(queue, ^{
         [apis enumerateObjectsUsingBlock:^(HLAPI * _Nonnull api, NSUInteger idx, BOOL * _Nonnull stop) {
             @hl_strongify(self);
             dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);

@@ -31,4 +31,6 @@ FOUNDATION_EXPORT HLDebugKey const kHLQueueDebugKey;
 @property (nonatomic, strong, readonly)dispatch_queue_t queueName;
 
 - (instancetype)initWithDict:(NSDictionary *)dict;
+
+- (NSDictionary *)toDictionary;
 @end
