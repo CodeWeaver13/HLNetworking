@@ -9,6 +9,13 @@
 #ifndef HLNetworkMacro_h
 #define HLNetworkMacro_h
 
+#define dispatch_async_main(dosomething) if ([NSThread isMainThread]) {\
+dosomething\
+} else {\
+    dispatch_async(dispatch_get_main_queue(), ^{\
+        dosomething\
+    });\
+}
 #define HL_SAFE_BLOCK(BlockName, ...) ({ !BlockName ? nil : BlockName(__VA_ARGS__); })
 #define HLLock() dispatch_semaphore_wait(self->_lock, DISPATCH_TIME_FOREVER)
 #define HLUnlock() dispatch_semaphore_signal(self->_lock)

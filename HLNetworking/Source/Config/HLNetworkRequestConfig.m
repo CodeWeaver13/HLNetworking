@@ -20,6 +20,7 @@
         _apiCallbackQueue = nil;
         _maxHttpConnectionPerHost = MAX_HTTP_CONNECTION_PER_HOST;
         _requestTimeoutInterval = HL_API_REQUEST_TIME_OUT;
+        _retryCount = 0;
         _apiVersion = nil;
         _isJudgeVersion = [[NSUserDefaults standardUserDefaults] boolForKey:@"isR"] ? : YES;
     }

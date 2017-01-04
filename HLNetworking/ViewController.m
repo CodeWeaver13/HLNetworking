@@ -114,8 +114,9 @@ static dispatch_queue_t my_api_queue() {
     [HLAPIManager setupConfig:^(HLNetworkConfig * _Nonnull config) {
         config.request.baseURL = @"https://httpbin.org/";
         config.request.apiVersion = nil;
-        config.request.apiCallbackQueue = my_api_queue();
-        config.enableGlobalLog = YES;
+        config.request.retryCount = 5;
+//        config.request.apiCallbackQueue = my_api_queue();
+//        config.enableGlobalLog = YES;
     }];
     [HLNetworkLogger setupConfig:^(HLNetworkLoggerConfig * _Nonnull config) {
         config.enableLocalLog = YES;
@@ -135,22 +136,17 @@ static dispatch_queue_t my_api_queue() {
     .setDelegate(self)
     .setObjReformerDelegate(self)
     .success(^(id obj) {
-//        NSLog(@"\napi 1 --- 已回调 %@ \n----", obj);
-//        NSLog(@"%d", i++);
-//        self.api4.setParams(@{@"show_env": @(i)});
-    })
-//    .debug(^(HLDebugMessage *message){
-//        NSLog(@"\ndebugMessage : %@\n",
-//              message);
-//    })
-    ;
+        NSLog(@"\napi 1 --- 已回调 %@ \n----", obj);
+        NSLog(@"%d", i++);
+        self.api4.setParams(@{@"show_env": @(i)});
+    });
     
     self.api2 = [HLAPI API].setMethod(HEAD)
     .setPath(@"headers")
     .setDelegate(self)
     .success(^(id obj) {
-//        NSLog(@"\napi 2 --- 已回调 %@ \n----", obj);
-//        NSLog(@"%d", i++);
+        NSLog(@"\napi 2 --- 已回调 %@ \n----", obj);
+        NSLog(@"%d", i++);
     });
     
     self.api3 = [HLAPI API].setMethod(GET)
@@ -158,43 +154,49 @@ static dispatch_queue_t my_api_queue() {
     .setParams(@{@"a": @(i)})
     .setDelegate(self)
     .success(^(id obj) {
-//        NSLog(@"\napi 3 --- 已回调 %@ \n----", obj);
-//        NSLog(@"%d", i++);
+        NSLog(@"\napi 3 --- 已回调 %@ \n----", obj);
+        NSLog(@"%d", i++);
     });
     
     self.api4 = [HLAPI API].setMethod(POST)
     .setPath(@"post")
     .setDelegate(self)
     .success(^(id  obj) {
-//        NSLog(@"\napi 4 --- 已回调 %@ \n----", obj);
-//        NSLog(@"%d", i++);
+        NSLog(@"\napi 4 --- 已回调 %@ \n----", obj);
+        NSLog(@"%d", i++);
     });
     
     self.api5 = [HLAPI API].setMethod(PATCH)
     .setPath(@"patch")
     .setDelegate(self)
     .success(^(id obj) {
-//        NSLog(@"\napi 5 --- 已回调 %@ \n----", obj);
-//        NSLog(@"%d", i++);
+        NSLog(@"\napi 5 --- 已回调 %@ \n----", obj);
+        NSLog(@"%d", i++);
     });
     
     self.api6 = [HLAPI API].setMethod(PUT)
     .setPath(@"put")
     .setDelegate(self)
     .success(^(id obj) {
-//        NSLog(@"\napi 6 --- 已回调 %@ \n----",obj);
-//        NSLog(@"%d", i++);
+        NSLog(@"\napi 6 --- 已回调 %@ \n----",obj);
+        NSLog(@"%d", i++);
     });
     
     self.api7 = [HLAPI API].setMethod(DELETE)
     .setPath(@"delete")
     .setDelegate(self)
     .success(^(id obj) {
-//        NSLog(@"\napi 7 --- 已回调 %@ \n----",obj);
-//        NSLog(@"%d", i++);
+        NSLog(@"\napi 7 --- 已回调 %@ \n----",obj);
+        NSLog(@"%d", i++);
     });
     
-    [self.api1 start];
+//    [self.api1 start];
+//    [self.api2 start];
+//    [self.api3 start];
+//    [self.api4 start];
+//    [self.api5 start];
+//    [self.api6 start];
+//    [self.api7 start];
     [chain addAPIs:@[self.api1, self.api2, self.api3, self.api4, self.api5, self.api6, self.api7]];
     [chain start];
     
@@ -226,12 +228,7 @@ static dispatch_queue_t my_api_queue() {
 
 #pragma mark - HLResponseDelegate
 
-HLObserverAPIs(self.api1, self.api2, self.api3)
-
-//- (NSArray<HLAPI *> *)requestAPIs {
-//    NSArray *array = [NSArray arrayWithObjects:self.api1, self.api2, self.api3, self.api4, nil];
-//    return array;
-//}
+HLObserverAPIs(self.api1, self.api2, self.api3, self.api4, self.api5, self.api6, self.api7)
 
 - (void)requestSucessWithResponseObject:(id)responseObject atAPI:(HLAPI *)api {
     NSLog(@"\n%@------RequestSuccessDelegate\n", [self getAPIName:api]);
@@ -258,6 +255,12 @@ HLObserverAPIs(self.api1, self.api2, self.api3)
         apiName = @"api3";
     } else if ([api isEqual:self.api4]) {
         apiName = @"api4";
+    } else if ([api isEqual:self.api5]) {
+        apiName = @"api5";
+    } else if ([api isEqual:self.api6]) {
+        apiName = @"api6";
+    } else if ([api isEqual:self.api7]) {
+        apiName = @"api7";
     }
     return apiName;
 }

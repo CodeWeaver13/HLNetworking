@@ -26,6 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy) NSDictionary<NSString *, NSString *> *header;
 @property (nonatomic, copy) NSSet *accpetContentTypes;
 @property (nonatomic, copy) NSString *cURL;
+@property (nonatomic, assign) NSUInteger retryCount;
 
 @property (nonatomic, copy, nullable) HLSuccessBlock apiSuccessHandler;
 @property (nonatomic, copy, nullable) HLFailureBlock apiFailureHandler;

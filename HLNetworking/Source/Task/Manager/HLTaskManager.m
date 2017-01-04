@@ -171,19 +171,17 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
         }
     }
     for (id<HLTaskResponseProtocol> delegate in self.responseObservers) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if ([[delegate requestTasks] containsObject:task]) {
-                if (netError) {
-                    if ([delegate respondsToSelector:@selector(requestFailureWithResponseError:atTask:)]) {
-                        [delegate requestFailureWithResponseError:netError atTask:task];
-                    }
-                } else {
-                    if ([delegate respondsToSelector:@selector(requestSucessWithResponseObject:atTask:)]) {
-                        [delegate requestSucessWithResponseObject:obj atTask:task];
-                    }
+        dispatch_async_main(if ([[delegate requestTasks] containsObject:task]) {
+            if (netError) {
+                if ([delegate respondsToSelector:@selector(requestFailureWithResponseError:atTask:)]) {
+                    [delegate requestFailureWithResponseError:netError atTask:task];
+                }
+            } else {
+                if ([delegate respondsToSelector:@selector(requestSucessWithResponseObject:atTask:)]) {
+                    [delegate requestSucessWithResponseObject:obj atTask:task];
                 }
             }
-        });
+        })
     }
 }
 
@@ -262,13 +260,11 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
         if (progress.totalUnitCount <= 0) {
             return;
         }
-        dispatch_async(dispatch_get_main_queue(), ^{
-            for (id<HLTaskResponseProtocol> obj in self.responseObservers) {
-                if ([obj respondsToSelector:@selector(requestProgress:atTask:)]) {
-                    [obj requestProgress:progress atTask:task];
-                }
+        dispatch_async_main(for (id<HLTaskResponseProtocol> obj in self.responseObservers) {
+            if ([obj respondsToSelector:@selector(requestProgress:atTask:)]) {
+                [obj requestProgress:progress atTask:task];
             }
-        });
+        })
     } : nil;
     
     /**

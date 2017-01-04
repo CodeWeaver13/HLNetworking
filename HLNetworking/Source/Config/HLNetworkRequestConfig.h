@@ -38,6 +38,9 @@
 // 每个Host的最大连接数，默认为5
 @property (nonatomic, assign) NSUInteger maxHttpConnectionPerHost;
 
+// 网络状态不好时自动重试次数，默认为0
+@property (nonatomic, assign) NSUInteger retryCount;
+
 // 请求超时时间，默认为15秒
 @property (nonatomic, assign) NSTimeInterval requestTimeoutInterval;
 

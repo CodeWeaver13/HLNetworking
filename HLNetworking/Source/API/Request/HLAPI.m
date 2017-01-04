@@ -32,6 +32,7 @@
         _header = [HLAPIManager sharedManager].config.request.defaultHeaders;
         _parameters = nil;
         _timeoutInterval = HL_API_REQUEST_TIME_OUT;
+        _retryCount = [HLAPIManager sharedManager].config.request.retryCount;
         _cachePolicy = NSURLRequestUseProtocolCachePolicy;
         _requestMethodType = GET;
         _requestSerializerType = RequestHTTP;
@@ -50,21 +51,21 @@
     if (api) {
         api.useDefaultParams = _useDefaultParams;
         api.objClz = _objClz;
-        api.cURL = _cURL;
-        api.accpetContentTypes = _accpetContentTypes;
-        api.header = _header;
-        api.parameters = _parameters;
+        api.cURL = [_cURL copyWithZone:zone];
+        api.accpetContentTypes = [_accpetContentTypes copyWithZone:zone];
+        api.header = [_header copyWithZone:zone];
+        api.parameters = [_parameters copyWithZone:zone];
         api.timeoutInterval = _timeoutInterval;
         api.cachePolicy = _cachePolicy;
         api.requestMethodType = _requestMethodType;
         api.requestSerializerType = _requestSerializerType;
         api.responseSerializerType = _responseSerializerType;
-        api.securityPolicy = _securityPolicy;
-        api.useDefaultParams = _useDefaultParams;
+        api.retryCount = _retryCount;
+        api.securityPolicy = [_securityPolicy copyWithZone:zone];
         api.delegate = _delegate;
         api.objReformerDelegate = _objReformerDelegate;
-        api.baseURL = _baseURL;
-        api.path = _path;
+        api.baseURL = [_baseURL copyWithZone:zone];
+        api.path = [_path copyWithZone:zone];
     }
     return api;
 }
