@@ -20,7 +20,7 @@ static dispatch_queue_t my_api_queue() {
     return my_api_queue;
 }
 
-@interface ViewController ()<HLAPIResponseDelegate, HLAPIRequestDelegate, HLObjReformerProtocol, HLAPIChainRequestsProtocol, HLAPIBatchRequestsProtocol, HLTaskRequestDelegate, HLTaskResponseProtocol>
+@interface ViewController ()<HLAPIGroupProtocol, HLAPIResponseDelegate, HLAPIRequestDelegate, HLObjReformerProtocol, HLTaskRequestDelegate, HLTaskResponseProtocol>
 @property(nonatomic, strong)HLAPI *api1;
 @property(nonatomic, strong)HLAPI *api2;
 @property(nonatomic, strong)HLAPI *api3;
@@ -126,10 +126,9 @@ static dispatch_queue_t my_api_queue() {
 
 - (void)testAPI {
     __block int i = 0;
-    HLAPIChainRequests *chain = [[HLAPIChainRequests alloc] init];
-    chain.delegate = self;
-    HLAPIBatchRequests *asyncBatch = [[HLAPIBatchRequests alloc] init];
-    asyncBatch.delegate = self;
+    HLAPIGroup *group = [HLAPIGroup groupWithMode:HLAPIGroupModeChian];
+    group.delegate = self;
+    group.maxRequestCount = 2;
     
     self.api1 = [HLAPI API].setMethod(GET)
     .setPath(@"user-agent")
@@ -197,19 +196,15 @@ static dispatch_queue_t my_api_queue() {
 //    [self.api5 start];
 //    [self.api6 start];
 //    [self.api7 start];
-    [chain addAPIs:@[self.api1, self.api2, self.api3, self.api4, self.api5, self.api6, self.api7]];
-    [chain start];
+    [group addAPIs:@[self.api1, self.api2, self.api3, self.api4, self.api5, self.api6, self.api7]];
+    [group start];
     
 //    [asyncBatch addAPIs:[NSSet setWithObjects:self.api1, self.api2, self.api3, self.api4, self.api5, self.api6, self.api7, nil]];
 //    [asyncBatch start];
 }
 
-- (void)chainRequestsAllDidFinished:(HLAPIChainRequests *)chainApis {
-    NSLog(@"chainRequestsAllDidFinished");
-}
-
-- (void)batchAPIRequestsDidFinished:(HLAPIBatchRequests *)batchApis {
-    NSLog(@"batchAPIRequestsDidFinished");
+- (void)apiGroupAllDidFinished:(HLAPIGroup *)apiGroup {
+    NSLog(@"apiGroupAllDidFinished");
 }
 
 #pragma mark - HLObjReformerProtocol

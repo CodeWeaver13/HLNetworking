@@ -11,7 +11,6 @@
 #import "HLNetworkConfig.h"
 #import "HLAPIManager.h"
 #import "HLSecurityPolicyConfig.h"
-#import "HLAPIRequestDelegate.h"
 
 
 @implementation HLAPI

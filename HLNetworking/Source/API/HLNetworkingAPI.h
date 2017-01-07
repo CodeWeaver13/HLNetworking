@@ -15,13 +15,10 @@
 #import "HLAPIManager.h"
 #import "HLAPI.h"
 #import "HLAPIType.h"
+#import "HLAPIGroup.h"
 #import "HLDebugMessage.h"
-#import "HLAPIBatchRequests.h"
-#import "HLAPIChainRequests.h"
 // API protocol
 #import "HLMultipartFormDataProtocol.h"
-#import "HLAPIRequestDelegate.h"
-#import "HLAPIResponseDelegate.h"
 #import "HLNetworkErrorProtocol.h"
 
 #endif /* HLNetworkingAPI_h */

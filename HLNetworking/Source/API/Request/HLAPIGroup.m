@@ -1,12 +1,12 @@
 //
-//  HLAPISyncBatchRequests.m
+//  HLAPIGroup.m
 //  HLNetworking
 //
-//  Created by wangshiyu13 on 2016/9/24.
-//  Copyright © 2016年 wangshiyu13. All rights reserved.
+//  Created by wangshiyu13 on 2017/1/7.
+//  Copyright © 2017年 wangshiyu13. All rights reserved.
 //
 
-#import "HLAPIChainRequests.h"
+#import "HLAPIGroup.h"
 #import "HLAPI.h"
 #import "HLAPIManager.h"
 
@@ -23,63 +23,67 @@ static dispatch_queue_t qkhl_api_chain_queue(const char * queueName) {
 }
 
 static NSString * const hint = @"API 必须是 HLAPI的子类";
-@interface HLAPIChainRequests ()
 
-@property (nonatomic, strong, readwrite) NSMutableArray <HLAPI *>*apiRequestsArray;
-@property (nonatomic, assign, readwrite)BOOL isCancel;
+@interface HLAPIGroup ()
+@property (nonatomic, strong, readwrite) NSMutableArray <HLAPI *>*apiArray;
 // 自定义的同步请求所在的串行队列
 @property (nonatomic, strong, readwrite) dispatch_queue_t customChainQueue;
 @end
 
-@implementation HLAPIChainRequests
+@implementation HLAPIGroup
 #pragma mark - Init
-- (instancetype)init {
+- (instancetype)initWithMode:(HLAPIGroupMode)mode {
     self = [super init];
     if (self) {
-        self.apiRequestsArray = [NSMutableArray array];
-        self.isCancel = NO;
+        _apiArray = [NSMutableArray array];
+        _groupMode = mode;
+        _maxRequestCount = 1;
     }
     return self;
+}
+
++ (instancetype)groupWithMode:(HLAPIGroupMode)mode {
+    return [[self alloc] initWithMode:mode];
 }
 
 #pragma mark - NSFastEnumeration
 
 - (NSUInteger)count {
-    return _apiRequestsArray.count;
+    return _apiArray.count;
 }
 
 - (nonnull id)objectAtIndexedSubscript:(NSUInteger)idx {
-    if (idx >= _apiRequestsArray.count) {
-        [NSException raise:NSRangeException format:@"Index %lu 的区间为 [0, %lu].", (unsigned long)idx, (unsigned long)_apiRequestsArray.count];
+    if (idx >= _apiArray.count) {
+        [NSException raise:NSRangeException format:@"Index %lu 的区间为 [0, %lu].", (unsigned long)idx, (unsigned long)_apiArray.count];
     }
-    return _apiRequestsArray[idx];
+    return _apiArray[idx];
 }
 
 - (void)enumerateObjectsUsingBlock:(void (^)(HLAPI *api, NSUInteger idx, BOOL *stop))block {
-    [_apiRequestsArray enumerateObjectsUsingBlock:block];
+    [_apiArray enumerateObjectsUsingBlock:block];
 }
 
 - (NSEnumerator*)objectEnumerator {
-    return [_apiRequestsArray objectEnumerator];
+    return [_apiArray objectEnumerator];
 }
 
 - (NSUInteger)countByEnumeratingWithState:(NSFastEnumerationState *)state
                                   objects:(id  _Nullable __unsafe_unretained [])buffer
                                     count:(NSUInteger)len
 {
-    return [_apiRequestsArray countByEnumeratingWithState:state objects:buffer count:len];
+    return [_apiArray countByEnumeratingWithState:state objects:buffer count:len];
 }
 
 #pragma mark - Add Requests
 - (void)add:(HLAPI *)api {
     NSParameterAssert(api);
     NSAssert([api isKindOfClass:[HLAPI class]], hint);
-    if ([self.apiRequestsArray containsObject:api]) {
+    if ([self.apiArray containsObject:api]) {
 #ifdef DEBUG
         NSLog(@"批处理队列中已有相同的API！");
 #endif
     }
-    [self.apiRequestsArray addObject:api];
+    [self.apiArray addObject:api];
 }
 
 - (void)addAPIs:(nonnull NSArray<HLAPI *> *)apis {
@@ -91,20 +95,16 @@ static NSString * const hint = @"API 必须是 HLAPI的子类";
 }
 
 - (void)start {
-    NSAssert([self.apiRequestsArray count] != 0, @"APIBatch元素不可小于1");
-    [HLAPIManager sendChain:self];
-    self.isCancel = NO;
+    NSAssert([self.apiArray count] != 0, @"APIBatch元素不可小于1");
+    [HLAPIManager sendGroup:self];
 }
 
 - (void)cancel {
-    NSAssert([self.apiRequestsArray count] != 0, @"APIBatch元素不可小于1");
-    for (HLAPI *api in self.apiRequestsArray) {
-        [HLAPIManager cancel:api];
-    }
-    self.isCancel = YES;
+    NSAssert([self.apiArray count] != 0, @"APIBatch元素不可小于1");
+    [HLAPIManager cancelGroup:self];
 }
 
-- (dispatch_queue_t)setupChainQueue:(NSString *)queueName {
+- (dispatch_queue_t)setupGroupQueue:(NSString *)queueName {
     self.customChainQueue = qkhl_api_chain_queue([queueName UTF8String]);
     return self.customChainQueue;
 }

@@ -24,6 +24,8 @@ static dispatch_queue_t qkhl_log_queue() {
 
 @property (nonatomic, strong, readwrite) HLNetworkLoggerConfig *config;
 
+@property (nonatomic, assign) BOOL enable;
+
 @property (nonatomic, strong) NSMutableArray <NSDictionary *>*debugInfoArray;
 
 @end
@@ -31,6 +33,10 @@ static dispatch_queue_t qkhl_log_queue() {
 @implementation HLNetworkLogger
 
 #pragma mark - logger
++ (BOOL)isEnable {
+    return [[self sharedInstance] enable];
+}
+
 + (void)logInfoWithDebugMessage:(HLDebugMessage *)debugMessage {
     [[self sharedInstance] logInfoWithDebugMessage:debugMessage];
 }
@@ -41,6 +47,14 @@ static dispatch_queue_t qkhl_log_queue() {
 
 + (void)addLogInfoWithDebugMessage:(HLDebugMessage *)debugMessage {
     [[self sharedInstance] addLogInfoWithDebugMessage:debugMessage];
+}
+
++ (void)startLogging {
+    [[self sharedInstance] startLogging];
+}
+
++ (void)stopLogging {
+    [[self sharedInstance] stopLogging];
 }
 
 - (void)logInfoWithDebugMessage:(HLDebugMessage *)debugMessage {
@@ -74,6 +88,14 @@ static dispatch_queue_t qkhl_log_queue() {
     });
 }
 
+- (void)startLogging {
+    self.enable = YES;
+}
+
+- (void)stopLogging {
+    self.enable = NO;
+}
+
 #pragma mark - setupConfig
 - (void)setupConfig:(void (^)(HLNetworkLoggerConfig * _Nonnull))configBlock {
     HL_SAFE_BLOCK(configBlock, self.config);
@@ -97,6 +119,7 @@ static dispatch_queue_t qkhl_log_queue() {
     self = [super init];
     if (self) {
         _config = [HLNetworkLoggerConfig config];
+        _enable = NO;
         _debugInfoArray = [NSMutableArray array];
     }
     return self;

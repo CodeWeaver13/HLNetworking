@@ -19,8 +19,7 @@ FOUNDATION_EXPORT void HLJudgeVersionSwitch(BOOL isR);
 @protocol HLAPIResponseDelegate;
 @class HLNetworkConfig;
 @class HLAPI;
-@class HLAPIBatchRequests;
-@class HLAPIChainRequests;
+@class HLAPIGroup;
 NS_ASSUME_NONNULL_BEGIN
 @interface HLAPIManager : NSObject
 
@@ -38,32 +37,36 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  发送API请求
-
+ 默认为manager内置队列
+ 
  @param api 要发送的api
  */
 - (void)send:(HLAPI *)api;
 
 /**
+ 发送一组请求
+ 
+ @param group 请求组
+ */
+- (void)sendGroup:(HLAPIGroup *)group;
+
+/**
  取消API请求
  如果该请求已经发送或者正在发送，则不保证一定可以取消，但会将Block回落点置空，delegate正常回调
-
+ 默认为manager内置队列
+ 
  @param api 要取消的api
  */
 - (void)cancel:(HLAPI *)api;
 
 /**
- 发送一系列API请求
-
- @param apis 待发送的API请求集合
+ 取消API请求
+ 如果该请求已经发送或者正在发送，则不保证一定可以取消，但会将Block回落点置空，delegate正常回调
+ 默认为manager内置队列
+ 
+ @param group 要取消的api组
  */
-- (void)sendBatch:(HLAPIBatchRequests *)apis;
-
-/**
- 发送同步请求
-
- @param apis 带发送的同步请求集合
- */
-- (void)sendChain:(HLAPIChainRequests *)apis;
+- (void)cancelGroup:(HLAPIGroup *)group;
 
 /**
  移除网络请求监听者
@@ -105,6 +108,7 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - API操作
 /**
  使用sharedManager单例发送API
+ 默认在内置队列
  
  @param api 需要发送的API
  */
@@ -113,7 +117,8 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  使用sharedManager取消API请求
  如果该请求已经发送或者正在发送，则不保证一定可以取消，但会将Block回落点置空，delegate正常回调
-
+ 默认在内置队列
+ 
  @param api 要取消的api
  */
 + (void)cancel:(HLAPI *)api;
@@ -122,16 +127,18 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  使用sharedManager发送一系列API请求
 
- @param apis 待发送的API请求集合
+ @param group 待发送的API请求集合
  */
-+ (void)sendBatch:(HLAPIBatchRequests *)apis;
++ (void)sendGroup:(HLAPIGroup *)group;
 
 /**
- 使用sharedManager发送同步请求
+ 使用sharedManager取消API请求组
+ 如果该请求已经发送或者正在发送，则不保证一定可以取消，但会将Block回落点置空，delegate正常回调
+ 默认为manager内置队列
  
- @param apis 带发送的同步请求集合
+ @param group 要取消的api组
  */
-+ (void)sendChain:(HLAPIChainRequests *)apis;
++ (void)cancelGroup:(HLAPIGroup *)group;
 
 #pragma mark - 注册/销毁网络消息监听
 /**

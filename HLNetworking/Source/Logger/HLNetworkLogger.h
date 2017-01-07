@@ -22,7 +22,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (void)setupConfig:(void(^)(HLNetworkLoggerConfig *config))configBlock;
 
-+ (instancetype)sharedInstance;
++ (BOOL)isEnable;
+
++ (void)startLogging;
+
++ (void)stopLogging;
 
 @end
 NS_ASSUME_NONNULL_END
