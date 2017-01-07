@@ -263,9 +263,9 @@
 - (NSUInteger)hash {
     NSString *hashStr = nil;
     if (self.cURL) {
-        hashStr = [NSString stringWithFormat:@"%@?%@", self.cURL, self.parameters];
+        hashStr = [NSString stringWithFormat:@"%@%@?%@", self.header, self.cURL, self.parameters];
     } else {
-        hashStr = [NSString stringWithFormat:@"%@/%@?%@", self.baseURL, self.path, self.parameters];
+        hashStr = [NSString stringWithFormat:@"%@%@/%@?%@", self.header, self.baseURL, self.path, self.parameters];
     }
     return [hashStr hash];
 }
@@ -278,6 +278,10 @@
     if (self == object) return YES;
     if (![object isKindOfClass:[HLAPI class]]) return NO;
     return [self isEqualToAPI:(HLAPI *) object];
+}
+
+- (NSString *)hashKey {
+    return [NSString stringWithFormat:@"%lu", (unsigned long)[self hash]];
 }
 
 - (NSString *)description {

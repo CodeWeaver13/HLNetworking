@@ -216,6 +216,8 @@ return [NSArray arrayWithObjects:__VA_ARGS__, nil];; \
 
 - (NSDictionary *)toDictionary;
 
+- (NSString *)hashKey;
+
 #pragma mark - Process
 // 开启API 请求
 - (HLAPI *)start;

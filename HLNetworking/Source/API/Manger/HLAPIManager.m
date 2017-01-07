@@ -86,9 +86,9 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
     [[self sharedManager] setupConfig:configBlock];
 }
 
-#pragma mark - 创建AFHTTPSessionManager
+#pragma mark - 获取AFHTTPSessionManager
 /**
- 根据API的BaseURL创建AFSessionManager
+ 根据API的BaseURL获取AFSessionManager
 
  @param api 调用的API
 
@@ -285,7 +285,7 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
         if (error.code == NSURLErrorCannotConnectToHost) {
             if (api.retryCount > 0) {
                 api.retryCount --;
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), api.queue, ^{
                     [self sendRequest:api withSemaphore:semaphore atGroup:group];
                 });
                 return;
@@ -332,7 +332,13 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
     }
 #endif
     if ([HLNetworkLogger isEnable]) {
-        [HLNetworkLogger addLogInfoWithDebugMessage:msg];
+        NSDictionary *msgDictionary;
+        if ([HLNetworkLogger shared].delegate) {
+            msgDictionary = [[HLNetworkLogger shared].delegate customInfoWithMessage:msg];
+        } else {
+            msgDictionary = [msg toDictionary];
+        }
+        [HLNetworkLogger addLogInfoWithDictionary:msgDictionary];
     }
     
     if (netError) {
@@ -374,9 +380,8 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
         dispatch_semaphore_signal(semaphore);
     }
     // 移除dataTask缓存
-    NSString *hashKey = [self hashStringWithAPI:api];
-    if ([self.sessionTasksCache objectForKey:hashKey]) {
-        [self.sessionTasksCache removeObjectForKey:hashKey];
+    if ([self.sessionTasksCache objectForKey:api.hashKey]) {
+        [self.sessionTasksCache removeObjectForKey:api.hashKey];
     }
 }
 
@@ -421,9 +426,8 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
         [requestParams addEntriesFromDictionary:self.config.request.defaultParams];
     }
     
-    NSString *hashKey = [self hashStringWithAPI:api];
     // 如果缓存中已有当前task，则立即使api返回失败回调，错误信息为frequentRequestErrorStr
-    if ([self.sessionTasksCache objectForKey:hashKey]) {
+    if ([self.sessionTasksCache objectForKey:api.hashKey]) {
         NSString *errorStr     = self.config.tips.frequentRequestErrorStr;
         NSDictionary *userInfo = @{
                                    NSLocalizedDescriptionKey : errorStr
@@ -598,7 +602,7 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
     
     // 缓存dataTask
     if (dataTask) {
-        self.sessionTasksCache[hashKey] = dataTask;
+        self.sessionTasksCache[api.hashKey] = dataTask;
     }
     
     // 对api.delegate 发送已经请求api的消息
@@ -614,42 +618,34 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
  */
 - (void)send:(HLAPI *)api {
     @hl_weakify(self);
-    dispatch_async(self.currentQueue, ^{
+    if (!api.queue) {
+        api.queue = self.currentQueue;
+    }
+    dispatch_async(api.queue, ^{
         @hl_strongify(self);
+        api.queue = self.currentQueue;
         [self sendRequest:api withSemaphore:nil atGroup:nil];
     });
 }
 
 - (void)cancel:(HLAPI *)api {
-    [self cancel:api withQueue:nil];
-}
-
-- (void)cancel:(HLAPI *)api withQueue:(dispatch_queue_t)queue {
     @hl_weakify(self);
-    if (!queue) {
-        queue = self.currentQueue;
+    if (!api.queue) {
+        api.queue = self.currentQueue;
     }
-    dispatch_async(queue, ^{
+    dispatch_async(api.queue, ^{
         @hl_strongify(self);
-        NSString *hashKey = [self hashStringWithAPI:api];
-        NSURLSessionDataTask *dataTask = [self.sessionTasksCache objectForKey:hashKey];
+        NSURLSessionDataTask *dataTask = [self.sessionTasksCache objectForKey:api.hashKey];
         if (dataTask) {
-            [self.sessionTasksCache removeObjectForKey:hashKey];
             api.apiSuccessHandler = nil;
             api.apiFailureHandler = nil;
             api.apiProgressHandler = nil;
             api.apiDebugHandler = nil;
             api.apiRequestConstructingBodyBlock = nil;
             [dataTask cancel];
+            [self.sessionTasksCache removeObjectForKey:api.hashKey];
         }
     });
-}
-
-- (void)cancelGroup:(HLAPIGroup *)group {
-    NSAssert(group.count != 0, @"APIGroup元素不可小于1");
-    [group enumerateObjectsUsingBlock:^(HLAPI * _Nonnull api, NSUInteger idx, BOOL * _Nonnull stop) {
-        [self cancel:api withQueue:group.customChainQueue];
-    }];
 }
 
 #pragma mark - Send Sync Chain Requests
@@ -677,6 +673,7 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
     dispatch_async(queue, ^{
         [group enumerateObjectsUsingBlock:^(HLAPI * _Nonnull api, NSUInteger idx, BOOL * _Nonnull stop) {
             @hl_strongify(self);
+            api.queue = queue;
             if (group.groupMode == HLAPIGroupModeChian) {
                 dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
             }
@@ -697,28 +694,30 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
     });
 }
 
+- (void)cancelGroup:(HLAPIGroup *)group {
+    NSAssert(group.count != 0, @"APIGroup元素不可小于1");
+    [group enumerateObjectsUsingBlock:^(HLAPI * _Nonnull api, NSUInteger idx, BOOL * _Nonnull stop) {
+        [self cancel:api];
+    }];
+}
+
 #pragma mark - private method
 - (HLDebugMessage *)debugMessageWithAPI:(HLAPI *)api
                            andResultObject:(id)resultObject
                                andError:(NSError *)error
 {
-    NSString *hashKey = [self hashStringWithAPI:api];
-    NSURLSessionDataTask *task = [self.sessionTasksCache objectForKey:hashKey] ?: [NSNull null];
+    id task = [self.sessionTasksCache objectForKey:api.hashKey] ?: [NSNull null];
     // 生成response对象
     HLURLResult *result = [[HLURLResult alloc] initWithObject:resultObject andError:error];
     HLURLResponse *response = [[HLURLResponse alloc] initWithResult:result
                                                           requestId:[NSNumber numberWithUnsignedInteger:[api hash]]
-                                                            request:task.currentRequest];
+                                                            request:[task currentRequest]];
     
     NSDictionary *params = @{kHLRequestDebugKey: api,
                              kHLSessionTaskDebugKey: task,
                              kHLResponseDebugKey: response,
                              kHLQueueDebugKey: self.currentQueue};
     return [[HLDebugMessage alloc] initWithDict:params];
-}
-
-- (NSString *)hashStringWithAPI:(HLAPI *)api {
-    return [NSString stringWithFormat:@"%lu", (unsigned long)[api hash]];
 }
 
 #pragma mark - Network Response Observer

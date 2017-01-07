@@ -33,6 +33,8 @@
 		CFDE3FE41E12220E00CDA39E /* HLAPICenter.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDE3FE01E12220E00CDA39E /* HLAPICenter.m */; };
 		CFDE3FE51E12220E00CDA39E /* HLBaseObjReformer.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDE3FE31E12220E00CDA39E /* HLBaseObjReformer.m */; };
 		CFE869A61E20D03C001BE8D4 /* HLAPIGroup.m in Sources */ = {isa = PBXBuildFile; fileRef = CFE869A51E20D03C001BE8D4 /* HLAPIGroup.m */; };
+		CFE869A81E20F6BC001BE8D4 /* iPhoneTypeDefine.plist in Resources */ = {isa = PBXBuildFile; fileRef = CFE869A71E20F6BC001BE8D4 /* iPhoneTypeDefine.plist */; };
+		CFE869AB1E20FA9F001BE8D4 /* UIDevice+deviceInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = CFE869AA1E20FA9F001BE8D4 /* UIDevice+deviceInfo.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -102,6 +104,9 @@
 		CFDE3FE91E1222CB00CDA39E /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = SOURCE_ROOT; };
 		CFE869A41E20D03C001BE8D4 /* HLAPIGroup.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLAPIGroup.h; sourceTree = "<group>"; };
 		CFE869A51E20D03C001BE8D4 /* HLAPIGroup.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLAPIGroup.m; sourceTree = "<group>"; };
+		CFE869A71E20F6BC001BE8D4 /* iPhoneTypeDefine.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = iPhoneTypeDefine.plist; sourceTree = "<group>"; };
+		CFE869A91E20FA9F001BE8D4 /* UIDevice+deviceInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIDevice+deviceInfo.h"; sourceTree = "<group>"; };
+		CFE869AA1E20FA9F001BE8D4 /* UIDevice+deviceInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIDevice+deviceInfo.m"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -197,12 +202,15 @@
 		CF70059E1E1CA0CF00DF8E80 /* Logger */ = {
 			isa = PBXGroup;
 			children = (
+				CFE869A71E20F6BC001BE8D4 /* iPhoneTypeDefine.plist */,
 				CF7005A51E1CE30100DF8E80 /* HLDebugMessage.h */,
 				CF7005A61E1CE30100DF8E80 /* HLDebugMessage.m */,
 				CF70059F1E1CA12200DF8E80 /* HLNetworkLogger.h */,
 				CF7005A01E1CA12200DF8E80 /* HLNetworkLogger.m */,
 				CF7005A21E1CDADD00DF8E80 /* HLNetworkLoggerConfig.h */,
 				CF7005A31E1CDADD00DF8E80 /* HLNetworkLoggerConfig.m */,
+				CFE869A91E20FA9F001BE8D4 /* UIDevice+deviceInfo.h */,
+				CFE869AA1E20FA9F001BE8D4 /* UIDevice+deviceInfo.m */,
 			);
 			path = Logger;
 			sourceTree = "<group>";
@@ -426,6 +434,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CFE869A81E20F6BC001BE8D4 /* iPhoneTypeDefine.plist in Resources */,
 				CF36275D1D9368BD00C26AAF /* LaunchScreen.storyboard in Resources */,
 				CF36275A1D9368BD00C26AAF /* Assets.xcassets in Resources */,
 				CF3627581D9368BD00C26AAF /* Main.storyboard in Resources */,
@@ -488,6 +497,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CFD3864B1E1999DC001CF086 /* HLAPICenter+home.m in Sources */,
+				CFE869AB1E20FA9F001BE8D4 /* UIDevice+deviceInfo.m in Sources */,
 				CFDCF7421D9C261B00DE1C8E /* HLSecurityPolicyConfig.m in Sources */,
 				CF5C95681E1A336500A3380C /* HLNetworkTipsConfig.m in Sources */,
 				CF5C956E1E1A351600A3380C /* HLNetworkPolicyConfig.m in Sources */,

@@ -120,7 +120,10 @@ static dispatch_queue_t my_api_queue() {
     }];
     [HLNetworkLogger setupConfig:^(HLNetworkLoggerConfig * _Nonnull config) {
         config.enableLocalLog = YES;
+        config.logAutoSaveCount = 5;
+        config.loggerType = HLNetworkLoggerTypePlist;
     }];
+    [HLNetworkLogger startLogging];
     [HLAPIManager registerResponseObserver:self];
 }
 
@@ -205,6 +208,9 @@ static dispatch_queue_t my_api_queue() {
 
 - (void)apiGroupAllDidFinished:(HLAPIGroup *)apiGroup {
     NSLog(@"apiGroupAllDidFinished");
+    for (NSString *path in [HLNetworkLogger logFilePaths]) {
+        NSLog(@"%@", path);
+    }
 }
 
 #pragma mark - HLObjReformerProtocol

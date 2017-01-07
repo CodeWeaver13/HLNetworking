@@ -8,6 +8,7 @@
 
 #import "HLNetworkLogger.h"
 #import "HLNetworkMacro.h"
+#import "UIDevice+deviceInfo.h"
 
 // 创建任务队列
 static dispatch_queue_t qkhl_log_queue() {
@@ -33,43 +34,35 @@ static dispatch_queue_t qkhl_log_queue() {
 @implementation HLNetworkLogger
 
 #pragma mark - logger
-+ (BOOL)isEnable {
-    return [[self sharedInstance] enable];
-}
-
-+ (void)logInfoWithDebugMessage:(HLDebugMessage *)debugMessage {
-    [[self sharedInstance] logInfoWithDebugMessage:debugMessage];
-}
-
-+ (void)writeToFile {
-    [[self sharedInstance] writeToFile];
-}
-
-+ (void)addLogInfoWithDebugMessage:(HLDebugMessage *)debugMessage {
-    [[self sharedInstance] addLogInfoWithDebugMessage:debugMessage];
-}
-
-+ (void)startLogging {
-    [[self sharedInstance] startLogging];
-}
-
-+ (void)stopLogging {
-    [[self sharedInstance] stopLogging];
-}
-
 - (void)logInfoWithDebugMessage:(HLDebugMessage *)debugMessage {
 #if DEBUG
     NSLog(@"%@", debugMessage);
 #endif
 }
 
+- (NSArray <NSString *>*)logFilePaths {
+    NSString *dirPath = [[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:@"com.qkhl.HLNetworking/log"];
+    NSArray <NSString *>*fileList = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:dirPath error:nil];
+    NSMutableArray <NSString *>*tmpArray = [NSMutableArray array];
+    for (NSString *fileName in fileList) {
+        NSString *path = [NSString stringWithFormat:@"%@/%@", dirPath, fileName];
+        [tmpArray addObject:path];
+    }
+    return [tmpArray copy];
+}
+
 - (void)writeToFile {
     dispatch_async(qkhl_log_queue(), ^{
         if (self.config.enableLocalLog) {
-            NSOutputStream *outputStream = [NSOutputStream outputStreamToFileAtPath:self.config.logFilePath append:YES];
-            [outputStream open];
-            BOOL succeed = [NSJSONSerialization writeJSONObject:self.debugInfoArray toStream:outputStream options:NSJSONWritingPrettyPrinted error:nil];
-            [outputStream close];
+            BOOL succeed = NO;
+            if (self.config.loggerType == HLNetworkLoggerTypeJSON) {
+                NSOutputStream *outputStream = [NSOutputStream outputStreamToFileAtPath:self.config.logFilePath append:YES];
+                [outputStream open];
+                succeed = [NSJSONSerialization writeJSONObject:self.debugInfoArray toStream:outputStream options:NSJSONWritingPrettyPrinted error:nil];
+                [outputStream close];
+            } else {
+                succeed = [self.debugInfoArray writeToFile:self.config.logFilePath atomically:YES];
+            }
             if (succeed) {
                 [self.debugInfoArray removeAllObjects];
             }
@@ -77,13 +70,13 @@ static dispatch_queue_t qkhl_log_queue() {
     });
 }
 
-- (void)addLogInfoWithDebugMessage:(HLDebugMessage *)debugMessage {
+- (void)addLogInfoWithDictionary:(NSDictionary *)dictionary {
     dispatch_async(qkhl_log_queue(), ^{
         if (self.config.enableLocalLog) {
             if (self.debugInfoArray.count > self.config.logAutoSaveCount) {
                 [self writeToFile];
             }
-            [self.debugInfoArray addObject:[debugMessage toDictionary]];
+            [self.debugInfoArray addObject:dictionary];
         }
     });
 }
@@ -101,18 +94,14 @@ static dispatch_queue_t qkhl_log_queue() {
     HL_SAFE_BLOCK(configBlock, self.config);
 }
 
-+ (void)setupConfig:(void (^)(HLNetworkLoggerConfig * _Nonnull))configBlock {
-    [[self sharedInstance] setupConfig:configBlock];
-}
-
 #pragma mark - init
-+ (instancetype)sharedInstance {
++ (instancetype)shared {
     static dispatch_once_t onceToken;
-    static HLNetworkLogger *sharedInstance;
+    static HLNetworkLogger *shared;
     dispatch_once(&onceToken, ^{
-        sharedInstance = [[self alloc] init];
+        shared = [[self alloc] init];
     });
-    return sharedInstance;
+    return shared;
 }
 
 - (instancetype)init {
@@ -127,12 +116,56 @@ static dispatch_queue_t qkhl_log_queue() {
 
 - (NSMutableArray<NSDictionary *> *)debugInfoArray {
     if (_debugInfoArray.count == 0) {
-        [_debugInfoArray addObject:@{@"AppInfo": @{@"channelID": _config.channelID,
-                                                   @"appKey": _config.appKey,
-                                                   @"appName": _config.appName,
-                                                   @"appVersion": _config.appVersion,
-                                                   @"serviceType": _config.serviceType}}];
+        NSDictionary *infoHeader;
+        if ([self.delegate respondsToSelector:@selector(customHeaderWithMessage:)]) {
+            infoHeader = [self.delegate customHeaderWithMessage:self.config];
+        } else {
+            infoHeader = @{@"AppInfo": @{@"OSVersion": [UIDevice currentDevice].systemVersion,
+                                         @"DeviceType": [UIDevice currentDevice].hl_machineType,
+                                         @"UDID": [UIDevice currentDevice].hl_udid,
+                                         @"UUID": [UIDevice currentDevice].hl_uuid,
+                                         @"MacAddressMD5": [UIDevice currentDevice].hl_macaddressMD5,
+                                         @"ChannelID": _config.channelID,
+                                         @"AppKey": _config.appKey,
+                                         @"AppName": _config.appName,
+                                         @"AppVersion": _config.appVersion,
+                                         @"ServiceType": _config.serviceType}};
+        }
+        [_debugInfoArray addObject:infoHeader];
     }
     return _debugInfoArray;
+}
+
+#pragma mark - static method
++ (NSArray <NSString *>*)logFilePaths {
+    return [[self alloc] logFilePaths];
+}
+
++ (void)setupConfig:(void (^)(HLNetworkLoggerConfig * _Nonnull))configBlock {
+    [[self shared] setupConfig:configBlock];
+}
+
++ (BOOL)isEnable {
+    return [[self shared] enable];
+}
+
++ (void)logInfoWithDebugMessage:(HLDebugMessage *)debugMessage {
+    [[self shared] logInfoWithDebugMessage:debugMessage];
+}
+
++ (void)writeToFile {
+    [[self shared] writeToFile];
+}
+
++ (void)addLogInfoWithDictionary:(NSDictionary *)dictionary {
+    [[self shared] addLogInfoWithDictionary:dictionary];
+}
+
++ (void)startLogging {
+    [[self shared] startLogging];
+}
+
++ (void)stopLogging {
+    [[self shared] stopLogging];
 }
 @end
