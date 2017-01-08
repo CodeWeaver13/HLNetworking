@@ -95,7 +95,9 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
  @return AFHTTPSessionManager
  */
 - (AFHTTPSessionManager *)sessionManagerWithAPI:(HLAPI *)api {
-    NSParameterAssert(api);
+    if (!api) {
+        return nil;
+    }
     // Request 序列化
     AFHTTPRequestSerializer *requestSerializer;
     switch (api.requestSerializerType) {
@@ -390,21 +392,18 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
       withSemaphore:(dispatch_semaphore_t)semaphore
             atGroup:(dispatch_group_t)group
 {
-    NSParameterAssert(api);
+    if (!api) return;
+    
     AFHTTPSessionManager *sessionManager = [self sessionManagerWithAPI:api];
-    if (!sessionManager) {
-        return;
-    }
+    if (!sessionManager) return;
     
     @hl_weakify(self);
-    NSString *requestURLString;
+    NSString *requestURLString = nil;
     // 如果定义了自定义的cURL, 则直接使用
     NSURL *cURL = [NSURL URLWithString:api.cURL];
     if (cURL) {
         requestURLString = cURL.absoluteString;
     } else {
-        NSAssert(api.baseURL != nil || self.config.request.baseURL != nil,
-                 @"api baseURL 和 self.config.baseurl 两者必须有一个有值");
         NSString *tmpBaseURLStr = api.baseURL ?: self.config.request.baseURL;
         NSURL *tmpBaseURL = [NSURL URLWithString:tmpBaseURLStr];
         // 使用BaseUrl + apiversion(可选) + path 组成 UrlString
@@ -418,7 +417,7 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
             requestURLString = [NSString stringWithFormat:@"%@/%@", requestURLString, api.path];
         }
     }
-    NSAssert(requestURLString != nil || ![requestURLString isEqualToString:@""], @"请求的URL有误！");
+    if (!requestURLString) return;
     
     // 生成请求参数
     NSMutableDictionary<NSString *, id> *requestParams = [NSMutableDictionary dictionaryWithDictionary:api.parameters];
@@ -499,9 +498,7 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
      */
     void (^progressBlock)(NSProgress *progress)
     = api.apiProgressHandler ? ^(NSProgress *progress) {
-        if (progress.totalUnitCount <= 0) {
-            return;
-        }
+        if (progress.totalUnitCount <= 0) return;
         dispatch_async_main(api.apiProgressHandler(progress);
                             for (id<HLAPIResponseDelegate> obj in self.responseObservers) {
                                 if ([obj respondsToSelector:@selector(requestProgress:atAPI:)]) {
@@ -656,10 +653,10 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
  @param group api组
  */
 - (void)sendGroup:(HLAPIGroup *)group {
-    NSParameterAssert(group);
+    if (!group) return;
     dispatch_queue_t queue;
-    if (group.customChainQueue) {
-        queue = group.customChainQueue;
+    if (group.customQueue) {
+        queue = group.customQueue;
     } else {
         queue = self.currentQueue;
     }

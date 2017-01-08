@@ -23,54 +23,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)requestDidSentWithAPI:(HLAPI *)api;
 @end
 
-@protocol HLAPIResponseDelegate <NSObject>
-
-/**
- 快速返回必须的apis
- 
- @param ... apis
- @return 必要的APIs集合
- */
-#define HLObserverAPIs(...) \
-- (NSArray <HLAPI *>*)requestAPIs { \
-return [NSArray arrayWithObjects:__VA_ARGS__, nil];; \
-}
-
-@required
-/**
- 返回必须的apis
- 
- @return 必要的APIs集合
- */
-- (NSArray <HLAPI *>*)requestAPIs;
-
-@optional
-
-/**
- 请求成功的回调
- 
- @param responseObject 回调对象
- @param api 调用的api
- */
-- (void)requestSucessWithResponseObject:(nonnull id)responseObject atAPI:(HLAPI *)api;
-
-/**
- 请求失败的回调
- 
- @param error 错误对象
- @param api 调用的api
- */
-- (void)requestFailureWithResponseError:(nullable NSError *)error atAPI:(HLAPI *)api;
-
-/**
- api 上传、下载等长时间执行的Progress进度
- 
- @param progress 进度
- @param api 调用的api
- */
-- (void)requestProgress:(nullable NSProgress *)progress atAPI:(HLAPI *)api;
-@end
-
 #pragma mark - HLObjReformerProtocol
 @protocol HLObjReformerProtocol <NSObject>
 @required
@@ -95,7 +47,7 @@ return [NSArray arrayWithObjects:__VA_ARGS__, nil];; \
 @property (nonatomic, copy, readonly) NSDictionary<NSString *, NSObject *> *parameters;
 @property (nonatomic, copy, readonly) NSDictionary<NSString *, NSString *> *header;
 @property (nonatomic, copy, readonly) NSSet *accpetContentTypes;
-@property (nonatomic, copy, readonly) NSString *cURL;
+@property (nonatomic, copy, nullable, readonly) NSString *cURL;
 
 // 请使用API
 - (instancetype)init NS_UNAVAILABLE;

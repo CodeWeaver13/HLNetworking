@@ -1,14 +1,13 @@
 //
-//  HLAPIGroup.m
+//  HLTaskGroup.m
 //  HLNetworking
 //
 //  Created by wangshiyu13 on 2017/1/7.
 //  Copyright © 2017年 wangshiyu13. All rights reserved.
 //
 
-#import "HLAPIGroup.h"
-#import "HLAPI.h"
-#import "HLAPIManager.h"
+#import "HLTaskGroup.h"
+#import "HLTaskManager.h"
 
 #define mix(A, B) A##B
 // 创建任务队列
@@ -22,18 +21,17 @@ static dispatch_queue_t qkhl_api_chain_queue(const char * queueName) {
     return mix(qkhl_api_chain_queue_, queueName);
 }
 
-@interface HLAPIGroup ()
-@property (nonatomic, strong, readwrite) NSMutableArray <HLAPI *>*apiArray;
+@interface HLTaskGroup ()
+@property (nonatomic, strong, readwrite) NSMutableArray <HLTask *>*taskArray;
 // 自定义的同步请求所在的串行队列
 @property (nonatomic, strong, readwrite) dispatch_queue_t customQueue;
 @end
-
-@implementation HLAPIGroup
+@implementation HLTaskGroup
 #pragma mark - Init
 - (instancetype)initWithMode:(HLAPIGroupMode)mode {
     self = [super init];
     if (self) {
-        _apiArray = [NSMutableArray array];
+        _taskArray = [NSMutableArray array];
         _groupMode = mode;
         _maxRequestCount = 1;
     }
@@ -47,60 +45,60 @@ static dispatch_queue_t qkhl_api_chain_queue(const char * queueName) {
 #pragma mark - NSFastEnumeration
 
 - (NSUInteger)count {
-    return _apiArray.count;
+    return _taskArray.count;
 }
 
 - (nonnull id)objectAtIndexedSubscript:(NSUInteger)idx {
-    if (idx >= _apiArray.count) {
-        [NSException raise:NSRangeException format:@"Index %lu 的区间为 [0, %lu].", (unsigned long)idx, (unsigned long)_apiArray.count];
+    if (idx >= _taskArray.count) {
+        [NSException raise:NSRangeException format:@"Index %lu 的区间为 [0, %lu].", (unsigned long)idx, (unsigned long)_taskArray.count];
     }
-    return _apiArray[idx];
+    return _taskArray[idx];
 }
 
-- (void)enumerateObjectsUsingBlock:(void (^)(HLAPI *api, NSUInteger idx, BOOL *stop))block {
-    [_apiArray enumerateObjectsUsingBlock:block];
+- (void)enumerateObjectsUsingBlock:(void (^)(HLTask *api, NSUInteger idx, BOOL *stop))block {
+    [_taskArray enumerateObjectsUsingBlock:block];
 }
 
 - (NSEnumerator*)objectEnumerator {
-    return [_apiArray objectEnumerator];
+    return [_taskArray objectEnumerator];
 }
 
 - (NSUInteger)countByEnumeratingWithState:(NSFastEnumerationState *)state
                                   objects:(id  _Nullable __unsafe_unretained [])buffer
                                     count:(NSUInteger)len
 {
-    return [_apiArray countByEnumeratingWithState:state objects:buffer count:len];
+    return [_taskArray countByEnumeratingWithState:state objects:buffer count:len];
 }
 
 #pragma mark - Add Requests
-- (void)add:(HLAPI *)api {
-    if (!api) {
+- (void)add:(HLTask *)task {
+    if (!task) {
         return;
     }
-    if ([self.apiArray containsObject:api]) {
+    if ([self.taskArray containsObject:task]) {
 #ifdef DEBUG
         NSLog(@"批处理队列中已有相同的API！");
 #endif
     }
-    [self.apiArray addObject:api];
+    [self.taskArray addObject:task];
 }
 
-- (void)addAPIs:(nonnull NSArray<HLAPI *> *)apis {
-    if (!apis) return;
-    if (apis.count == 0) return;
-    [apis enumerateObjectsUsingBlock:^(HLAPI * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+- (void)addAPIs:(nonnull NSArray<HLTask *> *)tasks {
+    if (!tasks) return;
+    if (tasks.count == 0) return;
+    [tasks enumerateObjectsUsingBlock:^(HLTask * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         [self add:obj];
     }];
 }
 
 - (void)start {
-    if (self.apiArray.count == 0) return;
-    [HLAPIManager sendGroup:self];
+    if (self.taskArray.count == 0) return;
+    [HLTaskManager sendGroup:self];
 }
 
 - (void)cancel {
-    if (self.apiArray.count == 0) return;
-    [HLAPIManager cancelGroup:self];
+    if (self.taskArray.count == 0) return;
+    [HLTaskManager cancelGroup:self];
 }
 
 - (dispatch_queue_t)setupGroupQueue:(NSString *)queueName {

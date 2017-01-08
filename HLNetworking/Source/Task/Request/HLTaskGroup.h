@@ -1,5 +1,5 @@
 //
-//  HLAPIGroup.h
+//  HLTaskGroup.h
 //  HLNetworking
 //
 //  Created by wangshiyu13 on 2017/1/7.
@@ -7,20 +7,19 @@
 //
 
 #import <Foundation/Foundation.h>
-@class HLAPI;
-@class HLAPIGroup;
+@class HLTask;
+@class HLTaskGroup;
 NS_ASSUME_NONNULL_BEGIN
-@protocol HLAPIGroupProtocol <NSObject>
+@protocol HLTaskGroupProtocol <NSObject>
 // Requests 全部调用完成之后调用
-- (void)apiGroupAllDidFinished:(nonnull HLAPIGroup *)apiGroup;
+- (void)apiGroupAllDidFinished:(nonnull HLTaskGroup *)apiGroup;
 @end
 
 typedef NS_ENUM(NSUInteger, HLAPIGroupMode) {
     HLAPIGroupModeBatch,
     HLAPIGroupModeChian
 };
-
-@interface HLAPIGroup : NSObject
+@interface HLTaskGroup : NSObject
 
 // 请求组类型
 @property (nonatomic, assign, readonly) HLAPIGroupMode groupMode;
@@ -31,7 +30,7 @@ typedef NS_ENUM(NSUInteger, HLAPIGroupMode) {
 @property (nonatomic, strong, readonly) dispatch_queue_t customQueue;
 
 // Group 内 api 执行完成之后调用的delegate
-@property (nonatomic, weak, nullable) id<HLAPIGroupProtocol> delegate;
+@property (nonatomic, weak, nullable) id<HLTaskGroupProtocol> delegate;
 
 // 请使用manager或sharedManager
 - (instancetype)init NS_UNAVAILABLE;
@@ -41,10 +40,10 @@ typedef NS_ENUM(NSUInteger, HLAPIGroupMode) {
 + (instancetype)groupWithMode:(HLAPIGroupMode)mode;
 
 // 加入到group集合中
-- (void)add:(nonnull HLAPI *)api;
+- (void)add:(nonnull HLTask *)task;
 
 // 将带有API集合的Array 赋值
-- (void)addAPIs:(nonnull NSArray<HLAPI *> *)apis;
+- (void)addAPIs:(nonnull NSArray<HLTask *> *)tasks;
 
 // 开启队列请求
 - (void)start;
@@ -59,7 +58,7 @@ typedef NS_ENUM(NSUInteger, HLAPIGroupMode) {
 
 @property (readonly) NSUInteger count;
 
-- (void)enumerateObjectsUsingBlock:(void (^)(HLAPI *api, NSUInteger idx, BOOL * stop))block;
+- (void)enumerateObjectsUsingBlock:(void (^)(HLTask *task, NSUInteger idx, BOOL * stop))block;
 
 - (nonnull NSEnumerator*)objectEnumerator;
 

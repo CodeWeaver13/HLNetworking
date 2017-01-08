@@ -237,18 +237,6 @@
 }
 
 #pragma mark - Process
-- (void)requestWillBeSent {
-    if ([self.delegate respondsToSelector:@selector(requestWillBeSentWithAPI:)]) {
-        [self.delegate requestWillBeSentWithAPI:self];
-    }
-}
-
-- (void)requestDidSent {
-    if ([self.delegate respondsToSelector:@selector(requestDidSentWithAPI:)]) {
-        [self.delegate requestDidSentWithAPI:self];
-    }
-}
-
 - (HLAPI *)start {
     [HLAPIManager send:self];
     return self;

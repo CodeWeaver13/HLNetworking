@@ -93,7 +93,7 @@ static dispatch_queue_t my_api_queue() {
     NSLog(@"\n进度=====\n当前任务：%@\n当前进度：%@", task.taskURL, progress);
 }
 
-- (void)requestSucessWithResponseObject:(nonnull id)responseObject atTask:(nullable HLTask *)task {
+- (void)requestSucessWithResponseObject:(nullable id)responseObject atTask:(nullable HLTask *)task {
     NSLog(@"\n完成=====\n当前任务：%@\n对象：%@", task, responseObject);
 }
 

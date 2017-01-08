@@ -79,7 +79,9 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
  @return AFHTTPSessionManager
  */
 - (AFURLSessionManager *)sessionManagerWithTask:(HLTask *)task {
-    NSParameterAssert(task);
+    if (!task) {
+        return nil;
+    }
     
     // 拼接baseUrlStr
     NSString *baseUrlStr;
@@ -170,25 +172,27 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
                                        userInfo:userInfo];
         }
     }
-    for (id<HLTaskResponseProtocol> delegate in self.responseObservers) {
-        dispatch_async_main(if ([[delegate requestTasks] containsObject:task]) {
-            if (netError) {
-                if ([delegate respondsToSelector:@selector(requestFailureWithResponseError:atTask:)]) {
-                    [delegate requestFailureWithResponseError:netError atTask:task];
-                }
-            } else {
-                if ([delegate respondsToSelector:@selector(requestSucessWithResponseObject:atTask:)]) {
-                    [delegate requestSucessWithResponseObject:obj atTask:task];
+    if (self.responseObservers.count > 0) {
+        for (id<HLTaskResponseProtocol> delegate in self.responseObservers) {
+            if ([[delegate requestTasks] containsObject:task]) {
+                if (netError) {
+                    if ([delegate respondsToSelector:@selector(requestFailureWithResponseError:atTask:)]) {
+                        dispatch_async_main([delegate requestFailureWithResponseError:netError atTask:task];)
+                    }
+                } else {
+                    if ([delegate respondsToSelector:@selector(requestSucessWithResponseObject:atTask:)]) {
+                        dispatch_async_main([delegate requestSucessWithResponseObject:obj atTask:task];)
+                    }
                 }
             }
-        })
+        }
     }
 }
 
-- (void)sendSingleTaskRequest:(HLTask *)task
-           withSessionManager:(AFURLSessionManager *)sessionManager {
-    NSParameterAssert(task);
-    NSParameterAssert(sessionManager);
+- (void)sendRequest:(HLTask *)task {
+    if (!task) return;
+    AFURLSessionManager *sessionManager = [self sessionManagerWithTask:task];
+    if (!sessionManager) return;
     @hl_weakify(self);
     
     BOOL isDownloadTask = task.requestTaskType == Upload;
@@ -201,8 +205,6 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
         requestURL = taskURL;
     } else {
         // 如果taskURL没定义，则使用BaseUrl + requestMethod 组成 UrlString
-        NSAssert(task.baseURL != nil || self.config.request.baseURL != nil,
-                 @"api baseURL 和 self.config.baseurl 两者必须有一个有值");
         NSString *tmpStr = [NSString stringWithFormat:@"%@/%@", task.baseURL ?: self.config.request.baseURL, task.path ?: @""];
         NSURL *tmpBaseURL = [NSURL URLWithString:tmpStr];
         host = [NSString stringWithFormat:@"%@://%@", tmpBaseURL.scheme, tmpBaseURL.host];
@@ -212,8 +214,13 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
     
     NSString *hashKey = [NSString stringWithFormat:@"%lu", (unsigned long)[task hash]];
     NSURLRequest *request = [NSURLRequest requestWithURL:requestURL];
+    if (!request) {
+        return;
+    }
     __block NSURL *fileURL = task.filePath ? [NSURL fileURLWithPath:task.filePath] : nil;
-    
+    if (!fileURL) {
+        return;
+    }
     // 如果缓存中已有当前task，则立即使api返回失败回调，错误信息为frequentRequestErrorStr，如果是apiBatch，则整组移除
     if ([self.downloadTasksCache objectForKey:hashKey] || [self.uploadTasksCache objectForKey:hashKey]) {
         NSString *errorStr     = self.config.tips.frequentRequestErrorStr;
@@ -257,9 +264,7 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
      */
     void (^progressBlock)(NSProgress *progress)
     = self.responseObservers.count != 0 ? ^(NSProgress *progress) {
-        if (progress.totalUnitCount <= 0) {
-            return;
-        }
+        if (progress.totalUnitCount <= 0) return;
         dispatch_async_main(for (id<HLTaskResponseProtocol> obj in self.responseObservers) {
             if ([obj respondsToSelector:@selector(requestProgress:atTask:)]) {
                 [obj requestProgress:progress atTask:task];
@@ -296,13 +301,7 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wundeclared-selector"
     if ([task respondsToSelector:@selector(requestWillBeSent)]) {
-        if ([[NSThread currentThread] isMainThread]) {
-            [task performSelector:@selector(requestWillBeSent)];
-        } else {
-            dispatch_sync(dispatch_get_main_queue(), ^{
-                [task performSelector:@selector(requestWillBeSent)];
-            });
-        }
+        dispatch_async_main([task performSelector:@selector(requestWillBeSent)];)
     }
 #pragma clang diagnostic pop
     
@@ -358,13 +357,7 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wundeclared-selector"
     if ([task respondsToSelector:@selector(requestDidSent)]) {
-        if ([[NSThread currentThread] isMainThread]) {
-            [task performSelector:@selector(requestDidSent)];
-        } else {
-            dispatch_sync(dispatch_get_main_queue(), ^{
-                [task performSelector:@selector(requestDidSent)];
-            });
-        }
+        dispatch_async_main([task performSelector:@selector(requestDidSent)];)
     }
 #pragma clang diagnostic pop
 }
@@ -375,15 +368,11 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
  @param task 需要发送的API
  */
 - (void)send:(nonnull HLTask *)task {
-    NSParameterAssert(task);
-    NSAssert(self.config, @"Config不能为空");
+    if (!task) return;
+    if (!self.config) return;
     
     dispatch_async(qkhl_task_session_creation_queue(), ^{
-        AFURLSessionManager *sessionManager = [self sessionManagerWithTask:task];
-        if (!sessionManager) {
-            return;
-        }
-        [self sendSingleTaskRequest:task withSessionManager:sessionManager];
+        [self sendRequest:task];
     });
 }
 
@@ -423,8 +412,7 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
             if (uploadTask) {
                 [uploadTask resume];
             } else {
-                [self.uploadTasksCache setObject:uploadTask forKey:hashKey];
-                [uploadTask resume];
+                [self send:task];
             }
         }
     });
@@ -490,8 +478,7 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
     [[self sharedManager] removeResponseObserver:observer];
 }
 
-#pragma mark - private method 
-
+#pragma mark - private method
 //获取已下载的文件大小
 - (unsigned long long)fileSizeForPath:(NSString *)path {
     signed long long fileSize = 0;
