@@ -99,7 +99,7 @@
     [desc appendFormat:@"CachePolicy: %@\n", [self getCachePolicyString:self.cachePolicy]];
     [desc appendString:@"===============End===============\n"];
 #else
-    desc = @"";
+    desc = [NSMutableString stringWithFormat:@""];
 #endif
     return desc;
 }

@@ -11,7 +11,7 @@
 
 @interface HLURLResponse : NSObject
 @property (nonatomic, strong, readonly) HLURLResult *result;
-@property (nonatomic, assign, readonly) NSInteger requestId;
+@property (nonatomic, assign, readonly) NSUInteger requestId;
 @property (nonatomic, copy, readonly) NSURLRequest *request;
 
 - (NSDictionary *)toDictionary;

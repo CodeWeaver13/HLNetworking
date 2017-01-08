@@ -293,7 +293,7 @@
     [desc appendFormat:@"CachePolicy: %@\n", [self getCachePolicy:self.cachePolicy]];
     [desc appendString:@"=================HLAPI End================\n"];
 #else
-    desc = @"";
+    desc = [NSMutableString stringWithFormat:@""];
 #endif
     return desc;
 }

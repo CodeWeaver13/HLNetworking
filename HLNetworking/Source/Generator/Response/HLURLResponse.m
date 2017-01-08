@@ -12,7 +12,7 @@
 
 @property (nonatomic, strong, readwrite) HLURLResult *result;
 @property (nonatomic, copy, readwrite) NSURLRequest *request;
-@property (nonatomic, assign, readwrite) NSInteger requestId;
+@property (nonatomic, assign, readwrite) NSUInteger requestId;
 
 @end
 
@@ -40,7 +40,7 @@
     [desc appendString:@"\n++++++++HLURLResponse Start++++++++\n"];
     [desc appendFormat:@"Result : %@\n", self.result];
     [desc appendFormat:@"Request : %@\n", self.request];
-    [desc appendFormat:@"RequestId : %lu\n", self.requestId];
+    [desc appendFormat:@"RequestId : %lu\n", (unsigned long)self.requestId];
     [desc appendString:@"+++++++++HLURLResponse End+++++++++\n"];
     return desc;
 }
@@ -49,7 +49,7 @@
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     dict[@"Result"] = [self.result toDictionary];
     dict[@"Request"] = self.request.description;
-    dict[@"RequestId"] = [NSString stringWithFormat:@"%ld", (long)self.requestId];
+    dict[@"RequestId"] = [NSString stringWithFormat:@"%lu", (unsigned long)self.requestId];
     return dict;
 }
 

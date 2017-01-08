@@ -36,7 +36,7 @@
     [desc appendFormat:@"CerFilePath: %@\n", self.cerFilePath ?: @"未设置"];
     [desc appendString:@"------HLSecurityPolicyConfig End------\n"];
 #else
-    desc = @"";
+    desc = [NSMutableString stringWithFormat:@""];
 #endif
     return desc;
 }
