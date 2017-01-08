@@ -20,16 +20,14 @@
     if (self) {
         _requestTaskType = Download;
         _baseURL = [HLTaskManager sharedManager].config.request.baseURL;
+        _retryCount = [HLTaskManager sharedManager].config.request.retryCount;
+        _cachePolicy = NSURLRequestUseProtocolCachePolicy;
         NSString *baseResumePath = [[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:@"com.qkhl.HLNetworking/downloadDict"];
         if (![[NSFileManager defaultManager] fileExistsAtPath:baseResumePath isDirectory:nil]) {
             [[NSFileManager defaultManager] createDirectoryAtPath:baseResumePath withIntermediateDirectories:YES attributes:nil error:nil];
         }
         _resumePath = [baseResumePath stringByAppendingPathComponent:[NSString stringWithFormat:@"%lu.arc", (unsigned long)self.hash]];
-#ifdef DEBUG
-        _securityPolicy = [HLSecurityPolicyConfig policyWithPinningMode:HLSSLPinningModeNone];
-#else
-        _securityPolicy = [HLSecurityPolicyConfig policyWithPinningMode:HLSSLPinningModePublicKey];
-#endif
+        _securityPolicy = [HLTaskManager sharedManager].config.defaultSecurityPolicy;
     }
     return self;
 }
@@ -69,6 +67,10 @@
         hashStr = [NSString stringWithFormat:@"%@/%@", self.baseURL, self.path];
     }
     return [hashStr hash];
+}
+
+- (NSString *)hashKey {
+    return [NSString stringWithFormat:@"%lu", (unsigned long)[self hash]];
 }
 
 - (BOOL)isEqualToTask:(HLTask *)task {
@@ -198,17 +200,5 @@
         self.requestTaskType = requestTaskType;
         return self;
     };
-}
-
-- (void)requestWillBeSent {
-    if ([self.delegate respondsToSelector:@selector(requestWillBeSentWithTask:)]) {
-        [self.delegate requestWillBeSentWithTask:self];
-    }
-}
-
-- (void)requestDidSent {
-    if ([self.delegate respondsToSelector:@selector(requestDidSentWithTask:)]) {
-        [self.delegate requestDidSentWithTask:self];
-    }
 }
 @end

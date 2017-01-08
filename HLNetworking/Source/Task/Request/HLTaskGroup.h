@@ -12,17 +12,17 @@
 NS_ASSUME_NONNULL_BEGIN
 @protocol HLTaskGroupProtocol <NSObject>
 // Requests 全部调用完成之后调用
-- (void)apiGroupAllDidFinished:(nonnull HLTaskGroup *)apiGroup;
+- (void)taskGroupAllDidFinished:(nonnull HLTaskGroup *)taskGroup;
 @end
 
-typedef NS_ENUM(NSUInteger, HLAPIGroupMode) {
-    HLAPIGroupModeBatch,
-    HLAPIGroupModeChian
+typedef NS_ENUM(NSUInteger, HLTaskGroupMode) {
+    HLTaskGroupModeBatch,
+    HLTaskGroupModeChian
 };
 @interface HLTaskGroup : NSObject
 
 // 请求组类型
-@property (nonatomic, assign, readonly) HLAPIGroupMode groupMode;
+@property (nonatomic, assign, readonly) HLTaskGroupMode groupMode;
 
 @property (nonatomic, assign) NSUInteger maxRequestCount;
 
@@ -37,13 +37,13 @@ typedef NS_ENUM(NSUInteger, HLAPIGroupMode) {
 + (instancetype)new NS_UNAVAILABLE;
 
 // 返回一个新的manager对象
-+ (instancetype)groupWithMode:(HLAPIGroupMode)mode;
++ (instancetype)groupWithMode:(HLTaskGroupMode)mode;
 
 // 加入到group集合中
 - (void)add:(nonnull HLTask *)task;
 
 // 将带有API集合的Array 赋值
-- (void)addAPIs:(nonnull NSArray<HLTask *> *)tasks;
+- (void)addTasks:(nonnull NSArray<HLTask *> *)tasks;
 
 // 开启队列请求
 - (void)start;

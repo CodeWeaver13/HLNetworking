@@ -76,5 +76,7 @@ NS_ASSUME_NONNULL_BEGIN
  暂停Task
  */
 - (HLTask *)pause;
+
+- (NSString *)hashKey;
 @end
 NS_ASSUME_NONNULL_END

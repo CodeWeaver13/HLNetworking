@@ -18,11 +18,7 @@
         _policy = [HLNetworkPolicyConfig config];
         _enableReachability = NO;
         _enableGlobalLog = NO;
-#ifdef DEBUG
         _defaultSecurityPolicy = [HLSecurityPolicyConfig policyWithPinningMode:HLSSLPinningModeNone];
-#else
-        _defaultSecurityPolicy = [HLSecurityPolicyConfig policyWithPinningMode:HLSSLPinningModePublicKey];
-#endif
     }
     return self;
 }

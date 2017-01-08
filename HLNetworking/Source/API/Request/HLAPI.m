@@ -22,6 +22,7 @@
         _useDefaultParams = YES;
         _objClz = [NSObject class];
         _cURL = nil;
+        _baseURL = [HLAPIManager sharedManager].config.request.baseURL;
         _accpetContentTypes = [NSSet setWithObjects:
                                @"text/json",
                                @"text/html",

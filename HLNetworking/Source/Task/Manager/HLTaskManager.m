@@ -10,6 +10,9 @@
 #import "HLTaskResponseProtocol.h"
 #import "HLTask.h"
 #import "HLTask_InternalParams.h"
+#import "HLTaskGroup.h"
+#import "HLDebugMessage.h"
+#import "HLNetworkLogger.h"
 #import "HLNetworkConfig.h"
 #import "HLSecurityPolicyConfig.h"
 #import "HLNetworkMacro.h"
@@ -21,7 +24,7 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         qkhl_task_session_creation_queue =
-        dispatch_queue_create("com.qkhl.pp.networking.wangshiyu13.task.callback.queue", DISPATCH_QUEUE_SERIAL);
+        dispatch_queue_create("com.qkhl.pp.networking.wangshiyu13.task.callback.queue", DISPATCH_QUEUE_PRIORITY_DEFAULT);
     });
     return qkhl_task_session_creation_queue;
 }
@@ -29,9 +32,10 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
 @interface HLTaskManager ()
 @property (nonatomic, strong, readwrite) HLNetworkConfig *config;
 @property (nonatomic, strong) NSMutableDictionary <NSString *, AFURLSessionManager *>*sessionManagerCache;
-@property (nonatomic, strong) NSMutableDictionary <NSString *, NSURLSessionDownloadTask *>*downloadTasksCache;
-@property (nonatomic, strong) NSMutableDictionary <NSString *, NSURLSessionUploadTask *>*uploadTasksCache;
+@property (nonatomic, strong) NSMutableDictionary <NSString *, NSURLSessionTask *>*sessionTaskCache;
 @property (nonatomic, strong) NSHashTable<id <HLTaskResponseProtocol>> *responseObservers;
+
+@property (nonatomic, strong) dispatch_queue_t currentQueue;
 @end
 
 @implementation HLTaskManager
@@ -62,10 +66,10 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
     self = [super init];
     if (self) {
         _config = [HLNetworkConfig config];
+        _currentQueue = _config.request.taskCallbackQueue ?: qkhl_task_session_creation_queue();
         _responseObservers = [NSHashTable hashTableWithOptions:NSHashTableWeakMemory];
         _sessionManagerCache = [NSMutableDictionary dictionary];
-        _downloadTasksCache = [NSMutableDictionary dictionary];
-        _uploadTasksCache = [NSMutableDictionary dictionary];
+        _sessionTaskCache = [NSMutableDictionary dictionary];
     }
     return self;
 }
@@ -107,8 +111,13 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
     securityPolicy.allowInvalidCertificates = task.securityPolicy.allowInvalidCertificates;
     securityPolicy.validatesDomainName      = task.securityPolicy.validatesDomainName;
     NSString *cerPath                       = task.securityPolicy.cerFilePath;
-    NSData *certData                        = [NSData dataWithContentsOfFile:cerPath];
-    securityPolicy.pinnedCertificates       = [NSSet setWithObject:certData];
+    NSData *certData = nil;
+    if (cerPath && ![cerPath isEqualToString:@""]) {
+        certData = [NSData dataWithContentsOfFile:cerPath];
+        if (certData) {
+            securityPolicy.pinnedCertificates = [NSSet setWithObject:certData];
+        }
+    }
     
     // AFURLSessionManager
     AFURLSessionManager *sessionManager;
@@ -138,16 +147,32 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
 
 #pragma mark - Response Complete Handler
 /**
- API完成的回调方法
+ Task完成的回调方法
 
- @param task 调用的API
- @param obj 返回的对象
+ @param task 调用的Task
+ @param resultObject 返回的对象
  @param error 返回的错误
+ @param group 调用的组
+ @param semaphore 调用的信号量
  */
-- (void)callTaskCompletion:(HLTask *)task obj:(id)obj error:(NSError *)error {
+- (void)callbackWithRequest:(HLTask *)task
+            andResultObject:(id)resultObject
+                   andError:(NSError *)error
+                   andGroup:(dispatch_group_t)group
+               andSemaphore:(dispatch_semaphore_t)semaphore {
     // 处理回调的block
     NSError *netError = error;
-    if (error) {
+    if (netError) {
+        // 网络状态不好时自动重试
+        if (error.code == NSURLErrorCannotConnectToHost) {
+            if (task.retryCount > 0) {
+                task.retryCount --;
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), task.queue, ^{
+                    [self sendRequest:task withSemaphore:semaphore atGroup:group];
+                });
+                return;
+            }
+        }
         // 如果不是reachability无法访问host或用户取消错误(NSURLErrorCancelled)，则对错误提示进行处理
         if (![error.domain isEqualToString: NSURLErrorDomain] &&
             error.code != NSURLErrorCancelled) {
@@ -172,24 +197,54 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
                                        userInfo:userInfo];
         }
     }
-    if (self.responseObservers.count > 0) {
-        for (id<HLTaskResponseProtocol> delegate in self.responseObservers) {
-            if ([[delegate requestTasks] containsObject:task]) {
-                if (netError) {
-                    if ([delegate respondsToSelector:@selector(requestFailureWithResponseError:atTask:)]) {
-                        dispatch_async_main([delegate requestFailureWithResponseError:netError atTask:task];)
-                    }
-                } else {
-                    if ([delegate respondsToSelector:@selector(requestSucessWithResponseObject:atTask:)]) {
-                        dispatch_async_main([delegate requestSucessWithResponseObject:obj atTask:task];)
-                    }
+    
+    // 设置Debug及log信息
+    HLDebugMessage *msg = [self debugMessageWithTask:task andResultObject:resultObject andError:netError];
+#if DEBUG
+    if (self.config.enableGlobalLog) {
+        [HLNetworkLogger logInfoWithDebugMessage:msg];
+    }
+#endif
+    if ([HLNetworkLogger isEnable]) {
+        NSDictionary *msgDictionary;
+        if ([HLNetworkLogger shared].delegate) {
+            msgDictionary = [[HLNetworkLogger shared].delegate customInfoWithMessage:msg];
+        } else {
+            msgDictionary = [msg toDictionary];
+        }
+        [HLNetworkLogger addLogInfoWithDictionary:msgDictionary];
+    }
+    
+    for (id<HLTaskResponseProtocol> delegate in self.responseObservers) {
+        if ([[delegate requestTasks] containsObject:task]) {
+            if (netError) {
+                if ([delegate respondsToSelector:@selector(requestFailureWithResponseError:atTask:)]) {
+                    dispatch_async_main([delegate requestFailureWithResponseError:netError atTask:task];)
+                }
+            } else {
+                if ([delegate respondsToSelector:@selector(requestSucessWithResponseObject:atTask:)]) {
+                    dispatch_async_main([delegate requestSucessWithResponseObject:resultObject atTask:task];)
                 }
             }
         }
     }
+    // 完成后离组
+    if (group) {
+        dispatch_group_leave(group);
+    }
+    // 完成后信号量加1
+    if (semaphore) {
+        dispatch_semaphore_signal(semaphore);
+    }
+    // 移除dataTask缓存
+    if ([self.sessionTaskCache objectForKey:task.hashKey]) {
+        [self.sessionTaskCache removeObjectForKey:task.hashKey];
+    }
 }
 
-- (void)sendRequest:(HLTask *)task {
+- (void)sendRequest:(HLTask *)task
+      withSemaphore:(dispatch_semaphore_t)semaphore
+            atGroup:(dispatch_group_t)group {
     if (!task) return;
     AFURLSessionManager *sessionManager = [self sessionManagerWithTask:task];
     if (!sessionManager) return;
@@ -222,7 +277,7 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
         return;
     }
     // 如果缓存中已有当前task，则立即使api返回失败回调，错误信息为frequentRequestErrorStr，如果是apiBatch，则整组移除
-    if ([self.downloadTasksCache objectForKey:hashKey] || [self.uploadTasksCache objectForKey:hashKey]) {
+    if ([self.sessionTaskCache objectForKey:hashKey]) {
         NSString *errorStr     = self.config.tips.frequentRequestErrorStr;
         NSDictionary *userInfo = @{
                                    NSLocalizedDescriptionKey : errorStr
@@ -230,7 +285,7 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
         NSError *cancelError = [NSError errorWithDomain:NSURLErrorDomain
                                                    code:NSURLErrorCancelled
                                                userInfo:userInfo];
-        [self callTaskCompletion:task obj:nil error:cancelError];
+        [self callbackWithRequest:task andResultObject:nil andError:cancelError andGroup:group andSemaphore:semaphore];
         return;
     }
     
@@ -255,7 +310,7 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
         NSError *networkUnreachableError = [NSError errorWithDomain:NSURLErrorDomain
                                                                code:NSURLErrorCannotConnectToHost
                                                            userInfo:userInfo];
-        [self callTaskCompletion:task obj:nil error:networkUnreachableError];
+        [self callbackWithRequest:task andResultObject:nil andError:networkUnreachableError andGroup:group andSemaphore:semaphore];
         return;
     }
     
@@ -286,46 +341,44 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
         return fileURL ?: [NSURL fileURLWithPath:path];
     };
     
+    void (^uploadCompleteBlock)(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error)
+    = ^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
+        @hl_strongify(self);
+        if (self.config.tips.isNetworkingActivityIndicatorEnabled) {
+            [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
+        }
+        [self callbackWithRequest:task andResultObject:responseObject andError:error andGroup:group andSemaphore:semaphore];
+        if (!isDownloadTask) {
+            [self.sessionTaskCache removeObjectForKey:hashKey];
+        }
+    };
+    
     void (^donwloadCompleteBlcok)(NSURLResponse * _Nonnull response, NSURL * _Nullable filePath, NSError * _Nullable error)
     = ^(NSURLResponse * _Nonnull response, NSURL * _Nullable filePath, NSError * _Nullable error) {
         @hl_strongify(self);
         if (self.config.tips.isNetworkingActivityIndicatorEnabled) {
             [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
         }
-        [self callTaskCompletion:task obj:filePath error:error];
+        [self callbackWithRequest:task andResultObject:filePath andError:error andGroup:group andSemaphore:semaphore];
         if (isDownloadTask) {
-            [self.downloadTasksCache removeObjectForKey:hashKey];
+            [self.sessionTaskCache removeObjectForKey:hashKey];
         }
     };
     
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wundeclared-selector"
-    if ([task respondsToSelector:@selector(requestWillBeSent)]) {
-        dispatch_async_main([task performSelector:@selector(requestWillBeSent)];)
+    if ([task.delegate respondsToSelector:@selector(requestWillBeSentWithTask:)]) {
+        dispatch_async_main([task.delegate requestWillBeSentWithTask:task];)
     }
-#pragma clang diagnostic pop
-    
     if (self.config.tips.isNetworkingActivityIndicatorEnabled) {
         [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:YES];
     }
     NSURLSessionTask *dataTask;
     
     switch (task.requestTaskType) {
-        case Upload: {
+        case Upload:
             dataTask = [sessionManager uploadTaskWithRequest:request
                                                     fromFile:fileURL
                                                     progress:progressBlock
-                                           completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
-                                               @hl_strongify(self);
-                                               if (self.config.tips.isNetworkingActivityIndicatorEnabled) {
-                                                   [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
-                                               }
-                                               [self callTaskCompletion:task obj:responseObject error:error];
-                                               if (!isDownloadTask) {
-                                                   [self.uploadTasksCache removeObjectForKey:hashKey];
-                                               }
-                                           }];
-        }
+                                           completionHandler:uploadCompleteBlock];
             break;
         case Download: {
             NSData *data = [NSData dataWithContentsOfURL:[NSURL fileURLWithPath:task.resumePath]];
@@ -340,26 +393,19 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
                                                        destination:destinationBlock
                                                  completionHandler:donwloadCompleteBlcok];
             }
-            break;
         }
+            break;
         default: break;
     }
     
     if (dataTask) {
         [dataTask resume];
-        if (isDownloadTask) {
-            [self.downloadTasksCache setObject:(NSURLSessionDownloadTask *)dataTask forKey:hashKey];
-        } else {
-            [self.uploadTasksCache setObject:(NSURLSessionUploadTask *)dataTask forKey:hashKey];
-        }
+        [self.sessionTaskCache setObject:dataTask forKey:hashKey];
     }
     
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wundeclared-selector"
-    if ([task respondsToSelector:@selector(requestDidSent)]) {
-        dispatch_async_main([task performSelector:@selector(requestDidSent)];)
+    if ([task.delegate respondsToSelector:@selector(requestDidSentWithTask:)]) {
+        dispatch_async_main([task.delegate requestDidSentWithTask:task];)
     }
-#pragma clang diagnostic pop
 }
 
 /**
@@ -368,71 +414,111 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
  @param task 需要发送的API
  */
 - (void)send:(nonnull HLTask *)task {
-    if (!task) return;
-    if (!self.config) return;
-    
-    dispatch_async(qkhl_task_session_creation_queue(), ^{
-        [self sendRequest:task];
+    @hl_weakify(self);
+    if (!task.queue) {
+        task.queue = self.currentQueue;
+    }
+    dispatch_async(task.queue, ^{
+        @hl_strongify(self);
+        [self sendRequest:task withSemaphore:nil atGroup:nil];
     });
 }
 
 - (void)cancel:(HLTask *)task {
-    dispatch_async(qkhl_task_session_creation_queue(), ^{
-        NSString *hashKey = [NSString stringWithFormat:@"%lu", (unsigned long)task.hash];
-        if (task.requestTaskType == Download) {
-            NSURLSessionDownloadTask *downloadTask = [self.downloadTasksCache objectForKey:hashKey];
-            if (downloadTask) {
-                [downloadTask cancelByProducingResumeData:^(NSData * _Nullable resumeData) {
+    @hl_weakify(self);
+    if (!task.queue) {
+        task.queue = self.currentQueue;
+    }
+    dispatch_async(task.queue, ^{
+        @hl_strongify(self);
+        NSURLSessionTask *sessionTask = [self.sessionTaskCache objectForKey:task.hashKey];
+        if (sessionTask) {
+            if (task.requestTaskType == Download) {
+                [(NSURLSessionDownloadTask *)sessionTask cancelByProducingResumeData:^(NSData * _Nullable resumeData) {
                     [resumeData writeToFile:task.resumePath atomically:YES];
                 }];
-                [self.downloadTasksCache removeObjectForKey:hashKey];
+            } else {
+                [sessionTask cancel];
             }
-        } else {
-            NSURLSessionUploadTask *task = [self.uploadTasksCache objectForKey:hashKey];
-            if (task) {
-                [task cancel];
-                [self.uploadTasksCache removeObjectForKey:hashKey];
-            }
+            [self.sessionTaskCache removeObjectForKey:task.hashKey];
         }
     });
 }
 
 - (void)resume:(HLTask *)task {
-    dispatch_async(qkhl_task_session_creation_queue(), ^{
-        NSString *hashKey = [NSString stringWithFormat:@"%lu", (unsigned long)task.hash];
-        if (task.requestTaskType == Download) {
-            NSURLSessionDownloadTask *downloadTask = [self.downloadTasksCache objectForKey:hashKey];
-            if (downloadTask) {
-                [downloadTask resume];
-            } else {
-                [self send:task];
-            }
+    @hl_weakify(self);
+    if (!task.queue) {
+        task.queue = self.currentQueue;
+    }
+    dispatch_async(task.queue, ^{
+        @hl_strongify(self);
+        NSURLSessionTask *sessionTask = [self.sessionTaskCache objectForKey:task.hashKey];
+        if (sessionTask) {
+            [sessionTask resume];
         } else {
-            NSURLSessionUploadTask *uploadTask = [self.uploadTasksCache objectForKey:hashKey];
-            if (uploadTask) {
-                [uploadTask resume];
-            } else {
-                [self send:task];
-            }
+            [self send:task];
         }
     });
 }
 
 - (void)pause:(HLTask *)task {
-    dispatch_async(qkhl_task_session_creation_queue(), ^{
-        NSString *hashKey = [NSString stringWithFormat:@"%lu", (unsigned long)[task hash]];
-        if (task.requestTaskType == Download) {
-            NSURLSessionDownloadTask *downloadTask = [self.downloadTasksCache objectForKey:hashKey];
-            if (downloadTask) {
-                [downloadTask suspend];
-            }
-        } else {
-            NSURLSessionUploadTask *uploadTask = [self.uploadTasksCache objectForKey:hashKey];
-            if (uploadTask) {
-                [uploadTask suspend];
-            }
+    @hl_weakify(self);
+    if (!task.queue) {
+        task.queue = self.currentQueue;
+    }
+    dispatch_async(task.queue, ^{
+        @hl_strongify(self);
+        NSURLSessionTask *sessionTask = [self.sessionTaskCache objectForKey:task.hashKey];
+        if (sessionTask) {
+            [sessionTask suspend];
         }
     });
+}
+
+- (void)sendGroup:(HLTaskGroup *)taskGroup {
+    if (!taskGroup) return;
+    dispatch_queue_t queue;
+    if (taskGroup.customQueue) {
+        queue = taskGroup.customQueue;
+    } else {
+        queue = self.currentQueue;
+    }
+    // 根据groupMode 配置信号量
+    dispatch_semaphore_t semaphore = nil;
+    if (taskGroup.groupMode == HLTaskGroupModeChian) {
+        semaphore = dispatch_semaphore_create(taskGroup.maxRequestCount);
+    }
+    dispatch_group_t task_group = dispatch_group_create();
+    @hl_weakify(self);
+    dispatch_async(queue, ^{
+        [taskGroup enumerateObjectsUsingBlock:^(HLTask * _Nonnull task, NSUInteger idx, BOOL * _Nonnull stop) {
+            @hl_strongify(self);
+            task.queue = queue;
+            if (taskGroup.groupMode == HLTaskGroupModeChian) {
+                dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+            }
+            dispatch_group_enter(task_group);
+            AFURLSessionManager *sessionManager = [self sessionManagerWithTask:task];
+            if (!sessionManager) {
+                dispatch_group_leave(task_group);
+                *stop = YES;
+            }
+            sessionManager.completionGroup = task_group;
+            [self sendRequest:task withSemaphore:semaphore atGroup:task_group];
+        }];
+        dispatch_group_notify(task_group, dispatch_get_main_queue(), ^{
+            if (taskGroup.delegate) {
+                [taskGroup.delegate taskGroupAllDidFinished:taskGroup];
+            }
+        });
+    });
+}
+
+- (void)cancelGroup:(HLTaskGroup *)taskGroup {
+    NSAssert(taskGroup.count != 0, @"APIGroup元素不可小于1");
+    [taskGroup enumerateObjectsUsingBlock:^(HLTask * _Nonnull task, NSUInteger idx, BOOL * _Nonnull stop) {
+        [self cancel:task];
+    }];
 }
 
 #pragma mark - Network Response Observer
@@ -440,11 +526,29 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
     [self.responseObservers addObject:observer];
 }
 
-
 - (void)removeResponseObserver:(nonnull id<HLTaskResponseProtocol>)observer {
     if ([self.responseObservers containsObject:observer]) {
         [self.responseObservers removeObject:observer];
     }
+}
+
+#pragma mark - private method
+- (HLDebugMessage *)debugMessageWithTask:(HLTask *)task
+                         andResultObject:(id)resultObject
+                                andError:(NSError *)error
+{
+    id sessionTask = [self.sessionTaskCache objectForKey:task.hashKey] ?: [NSNull null];
+    // 生成response对象
+    HLURLResult *result = [[HLURLResult alloc] initWithObject:resultObject andError:error];
+    HLURLResponse *response = [[HLURLResponse alloc] initWithResult:result
+                                                          requestId:[NSNumber numberWithUnsignedInteger:[task hash]]
+                                                            request:[sessionTask currentRequest]];
+    
+    NSDictionary *params = @{kHLRequestDebugKey: task,
+                             kHLSessionTaskDebugKey: sessionTask,
+                             kHLResponseDebugKey: response,
+                             kHLQueueDebugKey: self.currentQueue};
+    return [[HLDebugMessage alloc] initWithDict:params];
 }
 
 #pragma mark - 单例用的静态方法
@@ -466,6 +570,14 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
 // 暂停Task
 + (void)pause:(HLTask *)task {
     [[self sharedManager] pause:task];
+}
+
++ (void)sendGroup:(HLTaskGroup *)taskGroup {
+    [[self sharedManager] sendGroup:taskGroup];
+}
+
++ (void)cancelGroup:(HLTaskGroup *)taskGroup {
+    [[self sharedManager] cancelGroup:taskGroup];
 }
 
 // 注册网络请求监听者

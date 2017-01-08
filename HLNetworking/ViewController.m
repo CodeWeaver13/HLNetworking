@@ -29,7 +29,7 @@ static dispatch_queue_t my_api_queue() {
 @property(nonatomic, strong)HLAPI *api6;
 @property(nonatomic, strong)HLAPI *api7;
 
-@property(nonatomic, strong)HLTask *task1;
+@property(nonatomic, strong) NSMutableArray *taskArray;
 
 @property(nonatomic, assign)BOOL isPause;
 
@@ -40,8 +40,10 @@ static dispatch_queue_t my_api_queue() {
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [self setupAPINetworkConfig];
-    [self testAPI];
+    [self setupTaskNetworkConfig];
+    [self testTask];
+//    [self setupAPINetworkConfig];
+//    [self testAPI];
 //    [self testHome];
 }
 
@@ -55,9 +57,9 @@ static dispatch_queue_t my_api_queue() {
 
 - (void)pause {
     if (self.isPause) {
-        [self.task1 resume];
+//        [self.task1 resume];
     } else {
-        [self.task1 cancel];
+//        [self.task1 cancel];
     }
     self.isPause = !self.isPause;
 }
@@ -69,10 +71,20 @@ static dispatch_queue_t my_api_queue() {
     pauseButton.backgroundColor = [UIColor redColor];
     [self.view addSubview:pauseButton];
     [pauseButton addTarget:self action:@selector(pause) forControlEvents:UIControlEventTouchUpInside];
-    self.task1 = [[HLTask task]
-                  .setDelegate(self)
-                  .setFilePath([[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:@"Boom2.dmg"])
-                  .setTaskURL(@"https://dl.devmate.com/com.globaldelight.Boom2/Boom2.dmg") start];
+    
+    self.taskArray = [NSMutableArray array];
+    for (int i = 1; i<=10; i++) {
+        NSString *url = [NSString stringWithFormat:@"http://120.25.226.186:32812/resources/videos/minion_%02d.mp4", i];
+        HLTask *task = [HLTask task]
+        .setDelegate(self)
+        .setFilePath([[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:[NSString stringWithFormat:@"minion_%02d.mp4", i]])
+        .setTaskURL(url);
+        [self.taskArray addObject:task];
+    }
+    
+    HLTaskGroup *group = [HLTaskGroup groupWithMode:HLTaskGroupModeChian];
+    [group addTasks:self.taskArray];
+    [group start];
 }
 
 - (void)setupTaskNetworkConfig {
@@ -86,7 +98,7 @@ static dispatch_queue_t my_api_queue() {
 #pragma mark - task reponse protocol
 
 - (NSArray<HLTask *> *)requestTasks {
-    return @[self.task1];
+    return self.taskArray;
 }
 
 - (void)requestProgress:(nullable NSProgress *)progress atTask:(nullable HLTask *)task {

@@ -36,7 +36,6 @@
 		CFE869AE1E21166D001BE8D4 /* HLTaskGroup.m in Sources */ = {isa = PBXBuildFile; fileRef = CFE869AD1E21166D001BE8D4 /* HLTaskGroup.m */; };
 		CFF1A88D1E22256F00767B35 /* HLURLResponse.m in Sources */ = {isa = PBXBuildFile; fileRef = CFF1A8891E22256F00767B35 /* HLURLResponse.m */; };
 		CFF1A88E1E22256F00767B35 /* HLURLResult.m in Sources */ = {isa = PBXBuildFile; fileRef = CFF1A88C1E22256F00767B35 /* HLURLResult.m */; };
-		CFF1A8921E22258B00767B35 /* HLBaseRequest.m in Sources */ = {isa = PBXBuildFile; fileRef = CFF1A8911E22258B00767B35 /* HLBaseRequest.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -111,9 +110,6 @@
 		CFF1A8891E22256F00767B35 /* HLURLResponse.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLURLResponse.m; sourceTree = "<group>"; };
 		CFF1A88B1E22256F00767B35 /* HLURLResult.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLURLResult.h; sourceTree = "<group>"; };
 		CFF1A88C1E22256F00767B35 /* HLURLResult.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLURLResult.m; sourceTree = "<group>"; };
-		CFF1A8901E22258B00767B35 /* HLBaseRequest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLBaseRequest.h; sourceTree = "<group>"; };
-		CFF1A8911E22258B00767B35 /* HLBaseRequest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLBaseRequest.m; sourceTree = "<group>"; };
-		CFF1A8931E22261A00767B35 /* HLBaseRequest_InternalParams.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLBaseRequest_InternalParams.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -187,7 +183,6 @@
 			isa = PBXGroup;
 			children = (
 				CFF1A8851E22254B00767B35 /* Generator */,
-				CFF1A8861E22254B00767B35 /* Manager */,
 				CF70059E1E1CA0CF00DF8E80 /* Logger */,
 				CFDE3FDE1E12220E00CDA39E /* Center */,
 				CFDCF7321D9C261B00DE1C8E /* Task */,
@@ -349,18 +344,10 @@
 		CFF1A8851E22254B00767B35 /* Generator */ = {
 			isa = PBXGroup;
 			children = (
-				CFF1A88F1E22258000767B35 /* Request */,
 				CFF1A8871E22256F00767B35 /* Response */,
 				CFF1A88A1E22256F00767B35 /* Result */,
 			);
 			path = Generator;
-			sourceTree = "<group>";
-		};
-		CFF1A8861E22254B00767B35 /* Manager */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Manager;
 			sourceTree = "<group>";
 		};
 		CFF1A8871E22256F00767B35 /* Response */ = {
@@ -379,16 +366,6 @@
 				CFF1A88C1E22256F00767B35 /* HLURLResult.m */,
 			);
 			path = Result;
-			sourceTree = "<group>";
-		};
-		CFF1A88F1E22258000767B35 /* Request */ = {
-			isa = PBXGroup;
-			children = (
-				CFF1A8901E22258B00767B35 /* HLBaseRequest.h */,
-				CFF1A8911E22258B00767B35 /* HLBaseRequest.m */,
-				CFF1A8931E22261A00767B35 /* HLBaseRequest_InternalParams.h */,
-			);
-			path = Request;
 			sourceTree = "<group>";
 		};
 		F112EDD6A5BC41CD0E259D05 /* Pods */ = {
@@ -546,7 +523,6 @@
 				CFDE3FE41E12220E00CDA39E /* HLAPICenter.m in Sources */,
 				CFDE3FE51E12220E00CDA39E /* HLBaseObjReformer.m in Sources */,
 				CFF1A88D1E22256F00767B35 /* HLURLResponse.m in Sources */,
-				CFF1A8921E22258B00767B35 /* HLBaseRequest.m in Sources */,
 				CFE869A61E20D03C001BE8D4 /* HLAPIGroup.m in Sources */,
 				CF36274F1D9368BD00C26AAF /* main.m in Sources */,
 			);

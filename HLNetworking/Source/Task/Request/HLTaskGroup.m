@@ -28,7 +28,7 @@ static dispatch_queue_t qkhl_api_chain_queue(const char * queueName) {
 @end
 @implementation HLTaskGroup
 #pragma mark - Init
-- (instancetype)initWithMode:(HLAPIGroupMode)mode {
+- (instancetype)initWithMode:(HLTaskGroupMode)mode {
     self = [super init];
     if (self) {
         _taskArray = [NSMutableArray array];
@@ -38,7 +38,7 @@ static dispatch_queue_t qkhl_api_chain_queue(const char * queueName) {
     return self;
 }
 
-+ (instancetype)groupWithMode:(HLAPIGroupMode)mode {
++ (instancetype)groupWithMode:(HLTaskGroupMode)mode {
     return [[self alloc] initWithMode:mode];
 }
 
@@ -83,7 +83,7 @@ static dispatch_queue_t qkhl_api_chain_queue(const char * queueName) {
     [self.taskArray addObject:task];
 }
 
-- (void)addAPIs:(nonnull NSArray<HLTask *> *)tasks {
+- (void)addTasks:(nonnull NSArray<HLTask *> *)tasks {
     if (!tasks) return;
     if (tasks.count == 0) return;
     [tasks enumerateObjectsUsingBlock:^(HLTask * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
