@@ -17,5 +17,7 @@
 #import "HLNetworkingTask.h"
 // API
 #import "HLNetworkingAPI.h"
+// Logger
+#import "HLNetworkLogger.h"
 
 #endif /* HLNetworking_h */
