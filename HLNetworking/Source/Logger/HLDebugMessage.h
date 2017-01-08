@@ -28,7 +28,7 @@ FOUNDATION_EXPORT HLDebugKey const kHLQueueDebugKey;
 // 获取RequestObject
 @property (nonatomic, strong, readonly)HLURLResponse *response;
 // 执行的队列名
-@property (nonatomic, strong, readonly)dispatch_queue_t queueName;
+@property (nonatomic, strong, readonly)dispatch_queue_t queue;
 
 - (instancetype)initWithDict:(NSDictionary *)dict;
 

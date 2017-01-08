@@ -207,8 +207,8 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
 #endif
     if ([HLNetworkLogger isEnable]) {
         NSDictionary *msgDictionary;
-        if ([HLNetworkLogger shared].delegate) {
-            msgDictionary = [[HLNetworkLogger shared].delegate customInfoWithMessage:msg];
+        if ([[HLNetworkLogger currentDelegate] respondsToSelector:@selector(customInfoWithMessage:)]) {
+            msgDictionary = [[HLNetworkLogger currentDelegate] customInfoWithMessage:msg];
         } else {
             msgDictionary = [msg toDictionary];
         }

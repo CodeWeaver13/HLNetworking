@@ -1,7 +1,7 @@
 ![HLNetworking: Multi paradigm network request manager based on AFNetworking](https://raw.githubusercontent.com/QianKun-HanLin/HLNetworking/master/loge.png)
-#### 基于AFNetworking的多范式网络请求管理器
+#### 基于AFNetworking的高阶网络请求管理器
 [![License MIT](https://img.shields.io/badge/license-MIT-green.svg?style=flat)](https://github.com/wangshiyu13/HLQRCodeScanner/blob/master/LICENSE)
-[![CI Status](https://img.shields.io/badge/build-1.2.2-brightgreen.svg)](https://travis-ci.org/wangshiyu13/HLQRCodeScanner)
+[![CI Status](https://img.shields.io/badge/build-1.3.0-brightgreen.svg)](https://travis-ci.org/wangshiyu13/HLQRCodeScanner)
 [![CocoaPods](https://img.shields.io/badge/platform-iOS-lightgrey.svg)](http://cocoapods.org/?q= HLQRCodeScanner)
 [![Support](https://img.shields.io/badge/support-iOS%208%2B-blue.svg)](https://www.apple.com/nl/ios/)
 
@@ -77,6 +77,7 @@ HLNetworking整体结构如图所示，是一套基于[AFNetworking 3.1.0](https
 	- **validatesDomainName**：是否校验在证书 CN 字段中的 domain name，默认为 `YES`
 	- **cerFilePath**：cer证书文件路径，默认为 `nil`
 - **enableReachability**：是否启用reachability，baseURL为domain，默认为 `NO`
+- **enableGlobalLog**：是否开启网络debug日志，该选项会在控制台输出所有网络回调日志，并且在Release模式下无效
 
 ### API相关
 
@@ -242,59 +243,59 @@ HLObserverAPIs(self.api1, self.api2)
 ### 批量请求
 
 #### 无序请求
-HLNetworking 支持同时发一组批量请求，这组请求在业务逻辑上相关，但请求本身是互相独立的，请求时并行执行，`- batchAPIRequestsDidFinished` 会在所有请求都结束时才执行，每个请求的结果由API自身管理。注：回调中的 `HLAPIBatchRequests `里的`apiSet`是无序的。
+HLNetworking 支持同时发一组批量请求，这组请求在业务逻辑上相关，但请求本身是互相独立的，请求时并行执行，`- apiGroupAllDidFinished` 会在所有请求都结束时才执行，每个请求的结果由API自身管理。注：`HLAPIGroup `类做了特殊处理，自身即为`HLAPI`的容器，因此直接`group[index]`即可获取相应的`HLAPI`对象，也可以直接遍历；回调中的 `apiGroup `中元素的顺序与每个无序请求 `HLAPI` 对象的先后顺序不保证一致。
 
 ```obc
-HLAPIBatchRequests *batch = [[HLAPIBatchRequests alloc] init];
+HLAPIGroup *group = [HLAPIGroup groupWithMode:HLAPIGroupModeBatch];
 // 添加单个api
-[batch add:[HLAPI API]];
+[group add:[HLAPI API]];
 // 添加apis集合
-[batch addAPIs:[NSSet setWithObjects:api1, api2, api3, nil]];
+[group addAPIs:@[api1, api2, api3, nil]];
 
-[batch start];
+[group start];
 
 batch.delegate = self;
 
 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5), dispatch_get_main_queue(), ^{
 	// 使用cancel取消
-	[batch cancel];
+	[group cancel];
 });
 
-// batch全部完成之后调用 
-- (void)batchAPIRequestsDidFinished:(HLAPIBatchRequests * _Nonnull)batchApis {
-    NSLog(@"%@", batchApis);
+// group全部完成之后调用 
+- (void)apiGroupAllDidFinished:(HLAPIGroup *)apiGroup {
+    NSLog(@"%@", apiGroup);
 }
 ```
 
 #### 链式请求
-HLNetworking 同样支持发一组链式请求，这组请求之间互相依赖，下一请求是否发送以及请求的参数可以取决于上一个请求的结果，请求时串行执行，`- chainRequestsAllDidFinished` 会在所有请求都结束时才执行，每个请求的结果由API自身管理。注：`HLAPIChainRequests`类做了特殊处理，自身即为`HLAPI`的容器，因此直接`chain[index]`即可获取相应的`HLAPI`对象，也可以直接遍历；回调中的 `chainApis `中元素的顺序与每个链式请求 `HLAPI` 对象的先后顺序一致。
+HLNetworking 同样支持发一组链式请求，这组请求之间互相依赖，下一请求是否发送以及请求的参数可以取决于上一个请求的结果，请求时串行执行，`- chainRequestsAllDidFinished` 会在所有请求都结束时才执行，每个请求的结果由API自身管理。注：`HLAPIGroup `类做了特殊处理，自身即为`HLAPI`的容器，因此直接`group[index]`即可获取相应的`HLAPI`对象，也可以直接遍历；回调中的 `apiGroup `中元素的顺序与每个链式请求 `HLAPI` 对象的先后顺序一致。
 
 ```objc
-HLAPIChainRequests *chain = [[HLAPIChainRequests alloc] init];
+HLAPIGroup *group = [HLAPIGroup groupWithMode:HLAPIGroupModeChian];
+group.delegate = self;
+// 设置每次发送几个请求，每次发出的请求之间无依赖
+group.maxRequestCount = 1;
+[group addAPIs:@[self.api1, self.api2, self.api3, self.api4, self.api5]];
 
-chain.delegate = self;
+[group start];
 
-[chain addAPIs:@[self.api1, self.api2, self.api3, self.api4, self.api5]];
-
-[chain start];
-
-for (id obj in chain) {
+for (id obj in group) {
 	NSLog(@"%@", obj);
 }
 
-HLAPI *api = chain[0];
+HLAPI *api = group[0];
 
-// chain[0] == self.api1
+// group[0] == self.api1
 NSLog(@"%@", api);
 
 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5), dispatch_get_main_queue(), ^{
 	// 使用cancel取消
-	[chain cancel];
+	[group cancel];
 });
 
-// batch全部完成之后调用 
-- (void)chainRequestsAllDidFinished:(HLAPIChainRequests *)chainApis {
-    NSLog(@"chainRequestsAllDidFinished");
+// group全部完成之后调用 
+- (void)apiGroupAllDidFinished:(HLAPIGroup *)apiGroup {
+    NSLog(@"%@", apiGroup);
 }
 ```
 
@@ -438,10 +439,60 @@ HLObserverTasks(self.task1)
     NSLog(@"\n失败=====\n当前任务：%@\n错误：%@", task, error);
 }
 ```
+### 批量上传/下载任务
 
-**注意1：**Task暂时不支持批量上传/下载。
+#### 无序任务
+HLNetworking 支持同时发一组批量上传/下载任务，这组请求在业务逻辑上相关，但请求本身是互相独立的，请求时并行执行，`- taskGroupAllDidFinished` 会在所有请求都结束时才执行，每个请求的结果由API自身管理。注：`HLTaskGroup `类做了特殊处理，自身即为`HLTask`的容器，因此直接`group[index]`即可获取相应的`HLAPI`对象，也可以直接遍历；回调中的 `taskGroup `中元素的顺序与每个无序请求 `HLAPI` 对象的先后顺序不保证一致。
 
-**注意2：**Task的resume信息记录在沙盒中`Cache/com.qkhl.HLNetworking/downloadDict中`。
+```obc
+HLTaskGroup *group = [HLTaskGroup groupWithMode:HLTaskGroupModeBatch];
+group.delegate = self;
+[group addTasks:self.taskArray];
+[group start];
+
+dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5), dispatch_get_main_queue(), ^{
+	// 使用cancel取消
+	[group cancel];
+});
+
+// group全部完成之后调用 
+- (void)apiGroupAllDidFinished:(HLAPIGroup *)apiGroup {
+    NSLog(@"%@", apiGroup);
+}
+```
+
+#### 链式任务
+HLNetworking 同样支持发一组链式请求，这组请求之间互相依赖，下一请求是否发送以及请求的参数可以取决于上一个请求的结果，请求时串行执行，`- chainRequestsAllDidFinished` 会在所有请求都结束时才执行，每个请求的结果由API自身管理。注：`HLAPIGroup `类做了特殊处理，自身即为`HLAPI`的容器，因此直接`group[index]`即可获取相应的`HLAPI`对象，也可以直接遍历；回调中的 `apiGroup `中元素的顺序与每个链式请求 `HLAPI` 对象的先后顺序一致。
+
+```objc
+HLTaskGroup *group = [HLTaskGroup groupWithMode: HLTaskGroup ModeChian];
+group.delegate = self;
+// 设置每次发送几个请求，每次发出的请求之间无依赖
+group.maxRequestCount = 1;
+[group addTasks:@[self.task1, self.task2, self.task3, self.task4, self.task5]];
+[group start];
+
+for (id obj in group) {
+	NSLog(@"%@", obj);
+}
+
+HLTask *task = group[0];
+
+// group[0] == self.task1
+NSLog(@"%@", api);
+
+dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5), dispatch_get_main_queue(), ^{
+	// 使用cancel取消
+	[group cancel];
+});
+
+// group全部完成之后调用 
+- (void)apiGroupAllDidFinished:(HLAPIGroup *)apiGroup {
+    NSLog(@"%@", apiGroup);
+}
+```
+
+**注意1：**Task的resume信息记录在沙盒中`Cache/com.qkhl.HLNetworking/downloadDict中`。
 
 ### Center相关
 
@@ -492,7 +543,104 @@ HLStrongSynthesize(home, [HLAPI API]
 }
 ```
 
+### Logger相关
+
+- `HLNetworkLogger`提供了记录网络请求信息日志的功能，可自定义日志结构，日志头部信息，日志存储类型等
+
+#### 配置Logger
+可选参数如下：
+
+- **channelID**：渠道ID
+- **appKey**：app标志
+- **appName**：app名字
+- **appVersion**：app版本
+- **serviceType**：服务名
+- **enableLocalLog**：是否开启本地日志
+- **logAutoSaveCount**：日志自动保存数，默认为50次保存一次
+- **loggerLevel**：日志等级，该选项暂时无效
+- **loggerType**：日志保存类型，可选JSON或者Plist
+- **logFilePath**：只读，默认为`sandbox/Library/Cache/com.qkhl.HLNetworking/log/{timestamp}.log`
+
+- 范例
+
+```objc
+[HLNetworkLogger setupConfig:^(HLNetworkLoggerConfig *config) {
+    config.enableLocalLog = YES;
+    config.logAutoSaveCount = 50;
+    config.loggerType = HLNetworkLoggerTypeJSON;
+}];
+[HLNetworkLogger startLogging];
+
+```
+
+#### 默认Logger信息
+
+- `HLNetworkLogger`默认提供的log信息为`HLDebugMessage`对象，包括:
+	- `requestObject` api/task请求对象,
+	- `sessionTask` NSURLSessionTask对象,
+	- `response` HLURLResponse对象,
+	- `queue` dispatch_queue_t对象，
+	- 具体信息请参考`HLDebugMessage`，`HLURLResponse `，`HLURLResult`这三个文件中的注释
+- `HLNetworkLogger`通过管理`debugInfoArray`数组来存储信息，该数组的首元素为当前APP信息，默认如下：
+	- @{@"AppInfo": @{@"OSVersion": [UIDevice currentDevice].systemVersion,
+		- @"DeviceType": [UIDevice currentDevice].hl_machineType,
+		- @"UDID": [UIDevice currentDevice].hl_udid,
+		- @"UUID": [UIDevice currentDevice].hl_uuid,
+		- @"MacAddressMD5": [UIDevice currentDevice].hl_macaddressMD5,
+		- @"ChannelID": _config.channelID,
+		- @"AppKey": _config.appKey,
+		- @"AppName": _config.appName,
+		- @"AppVersion": _config.appVersion,
+		- @"ServiceType": _config.serviceType}}
+
+
+#### 自定义Logger信息
+
+- `HLNetworkLogger`提供自定义log信息内容的方法，该方法每发一次请求，回调时都会调用一次:
+
+```objc
+// 设置当前类为logger代理，并将当前类遵守HLNetworkCustomLoggerDelegate协议
+[HLNetworkLogger setDelegate:self];
+
+// 根据传入的message信息和其他信息组装字典数据
+- (NSDictionary *)customInfoWithMessage:(HLDebugMessage *)message {
+    return [message toDictionary];
+}
+
+// 根据传入的config信息和其他信息组装字典
+- (NSDictionary *)customHeaderWithMessage:(HLNetworkLoggerConfig *)config {
+    return @{@"AppInfo": @{@"OSVersion": [UIDevice currentDevice].systemVersion,
+                           @"DeviceType": [UIDevice currentDevice].hl_machineType,
+                           @"UDID": [UIDevice currentDevice].hl_udid,
+                           @"UUID": [UIDevice currentDevice].hl_uuid,
+                           @"MacAddressMD5": [UIDevice currentDevice].hl_macaddressMD5,
+                           @"ChannelID": config.channelID,
+                           @"AppKey": config.appKey,
+                           @"AppName": config.appName,
+                           @"AppVersion": config.appVersion,
+                           @"ServiceType": config.serviceType}};
+}
+```
+
 ### 更新日志
+
+**1.3.0**
+
+```
+新增：
+1. HLNetworkLogger类，用于记录日志，控制台打印全局日志，本地日志记录，默认为50条请求保存一次，可自定义info和header代理
+2. 网络链接不好的情况下自动重试的功能
+3. HLAPIGroup类，统一chain和batch，通过构造方法的HLAPIGroupMode区分类型(chain, batch)，提供maxRequestCount属性，可以控制chainRequest每次的并行请求数，默认为1
+4. HLTaskGroup，用法与HLAPIGroup一样，用于管理一组task请求
+移除
+1. chain和batch类
+修复：
+1. 修复了链式请求 请求重复时的线程调度问题
+2. 修复了某些情况下并发请求会导致线程死锁的问题
+3. 优化内部调用结构
+
+```
+
 **1.2.2**
 
 ```

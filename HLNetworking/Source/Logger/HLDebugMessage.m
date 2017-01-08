@@ -21,7 +21,7 @@ HLDebugKey const kHLQueueDebugKey = @"kHLQueueDebugKey";
 // 获取NSURLResponse
 @property (nonatomic, strong, readwrite)HLURLResponse *response;
 // 执行的队列名
-@property (nonatomic, strong, readwrite)dispatch_queue_t queueName;
+@property (nonatomic, strong, readwrite)dispatch_queue_t queue;
 // 生成时间
 @property (nonatomic, copy) NSString *timeString;
 @end
@@ -37,7 +37,7 @@ HLDebugKey const kHLQueueDebugKey = @"kHLQueueDebugKey";
         _sessionTask = dict[kHLSessionTaskDebugKey];
         _requestObject = dict[kHLRequestDebugKey];
         _response = dict[kHLResponseDebugKey];
-        _queueName = dict[kHLQueueDebugKey];
+        _queue = dict[kHLQueueDebugKey];
     }
     return self;
 }
@@ -48,7 +48,7 @@ HLDebugKey const kHLQueueDebugKey = @"kHLQueueDebugKey";
     dictionary[@"RequestObject"] = [self.requestObject toDictionary];
     dictionary[@"SessionTask"] = [self.sessionTask description];
     dictionary[@"Response"] = [self.response toDictionary];
-    dictionary[@"Queue"] = [self.queueName description];
+    dictionary[@"Queue"] = [self.queue description];
     return dictionary;
 }
 
@@ -59,7 +59,7 @@ HLDebugKey const kHLQueueDebugKey = @"kHLQueueDebugKey";
     [desc appendFormat:@"RequestObject : %@\n", self.requestObject ?: @"无参数"];
     [desc appendFormat:@"SessionTask : %@\n", self.sessionTask ?: @"无参数"];
     [desc appendFormat:@"Response : %@\n", self.response ?: @"无参数"];
-    [desc appendFormat:@"Queue : %@", self.queueName ?: @"无参数"];
+    [desc appendFormat:@"Queue : %@", self.queue ?: @"无参数"];
     [desc appendString:@"\n****************Debug Message End****************\n"];
     return desc;
 }

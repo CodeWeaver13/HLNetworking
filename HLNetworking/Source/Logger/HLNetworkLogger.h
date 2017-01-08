@@ -22,8 +22,8 @@ NS_ASSUME_NONNULL_BEGIN
 @interface HLNetworkLogger : NSObject
 
 @property (nonatomic, strong, readonly) HLNetworkLoggerConfig *config;
-
-@property (nonatomic, weak) id<HLNetworkCustomLoggerDelegate> delegate;
+// 设置代理
++ (void)setDelegate:(id<HLNetworkCustomLoggerDelegate>)delegate;
 
 // 写入后会清空当前记录的日志
 + (void)writeToFile;
@@ -48,6 +48,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 // 关闭日志
 + (void)stopLogging;
+
+// 当前代理对象
++ (nullable id<HLNetworkCustomLoggerDelegate>)currentDelegate;
 
 // 单例对象
 + (instancetype)shared;

@@ -25,6 +25,8 @@ static dispatch_queue_t qkhl_log_queue() {
 
 @property (nonatomic, strong, readwrite) HLNetworkLoggerConfig *config;
 
+@property (nonatomic, weak, nullable) id<HLNetworkCustomLoggerDelegate> delegate;
+
 @property (nonatomic, assign) BOOL enable;
 
 @property (nonatomic, strong) NSMutableArray <NSDictionary *>*debugInfoArray;
@@ -34,6 +36,14 @@ static dispatch_queue_t qkhl_log_queue() {
 @implementation HLNetworkLogger
 
 #pragma mark - logger
+- (id<HLNetworkCustomLoggerDelegate>)currentDelegate {
+    return [self delegate];
+}
+
+- (void)setDelegate:(id<HLNetworkCustomLoggerDelegate>)delegate {
+    self.delegate = delegate;
+}
+
 - (void)logInfoWithDebugMessage:(HLDebugMessage *)debugMessage {
 #if DEBUG
     NSLog(@"%@", debugMessage);
@@ -137,8 +147,16 @@ static dispatch_queue_t qkhl_log_queue() {
 }
 
 #pragma mark - static method
++ (id<HLNetworkCustomLoggerDelegate>)currentDelegate {
+    return [[self shared] currentDelegate];
+}
+
++ (void)setDelegate:(id<HLNetworkCustomLoggerDelegate>)delegate {
+    [[self shared] setDelegate:delegate];
+}
+
 + (NSArray <NSString *>*)logFilePaths {
-    return [[self alloc] logFilePaths];
+    return [[self shared] logFilePaths];
 }
 
 + (void)setupConfig:(void (^)(HLNetworkLoggerConfig * _Nonnull))configBlock {

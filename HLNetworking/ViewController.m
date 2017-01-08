@@ -20,7 +20,7 @@ static dispatch_queue_t my_api_queue() {
     return my_api_queue;
 }
 
-@interface ViewController ()<HLAPIGroupProtocol, HLAPIResponseDelegate, HLAPIRequestDelegate, HLObjReformerProtocol, HLTaskRequestDelegate, HLTaskResponseProtocol>
+@interface ViewController ()<HLAPIGroupProtocol, HLAPIResponseDelegate, HLAPIRequestDelegate, HLObjReformerProtocol, HLTaskGroupProtocol, HLTaskRequestDelegate, HLTaskResponseProtocol, HLNetworkCustomLoggerDelegate>
 @property(nonatomic, strong)HLAPI *api1;
 @property(nonatomic, strong)HLAPI *api2;
 @property(nonatomic, strong)HLAPI *api3;
@@ -40,11 +40,39 @@ static dispatch_queue_t my_api_queue() {
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    [self setupLogger];
     [self setupTaskNetworkConfig];
     [self testTask];
 //    [self setupAPINetworkConfig];
 //    [self testAPI];
 //    [self testHome];
+}
+
+- (void)setupLogger {
+    [HLNetworkLogger setupConfig:^(HLNetworkLoggerConfig * _Nonnull config) {
+        config.enableLocalLog = YES;
+        config.logAutoSaveCount = 5;
+        config.loggerType = HLNetworkLoggerTypePlist;
+    }];
+    [HLNetworkLogger setDelegate:self];
+    [HLNetworkLogger startLogging];
+}
+
+- (NSDictionary *)customInfoWithMessage:(HLDebugMessage *)message {
+    return [message toDictionary];
+}
+
+- (NSDictionary *)customHeaderWithMessage:(HLNetworkLoggerConfig *)config {
+    return @{@"AppInfo": @{@"OSVersion": [UIDevice currentDevice].systemVersion,
+                           @"DeviceType": [UIDevice currentDevice].hl_machineType,
+                           @"UDID": [UIDevice currentDevice].hl_udid,
+                           @"UUID": [UIDevice currentDevice].hl_uuid,
+                           @"MacAddressMD5": [UIDevice currentDevice].hl_macaddressMD5,
+                           @"ChannelID": config.channelID,
+                           @"AppKey": config.appKey,
+                           @"AppName": config.appName,
+                           @"AppVersion": config.appVersion,
+                           @"ServiceType": config.serviceType}};
 }
 
 - (void)testHome {
@@ -83,6 +111,7 @@ static dispatch_queue_t my_api_queue() {
     }
     
     HLTaskGroup *group = [HLTaskGroup groupWithMode:HLTaskGroupModeChian];
+    group.delegate = self;
     [group addTasks:self.taskArray];
     [group start];
 }
@@ -122,6 +151,10 @@ static dispatch_queue_t my_api_queue() {
     
 }
 
+- (void)taskGroupAllDidFinished:(HLTaskGroup *)taskGroup {
+    NSLog(@"全部已完成====%@", taskGroup);
+}
+#pragma mark - api request
 - (void)setupAPINetworkConfig {
     [HLAPIManager setupConfig:^(HLNetworkConfig * _Nonnull config) {
         config.request.baseURL = @"https://httpbin.org/";
@@ -130,12 +163,6 @@ static dispatch_queue_t my_api_queue() {
 //        config.request.apiCallbackQueue = my_api_queue();
 //        config.enableGlobalLog = YES;
     }];
-    [HLNetworkLogger setupConfig:^(HLNetworkLoggerConfig * _Nonnull config) {
-        config.enableLocalLog = YES;
-        config.logAutoSaveCount = 5;
-        config.loggerType = HLNetworkLoggerTypePlist;
-    }];
-    [HLNetworkLogger startLogging];
     [HLAPIManager registerResponseObserver:self];
 }
 

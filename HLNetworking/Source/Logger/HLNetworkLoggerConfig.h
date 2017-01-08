@@ -34,7 +34,7 @@ typedef NS_ENUM(NSUInteger, HLNetworkLoggerType) {
 // app名字
 @property (nonatomic, copy) NSString *appName;
 
-// app名字
+// app版本
 @property (nonatomic, copy) NSString *appVersion;
 
 // 服务名
@@ -46,7 +46,7 @@ typedef NS_ENUM(NSUInteger, HLNetworkLoggerType) {
 // 日志自动保存数，默认为50次保存一次
 @property (nonatomic, assign) NSUInteger logAutoSaveCount;
 
-// 日志等级
+// 日志等级，该选项暂时无效
 @property (nonatomic, assign) HLNetworkLoggerLevel loggerLevel;
 
 // 日志保存类型
