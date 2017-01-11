@@ -201,4 +201,19 @@
         return self;
     };
 }
+
+- (NSDictionary *)toDictionary {
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    dict[@"APIVersion"] = [HLTaskManager sharedManager].config.request.apiVersion ?: @"未设置";
+    dict[@"BaseURL"] = self.baseURL ?: [HLTaskManager sharedManager].config.request.baseURL;
+    dict[@"Path"] = self.path ?: @"未设置";
+    dict[@"CustomURL"] = self.self.taskURL ?: @"未设置";
+    dict[@"ResumePath"] = self.resumePath ?: @"未设置";
+    dict[@"TimeoutInterval"] = [NSString stringWithFormat:@"%f", self.timeoutInterval];
+    dict[@"SecurityPolicy"] = [self.securityPolicy toDictionary];
+    dict[@"RequestMethodType"] = [self getRequestTaskTypeString:self.requestTaskType];
+    dict[@"CachePolicy"] = [self getCachePolicyString:self.cachePolicy];
+    return dict;
+}
+
 @end

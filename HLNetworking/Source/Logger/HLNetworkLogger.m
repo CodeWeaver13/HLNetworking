@@ -40,10 +40,6 @@ static dispatch_queue_t qkhl_log_queue() {
     return [self delegate];
 }
 
-- (void)setDelegate:(id<HLNetworkCustomLoggerDelegate>)delegate {
-    self.delegate = delegate;
-}
-
 - (void)logInfoWithDebugMessage:(HLDebugMessage *)debugMessage {
 #if DEBUG
     NSLog(@"%@", debugMessage);
