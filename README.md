@@ -624,6 +624,14 @@ HLStrongSynthesize(home, [HLAPI API]
 
 ### 更新日志
 
+**1.3.1**
+
+```
+修复：
+1. 修复了HLNetworkLogger setDelegate方法调用错误的bug
+2. 修复了HLTask缺少toDictionary方法的错误
+```
+
 **1.3.0**
 
 ```
