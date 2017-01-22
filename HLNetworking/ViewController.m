@@ -29,6 +29,8 @@ static dispatch_queue_t my_api_queue() {
 @property(nonatomic, strong)HLAPI *api6;
 @property(nonatomic, strong)HLAPI *api7;
 
+@property(nonatomic, strong)HLTask *task1;
+
 @property(nonatomic, strong) NSMutableArray *taskArray;
 
 @property(nonatomic, assign)BOOL isPause;
@@ -38,13 +40,37 @@ static dispatch_queue_t my_api_queue() {
 
 @implementation ViewController
 
+- (HLTask *)task1 {
+    if (!_task1) {
+        _task1 = [HLTask task]
+        .setDelegate(self)
+        .setFilePath([[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:@"minion_01.mp4"])
+        .setCustomURL(@"http://120.25.226.186:32812/resources/videos/minion_01.mp4")
+        .progress(^(NSProgress *proc){
+            NSLog(@"\n进度=====\n当前进度：%@", proc);
+        })
+        .success(^(id response){
+            NSLog(@"\n完成=====\n对象：%@", response);
+        })
+        .failure(^(NSError *error){
+            NSLog(@"\n失败=====\n错误：%@", error);
+        });
+    }
+    return _task1;
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
     [self setupLogger];
-//    [self setupTaskNetworkConfig];
+    
+    
+    [self setupTaskNetworkConfig];
 //    [self testTask];
-    [self setupAPINetworkConfig];
-    [self testAPI];
+    
+//    [self setupAPINetworkConfig];
+//    [self testAPI];
+    
+    [self testButton];
 //    [self testHome];
 }
 
@@ -87,30 +113,32 @@ static dispatch_queue_t my_api_queue() {
     }) start];
 }
 
-- (void)pause {
+- (void)testButton {
+    self.isPause = YES;
+    UIButton *pauseButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    pauseButton.frame = CGRectMake(0, 0, 100, 100);
+    pauseButton.backgroundColor = [UIColor redColor];
+    [self.view addSubview:pauseButton];
+    [pauseButton addTarget:self action:@selector(start) forControlEvents:UIControlEventTouchUpInside];
+}
+
+- (void)start {
     if (self.isPause) {
-//        [self.task1 resume];
+        [self.task1 resume];
     } else {
-//        [self.task1 cancel];
+        [self.task1 cancel];
     }
     self.isPause = !self.isPause;
 }
 
 - (void)testTask {
-    self.isPause = NO;
-    UIButton *pauseButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    pauseButton.frame = CGRectMake(0, 0, 100, 100);
-    pauseButton.backgroundColor = [UIColor redColor];
-    [self.view addSubview:pauseButton];
-    [pauseButton addTarget:self action:@selector(pause) forControlEvents:UIControlEventTouchUpInside];
-    
     self.taskArray = [NSMutableArray array];
-    for (int i = 1; i<=10; i++) {
+    for (int i = 1; i<=5; i++) {
         NSString *url = [NSString stringWithFormat:@"http://120.25.226.186:32812/resources/videos/minion_%02d.mp4", i];
         HLTask *task = [HLTask task]
         .setDelegate(self)
         .setFilePath([[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:[NSString stringWithFormat:@"minion_%02d.mp4", i]])
-        .setTaskURL(url);
+        .setCustomURL(url);
         [self.taskArray addObject:task];
     }
     
@@ -135,7 +163,7 @@ static dispatch_queue_t my_api_queue() {
 }
 
 - (void)requestProgress:(nullable NSProgress *)progress atTask:(nullable HLTask *)task {
-    NSLog(@"\n进度=====\n当前任务：%@\n当前进度：%@", task.taskURL, progress);
+    NSLog(@"\n进度=====\n当前任务：%@\n当前进度：%@", task.customURL, progress);
 }
 
 - (void)requestSucessWithResponseObject:(nullable id)responseObject atTask:(nullable HLTask *)task {
@@ -148,11 +176,11 @@ static dispatch_queue_t my_api_queue() {
 
 #pragma mark - task request delegate
 - (void)requestWillBeSentWithTask:(HLTask *)task {
-    
+    NSLog(@"task即将发出");
 }
 // 请求已经发出
 - (void)requestDidSentWithTask:(HLTask *)task {
-    
+    NSLog(@"task已经发出");
 }
 
 - (void)taskGroupAllDidFinished:(HLTaskGroup *)taskGroup {

@@ -10,7 +10,7 @@
 NS_ASSUME_NONNULL_BEGIN
 @interface HLTask ()
 @property (nonatomic, weak, nullable) id<HLTaskRequestDelegate> delegate;
-@property (nonatomic, copy) NSString *taskURL;
+@property (nonatomic, copy) NSString *cURL;
 @property (nonatomic, copy) NSString *baseURL;
 @property (nonatomic, copy) NSString *path;
 @property (nonatomic, copy) NSString *filePath;
@@ -19,6 +19,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign)NSURLRequestCachePolicy cachePolicy;
 @property (nonatomic, strong)HLSecurityPolicyConfig *securityPolicy;
 @property (nonatomic, assign)HLRequestTaskType requestTaskType;
+
+@property (nonatomic, copy, nullable) HLSuccessBlock taskSuccessHandler;
+@property (nonatomic, copy, nullable) HLFailureBlock taskFailureHandler;
+@property (nonatomic, copy, nullable) HLProgressBlock taskProgressHandler;
 
 @property (nonatomic, assign) NSUInteger retryCount;
 @property (nonatomic, strong, nullable) dispatch_queue_t queue;

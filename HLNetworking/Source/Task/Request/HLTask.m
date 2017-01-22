@@ -36,6 +36,27 @@
     return [[self alloc] init];
 }
 
+- (HLTask *(^)(HLSuccessBlock))success {
+    return ^HLTask* (HLSuccessBlock objBlock) {
+        [self setTaskSuccessHandler:objBlock];
+        return self;
+    };
+}
+
+- (HLTask *(^)(HLFailureBlock))failure {
+    return ^HLTask* (HLFailureBlock errorBlock) {
+        [self setTaskFailureHandler:errorBlock];
+        return self;
+    };
+}
+
+- (HLTask *(^)(HLProgressBlock))progress {
+    return ^HLTask* (HLProgressBlock progressBlock) {
+        [self setTaskProgressHandler:progressBlock];
+        return self;
+    };
+}
+
 #pragma mark - Process
 
 - (HLTask *)start {
@@ -61,8 +82,8 @@
 #pragma mark - NSObject
 - (NSUInteger)hash {
     NSString *hashStr;
-    if (self.taskURL) {
-        hashStr = self.taskURL;
+    if (self.customURL) {
+        hashStr = self.customURL;
     } else {
         hashStr = [NSString stringWithFormat:@"%@/%@", self.baseURL, self.path];
     }
@@ -90,7 +111,7 @@
     [desc appendFormat:@"Class: %@\n", self.class];
     [desc appendFormat:@"BaseURL: %@\n", self.baseURL ?: [HLTaskManager sharedManager].config.request.baseURL];
     [desc appendFormat:@"Path: %@\n", self.path ?: @"未设置"];
-    [desc appendFormat:@"TaskURL: %@\n", self.taskURL ?: @"未设置"];
+    [desc appendFormat:@"CustomURL: %@\n", self.customURL ?: @"未设置"];
     [desc appendFormat:@"ResumePath: %@", self.resumePath];
     [desc appendFormat:@"CachePath: %@", self.filePath];
     [desc appendFormat:@"TimeoutInterval: %f\n", self.timeoutInterval];
@@ -155,10 +176,10 @@
     };
 }
 
-- (HLTask *(^)(NSString *taskURL))setTaskURL {
-    return ^HLTask* (NSString *taskURL) {
-        self.taskURL = taskURL;
-        NSURL *tmpURL = [NSURL URLWithString:taskURL];
+- (HLTask *(^)(NSString *taskURL))setCustomURL {
+    return ^HLTask* (NSString *customURL) {
+        self.cURL = customURL;
+        NSURL *tmpURL = [NSURL URLWithString:customURL];
         if (tmpURL) {
             self.baseURL = [NSString stringWithFormat:@"%@://%@", tmpURL.scheme, tmpURL.host];
             self.path = [NSString stringWithFormat:@"%@", tmpURL.query];
@@ -202,12 +223,28 @@
     };
 }
 
+- (id)copyWithZone:(NSZone *)zone {
+    HLTask *task = [[[self class] alloc] init];
+    if (task) {
+        task.cURL = [_cURL copyWithZone:zone];
+        task.timeoutInterval = _timeoutInterval;
+        task.cachePolicy = _cachePolicy;
+        task.requestTaskType = _requestTaskType;
+        task.retryCount = _retryCount;
+        task.securityPolicy = [_securityPolicy copyWithZone:zone];
+        task.delegate = _delegate;
+        task.baseURL = [_baseURL copyWithZone:zone];
+        task.path = [_path copyWithZone:zone];
+    }
+    return task;
+}
+
 - (NSDictionary *)toDictionary {
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     dict[@"APIVersion"] = [HLTaskManager sharedManager].config.request.apiVersion ?: @"未设置";
     dict[@"BaseURL"] = self.baseURL ?: [HLTaskManager sharedManager].config.request.baseURL;
     dict[@"Path"] = self.path ?: @"未设置";
-    dict[@"CustomURL"] = self.self.taskURL ?: @"未设置";
+    dict[@"CustomURL"] = self.customURL ?: @"未设置";
     dict[@"ResumePath"] = self.resumePath ?: @"未设置";
     dict[@"TimeoutInterval"] = [NSString stringWithFormat:@"%f", self.timeoutInterval];
     dict[@"SecurityPolicy"] = [self.securityPolicy toDictionary];

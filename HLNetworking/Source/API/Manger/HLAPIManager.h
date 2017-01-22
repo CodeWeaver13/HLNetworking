@@ -7,7 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "HLAPIType.h"
+#import "HLNetworkConst.h"
 
 // 判断当前是否为审核版本
 FOUNDATION_EXPORT BOOL HLJudgeVersion(void);

@@ -1,7 +1,7 @@
 ![HLNetworking: Multi paradigm network request manager based on AFNetworking](https://raw.githubusercontent.com/QianKun-HanLin/HLNetworking/master/loge.png)
 #### 基于AFNetworking的高阶网络请求管理器
 [![License MIT](https://img.shields.io/badge/license-MIT-green.svg?style=flat)](https://github.com/wangshiyu13/HLQRCodeScanner/blob/master/LICENSE)
-[![CI Status](https://img.shields.io/badge/build-1.3.0-brightgreen.svg)](https://travis-ci.org/wangshiyu13/HLQRCodeScanner)
+[![CI Status](https://img.shields.io/badge/build-1.3.2-brightgreen.svg)](https://travis-ci.org/wangshiyu13/HLQRCodeScanner)
 [![CocoaPods](https://img.shields.io/badge/platform-iOS-lightgrey.svg)](http://cocoapods.org/?q= HLQRCodeScanner)
 [![Support](https://img.shields.io/badge/support-iOS%208%2B-blue.svg)](https://www.apple.com/nl/ios/)
 
@@ -392,7 +392,7 @@ HLTask *task = [[HLTask task].setDelegate(self)
 	 // 设置下载或者上传的本地文件路径
     .setFilePath([[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:@"Boom2.dmg"])
     // 设置下载或者上传的地址
-    .setTaskURL(@"https://dl.devmate.com/com.globaldelight.Boom2/Boom2.dmg") start];
+    .setCustomURL(@"https://dl.devmate.com/com.globaldelight.Boom2/Boom2.dmg") start];
 ```
 
 #### Task的生命周期方法
@@ -426,7 +426,7 @@ HLObserverTasks(self.task1)
 
 // 下载/上传进度回调
 - (void)requestProgress:(nullable NSProgress *)progress atTask:(nullable HLTask *)task {
-    NSLog(@"\n进度=====\n当前任务：%@\n当前进度：%@", task.taskURL, progress);
+    NSLog(@"\n进度=====\n当前任务：%@\n当前进度：%@", task.customURL, progress);
 }
 
 // 任务完成回调
@@ -623,6 +623,16 @@ HLStrongSynthesize(home, [HLAPI API]
 ```
 
 ### 更新日志
+
+**1.3.2**
+
+```
+新增：
+1. 将AFNetworking相关抽取为HLAPIEngine类，提供基础的网络功能
+2. HLTask加入成功、失败、进度的Block
+修复：
+1. 精简HLAPIManager和HLTaskManager内部代码结构
+```
 
 **1.3.1**
 

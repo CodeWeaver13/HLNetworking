@@ -11,7 +11,6 @@
 // Task
 #import "HLTaskManager.h"
 #import "HLTask.h"
-#import "HLTaskType.h"
 #import "HLTaskGroup.h"
 // Task protocol
 #import "HLTaskResponseProtocol.h"

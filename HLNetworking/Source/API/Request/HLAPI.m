@@ -251,10 +251,10 @@
 #pragma mark - NSObject method
 - (NSUInteger)hash {
     NSString *hashStr = nil;
-    if (self.cURL) {
+    if (self.customURL) {
         hashStr = [NSString stringWithFormat:@"%@%@?%@?%lu",
                    self.header,
-                   self.cURL,
+                   self.customURL,
                    self.parameters,
                    (unsigned long)self.requestMethodType];
     } else {
@@ -290,7 +290,7 @@
     [desc appendFormat:@"Class: %@\n", self.objClz];
     [desc appendFormat:@"BaseURL: %@\n", self.baseURL ?: [HLAPIManager sharedManager].config.request.baseURL];
     [desc appendFormat:@"Path: %@\n", self.path ?: @"未设置"];
-    [desc appendFormat:@"CustomURL: %@\n", self.cURL ?: @"未设置"];
+    [desc appendFormat:@"CustomURL: %@\n", self.customURL ?: @"未设置"];
     [desc appendFormat:@"Parameters: %@\n", self.parameters ?: @"未设置"];
     [desc appendFormat:@"Header: %@\n", self.header ?: @"未设置"];
     [desc appendFormat:@"ContentTypes: %@\n", self.accpetContentTypes];
@@ -406,7 +406,7 @@
     dict[@"Class"] = [NSString stringWithFormat:@"%@", self.objClz];
     dict[@"BaseURL"] = self.baseURL ?: [HLAPIManager sharedManager].config.request.baseURL;
     dict[@"Path"] = self.path ?: @"未设置";
-    dict[@"CustomURL"] = self.cURL ?: @"未设置";
+    dict[@"CustomURL"] = self.customURL ?: @"未设置";
     dict[@"Parameters"] = self.parameters ?: @"未设置";
     dict[@"Header"] = self.header ?: @"未设置";
     dict[@"ContentTypes"] = [NSString stringWithFormat:@"%@", self.accpetContentTypes];

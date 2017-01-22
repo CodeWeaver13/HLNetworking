@@ -7,7 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "HLAPIType.h"
+#import "HLNetworkConst.h"
 @class HLAPI;
 @class HLSecurityPolicyConfig;
 @protocol HLMultipartFormDataProtocol;
@@ -47,7 +47,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy, readonly) NSDictionary<NSString *, NSObject *> *parameters;
 @property (nonatomic, copy, readonly) NSDictionary<NSString *, NSString *> *header;
 @property (nonatomic, copy, readonly) NSSet *accpetContentTypes;
-@property (nonatomic, copy, nullable, readonly) NSString *cURL;
+@property (nonatomic, copy, nullable, getter=customURL, readonly) NSString *cURL;
 
 // 请使用API
 - (instancetype)init NS_UNAVAILABLE;

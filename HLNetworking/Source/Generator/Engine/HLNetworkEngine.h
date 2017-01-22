@@ -1,5 +1,5 @@
 //
-//  HLAPIEngine.h
+//  HLNetworkEngine.h
 //  HLNetworking
 //
 //  Created by wangshiyu13 on 2017/1/22.
@@ -7,13 +7,10 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "HLAPIType.h"
-@class HLAPI;
+#import "HLNetworkConst.h"
 @class HLNetworkConfig;
 
-typedef void(^HLAPICallbackBlock)(HLAPI * api, id responseObject, NSError *error);
-
-@interface HLAPIEngine : NSObject
+@interface HLNetworkEngine : NSObject
 // 请使用sharedEngine
 - (instancetype)init NS_UNAVAILABLE;
 + (instancetype)new NS_UNAVAILABLE;
@@ -21,21 +18,21 @@ typedef void(^HLAPICallbackBlock)(HLAPI * api, id responseObject, NSError *error
 + (instancetype)sharedEngine;
 
 // 发送请求
-- (void)sendRequest:(HLAPI *)api
+// requestObject为HLAPI或者HLTask对象
+- (void)sendRequest:(id)requestObject
           andConfig:(HLNetworkConfig *)config
        progressBack:(HLProgressBlock)progressCallBack
-           callBack:(HLAPICallbackBlock)callBack;
+           callBack:(HLCallbackBlock)callBack;
 
 // 取消请求
-- (void)cancelRequest:(HLAPI *)api;
+- (void)cancelRequestByIdentifier:(NSString *)identifier;
 
 // 如果task不存在则返回NSNull对象
-- (NSURLSessionDataTask *)requestForAPI:(HLAPI *)api;
+- (NSURLSessionTask *)requestByIdentifier:(NSString *)identifier;
 
 #pragma mark - reachability相关
 // 开始监听，domain为需要监听的域名
 - (void)listeningWithDomain:(NSString *)domain listeningBlock:(HLReachabilityBlock)listener;
 // 停止监听，domain为需要停止的域名
 - (void)stopListeningWithDomain:(NSString *)domain;
-
 @end

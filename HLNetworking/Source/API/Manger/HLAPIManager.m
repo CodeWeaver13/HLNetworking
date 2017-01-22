@@ -7,18 +7,17 @@
 //
 
 #import "HLAPIManager.h"
-#import "HLURLResponse.h"
 #import "HLNetworkMacro.h"
+#import "HLNetworkConfig.h"
+#import "HLNetworkLogger.h"
+#import "HLNetworkEngine.h"
+#import "HLNetworkErrorProtocol.h"
+#import "HLURLResponse.h"
 #import "HLSecurityPolicyConfig.h"
 #import "HLMultipartFormDataProtocol.h"
-#import "HLNetworkErrorProtocol.h"
-#import "HLNetworkConfig.h"
 #import "HLAPI.h"
 #import "HLAPI_InternalParams.h"
 #import "HLAPIGroup.h"
-#import "HLNetworkLogger.h"
-#import "HLAPIEngine.h"
-#import <SystemConfiguration/SystemConfiguration.h>
 
 BOOL HLJudgeVersion(void) {
   return [[NSUserDefaults standardUserDefaults] boolForKey:@"isR"];
@@ -140,7 +139,10 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
     }
     
     // 设置Debug及log信息
-    HLDebugMessage *msg = [self debugMessageWithAPI:api andResultObject:resultObject andError:netError];
+    HLDebugMessage *msg = [[HLDebugMessage alloc] initWithRequest:api
+                                                        andResult:resultObject
+                                                         andError:netError
+                                                     andQueueName:[NSString stringWithFormat:@"%@", self.currentQueue]];
 #if DEBUG
     if ([api apiDebugHandler]) {
         dispatch_async_main(^{
@@ -229,7 +231,7 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
     }
     
     @hl_weakify(self)
-    [[HLAPIEngine sharedEngine] sendRequest:api andConfig:self.config progressBack:^(NSProgress *progress) {
+    [[HLNetworkEngine sharedEngine] sendRequest:api andConfig:self.config progressBack:^(NSProgress *progress) {
         for (id<HLAPIResponseDelegate> obj in self.responseObservers) {
             if ([obj respondsToSelector:@selector(requestProgress:atAPI:)]) {
                 [obj requestProgress:progress atAPI:api];
@@ -237,6 +239,9 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
         }
     } callBack:^(HLAPI *api, id responseObject, NSError *error) {
         @hl_strongify(self)
+        if (self.config.tips.isNetworkingActivityIndicatorEnabled) {
+            [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];
+        }
         [self callbackWithRequest:api andResultObject:responseObject andError:error andGroup:group andSemaphore:semaphore];
     }];
     
@@ -269,7 +274,12 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
         api.queue = self.currentQueue;
     }
     dispatch_async(api.queue, ^{
-        [[HLAPIEngine sharedEngine] cancelRequest:api];
+        api.apiSuccessHandler = nil;
+        api.apiFailureHandler = nil;
+        api.apiProgressHandler = nil;
+        api.apiDebugHandler = nil;
+        api.apiRequestConstructingBodyBlock = nil;
+        [[HLNetworkEngine sharedEngine] cancelRequestByIdentifier:api.hashKey];
     });
 }
 
@@ -318,34 +328,6 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
     [group enumerateObjectsUsingBlock:^(HLAPI * _Nonnull api, NSUInteger idx, BOOL * _Nonnull stop) {
         [self cancel:api];
     }];
-}
-
-#pragma mark - private method
-- (HLDebugMessage *)debugMessageWithAPI:(HLAPI *)api
-                        andResultObject:(id)resultObject
-                               andError:(NSError *)error
-{
-    id task = [[HLAPIEngine sharedEngine] requestForAPI:api];
-    id request = [NSNull null];
-    id requestId = [NSNull null];
-    
-    if ([task isKindOfClass:[NSURLSessionTask class]]) {
-        request = [task currentRequest];
-    }
-    if (api.hash) {
-        requestId = [NSNumber numberWithUnsignedInteger:[api hash]];
-    }
-    // 生成response对象
-    HLURLResult *result = [[HLURLResult alloc] initWithObject:resultObject andError:error];
-    HLURLResponse *response = [[HLURLResponse alloc] initWithResult:result
-                                                          requestId:requestId
-                                                            request:request];
-    
-    NSDictionary *params = @{kHLRequestDebugKey: api,
-                             kHLSessionTaskDebugKey: task,
-                             kHLResponseDebugKey: response,
-                             kHLQueueDebugKey: self.currentQueue};
-    return [[HLDebugMessage alloc] initWithDict:params];
 }
 
 #pragma mark - Network Response Observer
@@ -452,7 +434,7 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
 - (void)listeningWithDomain:(NSString *)domain listeningBlock:(HLReachabilityBlock)listener {
     if (self.config.enableReachability) {
         @hl_weakify(self)
-        [[HLAPIEngine sharedEngine] listeningWithDomain:domain listeningBlock:^(HLReachabilityStatus status) {
+        [[HLNetworkEngine sharedEngine] listeningWithDomain:domain listeningBlock:^(HLReachabilityStatus status) {
             @hl_strongify(self)
             self.reachabilityStatus = status;
             listener(status);
@@ -461,7 +443,7 @@ static dispatch_queue_t qkhl_api_http_creation_queue() {
 }
 
 - (void)stopListeningWithDomain:(NSString *)domain {
-    [[HLAPIEngine sharedEngine] stopListeningWithDomain:domain];
+    [[HLNetworkEngine sharedEngine] stopListeningWithDomain:domain];
 }
 
 @end

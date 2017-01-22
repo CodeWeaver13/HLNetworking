@@ -8,18 +8,11 @@
 
 #import <Foundation/Foundation.h>
 #import "HLURLResponse.h"
+#import "NSNull+ToDictionary.h"
+
 typedef NSString *HLDebugKey;
 
 @interface HLDebugMessage : NSObject
-#pragma mark - DebugKey
-// 获取NSURLSessionTask
-FOUNDATION_EXPORT HLDebugKey const kHLSessionTaskDebugKey;
-// 获取HLAPI
-FOUNDATION_EXPORT HLDebugKey const kHLRequestDebugKey;
-// 获取NSURLResponse
-FOUNDATION_EXPORT HLDebugKey const kHLResponseDebugKey;
-// 获取执行的队列名
-FOUNDATION_EXPORT HLDebugKey const kHLQueueDebugKey;
 
 // 请求对象，HLAPI或HLTask
 @property (nonatomic, strong, readonly)id requestObject;
@@ -28,11 +21,11 @@ FOUNDATION_EXPORT HLDebugKey const kHLQueueDebugKey;
 // 获取RequestObject
 @property (nonatomic, strong, readonly)HLURLResponse *response;
 // 执行的队列名
-@property (nonatomic, strong, readonly)dispatch_queue_t queue;
+@property (nonatomic, copy, readonly)NSString *queueName;
 // 生成时间
 @property (nonatomic, copy, readonly) NSString *timeString;
 
-- (instancetype)initWithDict:(NSDictionary *)dict;
+- (instancetype)initWithRequest:(id)requestObject andResult:(id)resultObject andError:(NSError *)error andQueueName:(NSString *)queueName;
 
 - (NSDictionary *)toDictionary;
 @end

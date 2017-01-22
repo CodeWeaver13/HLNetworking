@@ -1,15 +1,22 @@
 //
-//  HLAPIType.h
-//  HLPPShop
+//  HLNetworkConst.h
+//  HLNetworking
 //
-//  Created by wangshiyu13 on 2016/9/19.
-//  Copyright © 2016年 wangshiyu13. All rights reserved.
+//  Created by wangshiyu13 on 2017/1/22.
+//  Copyright © 2017年 wangshiyu13. All rights reserved.
 //
 
-#ifndef HLAPIType_h
-#define HLAPIType_h
+#ifndef HLNetworkConst_h
+#define HLNetworkConst_h
 @protocol HLMultipartFormDataProtocol;
 @class HLDebugMessage;
+
+// 网络请求类型
+typedef NS_ENUM(NSUInteger, HLRequestTaskType) {
+    Upload = 16,
+    Download = 17
+};
+
 // 网络请求类型
 typedef NS_ENUM(NSUInteger, HLRequestMethodType) {
     GET = 10,
@@ -63,6 +70,7 @@ typedef void(^HLRequestConstructingBodyBlock)(id<HLMultipartFormDataProtocol> __
 typedef void(^HLDebugBlock)(HLDebugMessage * __nonnull debugMessage);
 // reachability回调
 typedef void(^HLReachabilityBlock)(HLReachabilityStatus status);
+// 空回调
+typedef void(^HLCallbackBlock)(id __nonnull request, id __nullable responseObject, NSError * __nullable error);
 
-
-#endif /* HLAPIType_h */
+#endif /* HLNetworkConst_h */

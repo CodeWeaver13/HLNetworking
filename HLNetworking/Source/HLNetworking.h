@@ -11,6 +11,7 @@
 
 // config
 #import "HLNetworkMacro.h"
+#import "HLNetworkConst.h"
 #import "HLNetworkConfig.h"
 #import "HLSecurityPolicyConfig.h"
 // Task

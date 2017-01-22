@@ -14,7 +14,6 @@
 // API
 #import "HLAPIManager.h"
 #import "HLAPI.h"
-#import "HLAPIType.h"
 #import "HLAPIGroup.h"
 #import "HLDebugMessage.h"
 // API protocol
