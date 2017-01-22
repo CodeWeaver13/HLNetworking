@@ -35,8 +35,10 @@ HLDebugKey const kHLQueueDebugKey = @"kHLQueueDebugKey";
         NSDateFormatter *myFormatter = [[NSDateFormatter alloc] init];
         [myFormatter setDateFormat:@"yyyy-MM-dd HH:mm:ss"];
         _timeString = [myFormatter stringFromDate:[NSDate date]];
-        
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored"-Wundeclared-selector"
         NSString *hashKey = [requestObject performSelector:@selector(hashKey)];
+#pragma clang diagnostic pop
         id sessionTask = [[HLNetworkEngine sharedEngine] requestByIdentifier: hashKey];
         id request = [NSNull null];
         id requestId = [NSNull null];
