@@ -411,8 +411,7 @@
                       failure:failureBlock];
             }
                 break;
-            case POST:
-            {
+            case POST: {
                 if (![api apiRequestConstructingBodyBlock]) {
                     dataTask =
                     [session POST:requestURLString
@@ -434,13 +433,14 @@
                 }
             }
                 break;
-            default:
+            default: {
                 dataTask =
                 [session GET:requestURLString
                   parameters:requestParams
                     progress:progressBlock
                      success:successBlock
                      failure:failureBlock];
+            }
                 break;
         }
         

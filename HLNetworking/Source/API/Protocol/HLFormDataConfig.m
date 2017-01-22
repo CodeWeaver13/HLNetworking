@@ -10,7 +10,11 @@
 #import "HLMultipartFormDataProtocol.h"
 
 @implementation HLFormDataConfig
-+ (void (^)(id<HLMultipartFormDataProtocol>))configWithData:(NSData *)data name:(NSString *)name fileName:(NSString *)fileName mimeType:(NSString *)mimeType {
++ (void (^)(id<HLMultipartFormDataProtocol>))configWithData:(NSData *)data
+                                                       name:(NSString *)name
+                                                   fileName:(NSString *)fileName
+                                                   mimeType:(NSString *)mimeType
+{
     return ^(id<HLMultipartFormDataProtocol> formData) {
         [formData appendPartWithFileData:data
                                     name:name
@@ -19,7 +23,11 @@
     };
 }
 
-+ (void (^)(id<HLMultipartFormDataProtocol>))configWithImage:(UIImage *)image name:(NSString *)name fileName:(NSString *)fileName scale:(CGFloat)scale {
++ (void (^)(id<HLMultipartFormDataProtocol>))configWithImage:(UIImage *)image
+                                                        name:(NSString *)name
+                                                    fileName:(NSString *)fileName
+                                                       scale:(CGFloat)scale
+{
     return ^(id<HLMultipartFormDataProtocol> formData) {
         NSData *data;
         NSString *mimeType;
