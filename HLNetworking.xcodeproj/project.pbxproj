@@ -17,6 +17,7 @@
 		CF5C95681E1A336500A3380C /* HLNetworkTipsConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = CF5C95671E1A336500A3380C /* HLNetworkTipsConfig.m */; };
 		CF5C956B1E1A342000A3380C /* HLNetworkRequestConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = CF5C956A1E1A342000A3380C /* HLNetworkRequestConfig.m */; };
 		CF5C956E1E1A351600A3380C /* HLNetworkPolicyConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = CF5C956D1E1A351600A3380C /* HLNetworkPolicyConfig.m */; };
+		CF6C3C711E348A330052C4DF /* HLAPIEngine.m in Sources */ = {isa = PBXBuildFile; fileRef = CF6C3C701E348A330052C4DF /* HLAPIEngine.m */; };
 		CF7005A11E1CA12200DF8E80 /* HLNetworkLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = CF7005A01E1CA12200DF8E80 /* HLNetworkLogger.m */; };
 		CF7005A41E1CDADD00DF8E80 /* HLNetworkLoggerConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = CF7005A31E1CDADD00DF8E80 /* HLNetworkLoggerConfig.m */; };
 		CF7005A71E1CE30100DF8E80 /* HLDebugMessage.m in Sources */ = {isa = PBXBuildFile; fileRef = CF7005A61E1CE30100DF8E80 /* HLDebugMessage.m */; };
@@ -60,6 +61,8 @@
 		CF5C956D1E1A351600A3380C /* HLNetworkPolicyConfig.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLNetworkPolicyConfig.m; sourceTree = "<group>"; };
 		CF60A0DA1DA1600900AC1BB2 /* HLAPI_InternalParams.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLAPI_InternalParams.h; sourceTree = "<group>"; };
 		CF60A0DD1DA16C5B00AC1BB2 /* HLTask_InternalParams.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLTask_InternalParams.h; sourceTree = "<group>"; };
+		CF6C3C6F1E348A330052C4DF /* HLAPIEngine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLAPIEngine.h; sourceTree = "<group>"; };
+		CF6C3C701E348A330052C4DF /* HLAPIEngine.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLAPIEngine.m; sourceTree = "<group>"; };
 		CF70059F1E1CA12200DF8E80 /* HLNetworkLogger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLNetworkLogger.h; sourceTree = "<group>"; };
 		CF7005A01E1CA12200DF8E80 /* HLNetworkLogger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLNetworkLogger.m; sourceTree = "<group>"; };
 		CF7005A21E1CDADD00DF8E80 /* HLNetworkLoggerConfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLNetworkLoggerConfig.h; sourceTree = "<group>"; };
@@ -242,6 +245,8 @@
 			children = (
 				CFDCF71F1D9C261B00DE1C8E /* HLAPIManager.h */,
 				CFDCF7201D9C261B00DE1C8E /* HLAPIManager.m */,
+				CF6C3C6F1E348A330052C4DF /* HLAPIEngine.h */,
+				CF6C3C701E348A330052C4DF /* HLAPIEngine.m */,
 			);
 			path = Manger;
 			sourceTree = "<group>";
@@ -516,6 +521,7 @@
 				CF7005A41E1CDADD00DF8E80 /* HLNetworkLoggerConfig.m in Sources */,
 				CFD3863B1E193BA8001CF086 /* HLFormDataConfig.m in Sources */,
 				CF7005A71E1CE30100DF8E80 /* HLDebugMessage.m in Sources */,
+				CF6C3C711E348A330052C4DF /* HLAPIEngine.m in Sources */,
 				CFDCF7441D9C261B00DE1C8E /* HLTask.m in Sources */,
 				CFDCF73E1D9C261B00DE1C8E /* HLAPIManager.m in Sources */,
 				CFDCF7411D9C261B00DE1C8E /* HLNetworkConfig.m in Sources */,

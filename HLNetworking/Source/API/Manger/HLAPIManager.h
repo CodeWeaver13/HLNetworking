@@ -7,7 +7,6 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "HLDebugMessage.h"
 #import "HLAPIType.h"
 
 // 判断当前是否为审核版本
@@ -20,6 +19,7 @@ FOUNDATION_EXPORT void HLJudgeVersionSwitch(BOOL isR);
 @class HLNetworkConfig;
 @class HLAPI;
 @class HLAPIGroup;
+@class HLDebugMessage;
 NS_ASSUME_NONNULL_BEGIN
 
 @protocol HLAPIResponseDelegate <NSObject>
@@ -237,14 +237,12 @@ return [NSArray arrayWithObjects:__VA_ARGS__, nil];; \
 + (BOOL)isReachableViaWiFi;
 
 // 开启默认reachability监视器，block返回状态
-+ (void)listening:(void(^)(HLReachabilityStatus status))listener;
-
++ (void)listening:(HLReachabilityBlock)listener;
 // 默认reachability监视器停止监听
 + (void)stopListening;
 
 // 监听给定的域名是否可以访问，block内返回状态
-- (void)listeningWithDomain:(NSString *)domain listeningBlock:(void (^)(HLReachabilityStatus))listener;
-
+- (void)listeningWithDomain:(NSString *)domain listeningBlock:(HLReachabilityBlock)listener;
 // 停止给定域名的网络状态监听
 - (void)stopListeningWithDomain:(NSString *)domain;
 @end

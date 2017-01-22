@@ -29,6 +29,8 @@ FOUNDATION_EXPORT HLDebugKey const kHLQueueDebugKey;
 @property (nonatomic, strong, readonly)HLURLResponse *response;
 // 执行的队列名
 @property (nonatomic, strong, readonly)dispatch_queue_t queue;
+// 生成时间
+@property (nonatomic, copy, readonly) NSString *timeString;
 
 - (instancetype)initWithDict:(NSDictionary *)dict;
 

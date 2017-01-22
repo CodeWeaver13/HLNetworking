@@ -252,9 +252,18 @@
 - (NSUInteger)hash {
     NSString *hashStr = nil;
     if (self.cURL) {
-        hashStr = [NSString stringWithFormat:@"%@%@?%@", self.header, self.cURL, self.parameters];
+        hashStr = [NSString stringWithFormat:@"%@%@?%@?%lu",
+                   self.header,
+                   self.cURL,
+                   self.parameters,
+                   (unsigned long)self.requestMethodType];
     } else {
-        hashStr = [NSString stringWithFormat:@"%@%@/%@?%@", self.header, self.baseURL, self.path, self.parameters];
+        hashStr = [NSString stringWithFormat:@"%@%@/%@?%@?%lu",
+                   self.header,
+                   self.baseURL,
+                   self.path,
+                   self.parameters,
+                   (unsigned long)self.requestMethodType];
     }
     return [hashStr hash];
 }

@@ -41,10 +41,10 @@ static dispatch_queue_t my_api_queue() {
 - (void)viewDidLoad {
     [super viewDidLoad];
     [self setupLogger];
-    [self setupTaskNetworkConfig];
-    [self testTask];
-//    [self setupAPINetworkConfig];
-//    [self testAPI];
+//    [self setupTaskNetworkConfig];
+//    [self testTask];
+    [self setupAPINetworkConfig];
+    [self testAPI];
 //    [self testHome];
 }
 
@@ -59,7 +59,11 @@ static dispatch_queue_t my_api_queue() {
 }
 
 - (NSDictionary *)customInfoWithMessage:(HLDebugMessage *)message {
-    return [message toDictionary];
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    dict[@"Time"] = message.timeString;
+    dict[@"RequestObject"] = [message.requestObject toDictionary];
+    dict[@"Response"] = [message.response toDictionary];
+    return [dict copy];
 }
 
 - (NSDictionary *)customHeaderWithMessage:(HLNetworkLoggerConfig *)config {
@@ -159,7 +163,7 @@ static dispatch_queue_t my_api_queue() {
     [HLAPIManager setupConfig:^(HLNetworkConfig * _Nonnull config) {
         config.request.baseURL = @"https://httpbin.org/";
         config.request.apiVersion = nil;
-        config.request.retryCount = 5;
+        config.request.retryCount = 4;
 //        config.request.apiCallbackQueue = my_api_queue();
 //        config.enableGlobalLog = YES;
     }];
@@ -170,7 +174,7 @@ static dispatch_queue_t my_api_queue() {
     __block int i = 0;
     HLAPIGroup *group = [HLAPIGroup groupWithMode:HLAPIGroupModeChian];
     group.delegate = self;
-    group.maxRequestCount = 2;
+    group.maxRequestCount = 1;
     
     self.api1 = [HLAPI API].setMethod(GET)
     .setPath(@"user-agent")
@@ -276,13 +280,13 @@ HLObserverAPIs(self.api1, self.api2, self.api3, self.api4, self.api5, self.api6,
 }
 
 - (void)requestFailureWithResponseError:(NSError *)error atAPI:(HLAPI *)api {
-    NSLog(@"\n%@------RequestFailureDelegate\n", [self getAPIName:api]);
+    NSLog(@"\n%@------RequestFailureDelegate------%@\n", [self getAPIName:api], error);
     NSLog(@"%@", [NSThread currentThread]);
 }
 
 - (void)requestProgress:(NSProgress *)progress atAPI:(HLAPI *)api {
-    NSLog(@"\n%@------RequestProgress\n", [self getAPIName:api]);
-    NSLog(@"%@", [NSThread currentThread]);
+//    NSLog(@"\n%@------RequestProgress--------%@\n", [self getAPIName:api], progress);
+//    NSLog(@"%@", [NSThread currentThread]);
 }
 
 - (NSString *)getAPIName:(HLAPI *)api {

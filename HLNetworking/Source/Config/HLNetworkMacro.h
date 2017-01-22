@@ -9,13 +9,15 @@
 #ifndef HLNetworkMacro_h
 #define HLNetworkMacro_h
 
-#define dispatch_async_main(dosomething) if ([NSThread isMainThread]) {\
-dosomething\
-} else {\
-    dispatch_async(dispatch_get_main_queue(), ^{\
-        dosomething\
-    });\
+static inline BOOL IsEmptyValue(id thing) {
+    return thing == nil
+    || ([thing respondsToSelector:@selector(length)]
+        && [(NSData *)thing length] == 0)
+    || ([thing respondsToSelector:@selector(count)]
+        && [(NSArray *)thing count] == 0)
+    ||  ([thing isKindOfClass:[NSNull class]]);
 }
+
 #define HL_SAFE_BLOCK(BlockName, ...) ({ !BlockName ? nil : BlockName(__VA_ARGS__); })
 #define HLLock() dispatch_semaphore_wait(self->_lock, DISPATCH_TIME_FOREVER)
 #define HLUnlock() dispatch_semaphore_signal(self->_lock)

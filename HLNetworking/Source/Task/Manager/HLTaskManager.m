@@ -219,11 +219,15 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
         if ([[delegate requestTasks] containsObject:task]) {
             if (netError) {
                 if ([delegate respondsToSelector:@selector(requestFailureWithResponseError:atTask:)]) {
-                    dispatch_async_main([delegate requestFailureWithResponseError:netError atTask:task];)
+                    dispatch_async_main(^{
+                        [delegate requestFailureWithResponseError:netError atTask:task];
+                    });
                 }
             } else {
                 if ([delegate respondsToSelector:@selector(requestSucessWithResponseObject:atTask:)]) {
-                    dispatch_async_main([delegate requestSucessWithResponseObject:resultObject atTask:task];)
+                    dispatch_async_main(^{
+                        [delegate requestSucessWithResponseObject:resultObject atTask:task];
+                    });
                 }
             }
         }
@@ -320,11 +324,13 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
     void (^progressBlock)(NSProgress *progress)
     = self.responseObservers.count != 0 ? ^(NSProgress *progress) {
         if (progress.totalUnitCount <= 0) return;
-        dispatch_async_main(for (id<HLTaskResponseProtocol> obj in self.responseObservers) {
-            if ([obj respondsToSelector:@selector(requestProgress:atTask:)]) {
-                [obj requestProgress:progress atTask:task];
+        dispatch_async_main(^{
+            for (id<HLTaskResponseProtocol> obj in self.responseObservers) {
+                if ([obj respondsToSelector:@selector(requestProgress:atTask:)]) {
+                    [obj requestProgress:progress atTask:task];
+                }
             }
-        })
+        });
     } : nil;
     
     /**
@@ -366,7 +372,9 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
     };
     
     if ([task.delegate respondsToSelector:@selector(requestWillBeSentWithTask:)]) {
-        dispatch_async_main([task.delegate requestWillBeSentWithTask:task];)
+        dispatch_async_main(^{
+            [task.delegate requestWillBeSentWithTask:task];
+        });
     }
     if (self.config.tips.isNetworkingActivityIndicatorEnabled) {
         [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:YES];
@@ -404,7 +412,9 @@ static dispatch_queue_t qkhl_task_session_creation_queue() {
     }
     
     if ([task.delegate respondsToSelector:@selector(requestDidSentWithTask:)]) {
-        dispatch_async_main([task.delegate requestDidSentWithTask:task];)
+        dispatch_async_main(^{
+            [task.delegate requestDidSentWithTask:task];
+        });
     }
 }
 

@@ -23,7 +23,7 @@ HLDebugKey const kHLQueueDebugKey = @"kHLQueueDebugKey";
 // 执行的队列名
 @property (nonatomic, strong, readwrite)dispatch_queue_t queue;
 // 生成时间
-@property (nonatomic, copy) NSString *timeString;
+@property (nonatomic, copy, readwrite) NSString *timeString;
 @end
 
 @implementation HLDebugMessage
