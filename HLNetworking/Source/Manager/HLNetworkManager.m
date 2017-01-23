@@ -14,6 +14,8 @@
 #import "HLDebugMessage.h"
 #import "HLURLRequest_InternalParams.h"
 #import "HLRequestGroup.h"
+#import "HLTaskRequest.h"
+#import "HLAPIRequest.h"
 
 inline BOOL HLJudgeVersion(void) { return [[NSUserDefaults standardUserDefaults] boolForKey:@"isR"]; }
 
@@ -30,6 +32,17 @@ static dispatch_queue_t qkhl_network_creation_queue() {
     return qkhl_network_creation_queue;
 }
 
+// 创建上传下载任务队列
+static dispatch_queue_t qkhl_network_task_queue() {
+    static dispatch_queue_t qkhl_network_task_queue;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        qkhl_network_task_queue =
+        dispatch_queue_create("com.qkhl.wangshiyu13.networking.task.queue", DISPATCH_QUEUE_PRIORITY_DEFAULT);
+    });
+    return qkhl_network_task_queue;
+}
+
 @interface HLNetworkManager ()
 @property (nonatomic, strong, readwrite) HLNetworkConfig *config;
 @property (nonatomic, strong) NSHashTable<id <HLNetworkResponseDelegate>> *responseObservers;
@@ -38,7 +51,8 @@ static dispatch_queue_t qkhl_network_creation_queue() {
 @property (nonatomic, assign, readwrite, getter = isReachable) BOOL reachable;
 @property (nonatomic, assign, readwrite, getter = isReachableViaWWAN) BOOL reachableViaWWAN;
 @property (nonatomic, assign, readwrite, getter = isReachableViaWiFi) BOOL reachableViaWiFi;
-@property (nonatomic, strong) dispatch_queue_t currentQueue;
+@property (nonatomic, strong) dispatch_queue_t currentRequestQueue;
+@property (nonatomic, strong) dispatch_queue_t currentTaskQueue;
 @end
 
 @implementation HLNetworkManager
@@ -61,7 +75,8 @@ static dispatch_queue_t qkhl_network_creation_queue() {
     self = [super init];
     if (self) {
         _config = [HLNetworkConfig config];
-        _currentQueue = _config.request.apiCallbackQueue ?: qkhl_network_creation_queue();
+        _currentRequestQueue = _config.request.apiCallbackQueue ?: qkhl_network_creation_queue();
+        _currentTaskQueue = qkhl_network_task_queue();
         _reachabilityStatus = HLReachabilityStatusUnknown;
         _responseObservers = [NSHashTable hashTableWithOptions:NSHashTableWeakMemory];
     }
@@ -69,7 +84,7 @@ static dispatch_queue_t qkhl_network_creation_queue() {
 }
 - (void)setupConfig:(void (^)(HLNetworkConfig * _Nonnull config))configBlock {
     HL_SAFE_BLOCK(configBlock, self.config);
-    self.currentQueue = self.config.request.apiCallbackQueue ?: qkhl_network_creation_queue();
+    self.currentRequestQueue = self.config.request.apiCallbackQueue ?: qkhl_network_creation_queue();
 }
 + (void)setupConfig:(void (^)(HLNetworkConfig * _Nonnull config))configBlock {
     [[self sharedManager] setupConfig:configBlock];
@@ -80,7 +95,11 @@ static dispatch_queue_t qkhl_network_creation_queue() {
 - (void)send:(__kindof HLURLRequest *)request {
     @hl_weakify(self);
     if (!request.queue) {
-        request.queue = self.currentQueue;
+        if ([request isKindOfClass:[HLTaskRequest class]]) {
+            request.queue = self.currentTaskQueue;
+        } else {
+            request.queue = self.currentRequestQueue;
+        }
     }
     dispatch_async(request.queue, ^{
         @hl_strongify(self);
@@ -97,7 +116,11 @@ static dispatch_queue_t qkhl_network_creation_queue() {
     if (group.customQueue) {
         queue = group.customQueue;
     } else {
-        queue = self.currentQueue;
+        if ([group[0] isKindOfClass:[HLTaskRequest class]]) {
+            queue = self.currentTaskQueue;
+        } else {
+            queue = self.currentRequestQueue;
+        }
     }
     // 根据groupMode 配置信号量
     dispatch_semaphore_t semaphore = nil;
@@ -129,13 +152,13 @@ static dispatch_queue_t qkhl_network_creation_queue() {
 // 取消API请求，如果该请求已经发送或者正在发送，则不保证一定可以取消，但会将Block回落点置空，delegate正常回调，默认为manager内置队列
 - (void)cancel:(__kindof HLURLRequest *)request {
     if (!request.queue) {
-        request.queue = self.currentQueue;
+        if ([request isKindOfClass:[HLTaskRequest class]]) {
+            request.queue = self.currentTaskQueue;
+        } else {
+            request.queue = self.currentRequestQueue;
+        }
     }
     dispatch_async(request.queue, ^{
-        request.successHandler = nil;
-        request.failureHandler = nil;
-        request.progressHandler = nil;
-        request.debugHandler = nil;
         [[HLNetworkEngine sharedEngine] cancelRequestByIdentifier:request.hashKey];
     });
 }
@@ -156,7 +179,11 @@ static dispatch_queue_t qkhl_network_creation_queue() {
 - (void)resume:(__kindof HLURLRequest *)request {
     @hl_weakify(self);
     if (!request.queue) {
-        request.queue = self.currentQueue;
+        if ([request isKindOfClass:[HLTaskRequest class]]) {
+            request.queue = self.currentTaskQueue;
+        } else {
+            request.queue = self.currentRequestQueue;
+        }
     }
     dispatch_async(request.queue, ^{
         @hl_strongify(self);
@@ -174,7 +201,11 @@ static dispatch_queue_t qkhl_network_creation_queue() {
 // 暂停Task
 - (void)pause:(__kindof HLURLRequest *)request {
     if (!request.queue) {
-        request.queue = self.currentQueue;
+        if ([request isKindOfClass:[HLTaskRequest class]]) {
+            request.queue = self.currentTaskQueue;
+        } else {
+            request.queue = self.currentRequestQueue;
+        }
     }
     dispatch_async(request.queue, ^{
         NSURLSessionTask *sessionTask = [[HLNetworkEngine sharedEngine] requestByIdentifier:request.hashKey];
@@ -365,7 +396,7 @@ static dispatch_queue_t qkhl_network_creation_queue() {
     HLDebugMessage *msg = [[HLDebugMessage alloc] initWithRequest:request
                                                         andResult:resultObject
                                                          andError:netError
-                                                     andQueueName:[NSString stringWithFormat:@"%@", self.currentQueue]];
+                                                     andQueueName:[NSString stringWithFormat:@"%@", [request isKindOfClass:[HLTaskRequest class]] ? self.currentTaskQueue : self.currentRequestQueue]];
 #if DEBUG
     if (self.config.enableGlobalLog) {
         [HLNetworkLogger logInfoWithDebugMessage:msg];

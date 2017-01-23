@@ -155,18 +155,6 @@
     };
 }
 
-#pragma mark - process
-// 开启API 请求
-- (HLAPIRequest *)start {
-    [HLNetworkManager send:self];
-    return self;
-}
-// 取消API 请求
-- (HLAPIRequest *)cancel {
-    [HLNetworkManager cancel:self];
-    return self;
-}
-
 #pragma mark - helper
 - (NSUInteger)hash {
     NSString *hashStr = nil;

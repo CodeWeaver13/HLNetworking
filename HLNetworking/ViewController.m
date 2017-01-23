@@ -7,6 +7,7 @@
 //
 #import "ViewController.h"
 #import "HLNetworking.h"
+#import "HLAPICenter+home.h"
 
 static dispatch_queue_t my_api_queue() {
     static dispatch_queue_t my_api_queue;
@@ -72,24 +73,24 @@ static dispatch_queue_t my_api_queue() {
         config.request.baseURL = @"https://httpbin.org";
         config.policy.isBackgroundSession = NO;
         config.request.apiVersion = nil;
-        config.request.retryCount = 4;
+//        config.request.retryCount = 4;
     }];
     [HLNetworkManager registerResponseObserver:self];
     
     
-    [self testTask];
-//    [self testAPI];
+//    [self testTask];
+    [self testAPI];
     
-//    [self testButton];
+    [self testButton];
 //    [self testHome];
 }
 
 - (void)testHome {
-//    [HLAPICenter.home.success(^(id responce) {
-//        self.model = responce;
-//    }).failure(^(NSError *obj){
-//        NSLog(@"----%@", obj);
-//    }) start];
+    [HLAPICenter.home.success(^(id responce) {
+        self.model = responce;
+    }).failure(^(NSError *obj){
+        NSLog(@"----%@", obj);
+    }) start];
 }
 
 - (void)testButton {
@@ -227,11 +228,11 @@ static dispatch_queue_t my_api_queue() {
 
 #pragma mark - HLRequestDelegate
 - (void)requestWillBeSent:(HLURLRequest *)request {
-    NSLog(@"\n%@---willBeSent---", [self getAPIName:request]);
+    NSLog(@"\n%@---willBeSent---", request.hashKey);
 }
 
 - (void)requestDidSent:(HLURLRequest *)request {
-    NSLog(@"\n%@---didSent---", [self getAPIName:request]);
+    NSLog(@"\n%@---didSent---", request.hashKey);
 }
 
 #pragma mark - HLResponseDelegate
@@ -240,18 +241,19 @@ static dispatch_queue_t my_api_queue() {
     return self.taskArray;
 }
 
+// 进度的回调
 - (void)requestProgress:(nullable NSProgress *)progress atRequest:(nullable HLURLRequest *)request {
-        NSLog(@"\n%@------RequestProgress--------%@\n", [self getAPIName:request], progress);
-        NSLog(@"%@", [NSThread currentThread]);
+    NSLog(@"\n%@------RequestProgress--------%@\n", request.hashKey, progress);
+    NSLog(@"%@", [NSThread currentThread]);
 }
 // 请求成功的回调
 - (void)requestSucess:(nullable id)responseObject atRequest:(nullable HLURLRequest *)request {
-    NSLog(@"\n%@------RequestSuccessDelegate\n", [self getAPIName:request]);
+    NSLog(@"\n%@------RequestSuccessDelegate\n", request.hashKey);
     NSLog(@"%@", [NSThread currentThread]);
 }
 // 请求失败的回调
 - (void)requestFailure:(nullable NSError *)error atRequest:(nullable HLURLRequest *)request {
-    NSLog(@"\n%@------RequestFailureDelegate------%@\n", [self getAPIName:request], error);
+    NSLog(@"\n%@------RequestFailureDelegate------%@\n", request.hashKey, error);
     NSLog(@"%@", [NSThread currentThread]);
 }
 
@@ -274,26 +276,6 @@ static dispatch_queue_t my_api_queue() {
                            @"AppName": config.appName,
                            @"AppVersion": config.appVersion,
                            @"ServiceType": config.serviceType}};
-}
-
-- (NSString *)getAPIName:(HLURLRequest *)api {
-    NSString *apiName;
-    if ([api isEqual:self.api1]) {
-        apiName = @"api1";
-    } else if ([api isEqual:self.api2]) {
-        apiName = @"api2";
-    } else if ([api isEqual:self.api3]) {
-        apiName = @"api3";
-    } else if ([api isEqual:self.api4]) {
-        apiName = @"api4";
-    } else if ([api isEqual:self.api5]) {
-        apiName = @"api5";
-    } else if ([api isEqual:self.api6]) {
-        apiName = @"api6";
-    } else if ([api isEqual:self.api7]) {
-        apiName = @"api7";
-    }
-    return apiName;
 }
 
 - (void)dealloc {

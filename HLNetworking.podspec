@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
   spec.name             = 'HLNetworking'
-  spec.version          = '1.3.2'
+  spec.version          = '2.0.0.beta1'
   spec.license          = { :type => "MIT", :file => 'LICENSE' }
   spec.homepage         = 'https://github.com/QianKun-HanLin/HLNetworking'
   spec.authors          = {"wangshiyu13" => "wangshiyu13@163.com"}
@@ -17,25 +17,9 @@ Pod::Spec.new do |spec|
 
   spec.subspec 'Core' do |core|
 
-    core.source_files = 'HLNetworking/Source/HLNetworking.h', 'HLNetworking/Source/Generator/**/*.{h,m}', 'HLNetworking/Source/Logger/**/*.{h,m}', 'HLNetworking/Source/Config/**/*.{h,m}', 'HLNetworking/Source/API/**/*.{h,m}', 'HLNetworking/Source/Task/**/*.{h,m}'
+    core.source_files = 'HLNetworking/Source/HLNetworking.h', 'HLNetworking/Source/Generator/**/*.{h,m}', 'HLNetworking/Source/Manager/**/*.{h,m}', 'HLNetworking/Source/Engine/**/*.{h,m}', 'HLNetworking/Source/Logger/**/*.{h,m}', 'HLNetworking/Source/Config/**/*.{h,m}'
 
     core.dependency 'AFNetworking', '~> 3.1.0'
-
-  end
-
-  spec.subspec 'API' do |api|
-
-    api.source_files = 'HLNetworking/Source/HLNetworkingAPI.h', 'HLNetworking/Source/Generator/**/*.{h,m}', 'HLNetworking/Source/Logger/**/*.{h,m}', 'HLNetworking/Source/Config/**/*.{h,m}', 'HLNetworking/Source/API/**/*.{h,m}'
-
-    api.dependency 'AFNetworking', '~> 3.1.0'
-
-  end
-
-  spec.subspec 'Task' do |task|
-
-    task.source_files = 'HLNetworking/Source/HLNetworkingTask.h', 'HLNetworking/Source/Generator/**/*.{h,m}', 'HLNetworking/Source/Logger/**/*.{h,m}', 'HLNetworking/Source/Config/**/*.{h,m}', 'HLNetworking/Source/Task/**/*.{h,m}'
-
-    task.dependency 'AFNetworking', '~> 3.1.0'
 
   end
 
@@ -43,7 +27,7 @@ Pod::Spec.new do |spec|
 
     center.source_files = 'HLNetworking/Source/Center/*.{h,m}'
 
-    center.dependency 'HLNetworking/API'
+    center.dependency 'HLNetworking/Core'
 
     center.dependency 'YYModel'
     

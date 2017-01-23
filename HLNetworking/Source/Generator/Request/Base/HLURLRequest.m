@@ -158,22 +158,22 @@
 #pragma mark - process
 // 开启API 请求
 - (__kindof HLURLRequest *)start {
-    HLNetLog(@"需子类实现");
+    [HLNetworkManager send:self];
     return self;
 }
 // 取消API 请求
 - (__kindof HLURLRequest *)cancel {
-    HLNetLog(@"需子类实现");
+    [HLNetworkManager cancel:self];
     return self;
 }
 // 继续Task
 - (__kindof HLURLRequest *)resume {
-    HLNetLog(@"需子类实现");
+    [HLNetworkManager resume:self];
     return self;
 }
 // 暂停Task
 - (__kindof HLURLRequest *)pause {
-    HLNetLog(@"需子类实现");
+    [HLNetworkManager pause:self];
     return self;
 }
 

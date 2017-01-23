@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "HLNetworkConst.h"
 @class HLNetworkConfig;
+@class HLURLRequest;
 
 @interface HLNetworkEngine : NSObject
 // 请使用sharedEngine
@@ -19,7 +20,7 @@
 
 // 发送请求
 // requestObject为HLAPI或者HLTask对象
-- (void)sendRequest:(id)requestObject
+- (void)sendRequest:(__kindof HLURLRequest *)requestObject
           andConfig:(HLNetworkConfig *)config
        progressBack:(HLProgressBlock)progressCallBack
            callBack:(HLCallbackBlock)callBack;

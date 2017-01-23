@@ -104,14 +104,14 @@ return [NSArray arrayWithObjects:__VA_ARGS__, nil]; \
 
 @required
 // 设置需要监听的task对象
-- (NSArray <HLURLRequest *>*)observerRequests;
+- (NSArray <__kindof HLURLRequest *>*)observerRequests;
 
 @optional
 // task 上传、下载等长时间执行的Progress进度
-- (void)requestProgress:(nullable NSProgress *)progress atRequest:(nullable HLURLRequest *)request;
+- (void)requestProgress:(nullable NSProgress *)progress atRequest:(nullable __kindof HLURLRequest *)request;
 // 请求成功的回调
-- (void)requestSucess:(nullable id)responseObject atRequest:(nullable HLURLRequest *)request;
+- (void)requestSucess:(nullable id)responseObject atRequest:(nullable __kindof HLURLRequest *)request;
 // 请求失败的回调
-- (void)requestFailure:(nullable NSError *)error atRequest:(nullable HLURLRequest *)request;
+- (void)requestFailure:(nullable NSError *)error atRequest:(nullable __kindof HLURLRequest *)request;
 @end
 NS_ASSUME_NONNULL_END

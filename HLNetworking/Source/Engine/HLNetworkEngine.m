@@ -53,142 +53,28 @@
  @param config 请求参数
  @return AFURLSessionManager
  */
-- (AFURLSessionManager *)sessionManagerByRequest:(id)requestObject andManagerConfig:(HLNetworkConfig *)config {
+- (AFURLSessionManager *)sessionManagerByRequest:(__kindof HLURLRequest *)requestObject andManagerConfig:(HLNetworkConfig *)config {
     if (!requestObject) return nil;
     /** 拼接baseUrlStr */
-    NSString *baseUrlStr;
-    // 如果定义了自定义的cURL, 则直接使用
-    NSURL *cURL = [NSURL URLWithString:[requestObject customURL]];
-    if (cURL.host) {
-        baseUrlStr = [NSString stringWithFormat:@"%@://%@", cURL.scheme ?: @"https", cURL.host];
-    } else {
-        NSAssert([requestObject baseURL] != nil || config.request.baseURL != nil,
-                 @"api baseURL 和 self.config.baseurl 两者必须有一个有值");
-        
-        NSString *tmpStr = (NSString *)[requestObject baseURL] ? : config.request.baseURL;
-        
-        // 在某些情况下，一些用户会直接把整个url地址写进 baseUrl
-        // 因此，还需要对baseUrl 进行一次切割
-        NSURL *tmpURL = [NSURL URLWithString:tmpStr];
-        baseUrlStr = [NSString stringWithFormat:@"%@://%@", tmpURL.scheme ?: @"https", tmpURL.host];;
-    }
+    NSString *baseUrlStr = [self createBaseURLString:requestObject andConfig:config];
     
     /** 设置AFSecurityPolicy参数 */
-    HLSecurityPolicyConfig *requestSecurityPolicy = (HLSecurityPolicyConfig *)[requestObject securityPolicy];
-    NSUInteger pinningMode = requestSecurityPolicy.SSLPinningMode ?: config.defaultSecurityPolicy.SSLPinningMode;
-    AFSecurityPolicy *securityPolicy = [AFSecurityPolicy policyWithPinningMode:pinningMode];
-    securityPolicy.allowInvalidCertificates = requestSecurityPolicy.allowInvalidCertificates ?: config.defaultSecurityPolicy.allowInvalidCertificates;
-    securityPolicy.validatesDomainName = requestSecurityPolicy.validatesDomainName ?: config.defaultSecurityPolicy.validatesDomainName;
-    NSString *cerPath = requestSecurityPolicy.cerFilePath ?: config.defaultSecurityPolicy.cerFilePath;
-    NSData *certData = nil;
-    if (cerPath && ![cerPath isEqualToString:@""]) {
-        certData = [NSData dataWithContentsOfFile:cerPath];
-        if (certData) {
-            securityPolicy.pinnedCertificates = [NSSet setWithObject:certData];
-        }
-    }
+    AFSecurityPolicy *securityPolicy = [self createSecurityPolicy:requestObject andConfig:config];
     
     /** 如果requestObject为HLTask */
     if ([requestObject isKindOfClass:[HLTaskRequest class]]) {
         // AFURLSessionManager
-        AFURLSessionManager *sessionManager;
-        sessionManager = [self.sessionManagerCache objectForKey:baseUrlStr];
-        // 如果缓存中取不到对应的sessionManager，则创建一个新的SessionManager
-        if (!sessionManager) {
-            NSURLSessionConfiguration *sessionConfig;
-            if (config) {
-                if (config.policy.isBackgroundSession) {
-                    NSString *kBackgroundSessionID = [NSString stringWithFormat:@"com.wangshiyu13.backgroundSession.task.%@", baseUrlStr];
-                    NSString *kSharedContainerIdentifier = config.policy.AppGroup ?: [NSString stringWithFormat:@"com.wangshiyu13.testApp"];
-                    sessionConfig = [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:kBackgroundSessionID];
-                    sessionConfig.sharedContainerIdentifier = kSharedContainerIdentifier;
-                } else {
-                    sessionConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
-                }
-                sessionConfig.HTTPMaximumConnectionsPerHost = config.request.maxHttpConnectionPerHost;
-            } else {
-                sessionConfig.HTTPMaximumConnectionsPerHost = MAX_HTTP_CONNECTION_PER_HOST;
-            }
-            sessionManager = [[AFURLSessionManager alloc] initWithSessionConfiguration:sessionConfig];
-            [self.sessionManagerCache setObject:sessionManager forKey:baseUrlStr];
-        }
-        sessionManager.securityPolicy = securityPolicy;
-        return sessionManager;
-    
+        return [self createSessionManager:config
+                         andBaseURLString:baseUrlStr
+                        andSecurityPolicy:securityPolicy];
+        
     /** 如果requestObject为HLAPI */
     } else if ([requestObject isKindOfClass:[HLAPIRequest class]]) {
-        // Request 序列化
-        AFHTTPRequestSerializer *requestSerializer;
-        switch ([requestObject requestSerializerType]) {
-            case RequestHTTP:
-                requestSerializer = [AFHTTPRequestSerializer serializer];
-                break;
-            case RequestJSON:
-                requestSerializer = [AFJSONRequestSerializer serializer];
-                break;
-            case RequestPlist:
-                requestSerializer = [AFPropertyListRequestSerializer serializer];
-                break;
-            default:
-                requestSerializer = [AFHTTPRequestSerializer serializer];
-                break;
-        }
-        requestSerializer.cachePolicy          = [requestObject cachePolicy];
-        requestSerializer.timeoutInterval      = [requestObject timeoutInterval];
-        NSDictionary *requestHeaderFieldParams = [requestObject header];
-        if (![[requestHeaderFieldParams allKeys] containsObject:@"User-Agent"] &&
-            config.request.userAgent) {
-            [requestSerializer setValue:config.request.userAgent forHTTPHeaderField:@"User-Agent"];
-        }
-        if (requestHeaderFieldParams) {
-            [requestHeaderFieldParams enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
-                [requestSerializer setValue:obj forHTTPHeaderField:key];
-            }];
-        }
-        if (!requestSerializer) {
-            return nil;
-        }
-        
-        // Response 序列化
-        AFHTTPResponseSerializer *responseSerializer;
-        switch ([requestObject responseSerializerType]) {
-            case ResponseHTTP:
-                responseSerializer = [AFHTTPResponseSerializer serializer];
-                break;
-            case ResponseJSON:
-                responseSerializer = [AFJSONResponseSerializer serializer];
-                break;
-            case ResponsePlist:
-                responseSerializer = [AFPropertyListResponseSerializer serializer];
-                break;
-            case ResponseXML:
-                responseSerializer = [AFXMLParserResponseSerializer serializer];
-                break;
-            default:
-                break;
-        }
-        responseSerializer.acceptableContentTypes = [requestObject accpetContentTypes];
-        if (!responseSerializer) {
-            return nil;
-        }
-        
-        // AFHTTPSession
-        AFHTTPSessionManager *sessionManager = [self.sessionManagerCache objectForKey:baseUrlStr];
-        if (!sessionManager) {
-            // 根据传入的BaseURL创建新的SessionManager
-            NSURLSessionConfiguration *sessionConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
-            sessionConfig.HTTPMaximumConnectionsPerHost = config.request.maxHttpConnectionPerHost;
-            sessionConfig.requestCachePolicy = [requestObject cachePolicy] ?: config.policy.cachePolicy;
-            sessionConfig.timeoutIntervalForRequest = [requestObject timeoutInterval] ?: config.request.requestTimeoutInterval;
-            sessionConfig.URLCache = config.policy.URLCache;
-            sessionManager = [[AFHTTPSessionManager alloc] initWithBaseURL:[NSURL URLWithString:baseUrlStr] sessionConfiguration:sessionConfig];
-            [self.sessionManagerCache setObject:sessionManager forKey:baseUrlStr];
-        }
-        sessionManager.requestSerializer = requestSerializer;
-        sessionManager.responseSerializer = responseSerializer;
-        sessionManager.securityPolicy = securityPolicy;
-        
-        return sessionManager;
+        // AFHTTPSessionManager
+        return [self createSessionManager:requestObject
+                                andConfig:config
+                         andBaseURLString:baseUrlStr
+                        andSecurityPolicy:securityPolicy];
     } else {
         return nil;
     }
@@ -202,39 +88,26 @@
 }
 
 # pragma mark - 发送请求
-- (void)sendRequest:(id)requestObject
+- (void)sendRequest:(__kindof HLURLRequest *)requestObject
           andConfig:(HLNetworkConfig *)config
        progressBack:(HLProgressBlock)progressCallBack
            callBack:(HLCallbackBlock)callBack
 {
     /** 容错 */
-    if (![requestObject isKindOfClass:[HLAPIRequest class]] && ![requestObject isKindOfClass:[HLTaskRequest class]]){
-        NSError *noAPIError = [NSError errorWithDomain:NSURLErrorDomain
-                                                  code:NSURLErrorUnsupportedURL
-                                              userInfo:@{NSLocalizedDescriptionKey: @"请求对象类型不正确！"}];
-        if (callBack) {
-            callBack(requestObject, nil, noAPIError);
-        }
-        return;
-    }
     if (!requestObject) {
-        NSError *noAPIError = [NSError errorWithDomain:NSURLErrorDomain
-                                                  code:NSURLErrorUnsupportedURL
-                                              userInfo:@{NSLocalizedDescriptionKey: @"请求对象不存在！"}];
-        if (callBack) {
-            callBack(requestObject, nil, noAPIError);
-        }
+        [self faultTolerantProcessWithBlock:callBack
+                           andRequestObject:requestObject
+                               andErrorCode:NSURLErrorUnsupportedURL
+                        andErrorDescription:@"请求对象不存在！"];
         return;
     }
     
     // 如果缓存中已有当前task，则立即使api返回失败回调，错误信息为frequentRequestErrorStr
     if ([self.sessionTasksCache objectForKey:[requestObject hashKey]]) {
-        NSError *cancelError = [NSError errorWithDomain:NSURLErrorDomain
-                                                   code:NSURLErrorCancelled
-                                               userInfo:@{NSLocalizedDescriptionKey: config.tips.frequentRequestErrorStr}];
-        if (callBack) {
-            callBack(requestObject, nil, cancelError);
-        }
+        [self faultTolerantProcessWithBlock:callBack
+                           andRequestObject:requestObject
+                               andErrorCode:NSURLErrorCancelled
+                        andErrorDescription:config.tips.frequentRequestErrorStr];
         return;
     }
     
@@ -242,12 +115,10 @@
     /** 生成sessionManager */
     AFURLSessionManager *sessionManager = [self sessionManagerByRequest:requestObject andManagerConfig:config];
     if (!sessionManager) {
-        NSError *noSessionError = [NSError errorWithDomain:NSURLErrorDomain
-                                                      code:NSURLErrorUnsupportedURL
-                                                  userInfo:@{NSLocalizedDescriptionKey: @"SessionManager无法构建！"}];
-        if (callBack) {
-            callBack(requestObject, nil, noSessionError);
-        }
+        [self faultTolerantProcessWithBlock:callBack
+                           andRequestObject:requestObject
+                               andErrorCode:NSURLErrorUnsupportedURL
+                        andErrorDescription:@"SessionManager无法构建！"];
         return;
     }
     
@@ -278,12 +149,10 @@
         }
     }
     if (IsEmptyValue(requestURLString)) {
-        NSError *noRequestURLError = [NSError errorWithDomain:NSURLErrorDomain
-                                                         code:NSURLErrorUnsupportedURL
-                                                     userInfo:@{NSLocalizedDescriptionKey: @"requestURLString无法构建！"}];
-        if (callBack) {
-            callBack(requestObject, nil, noRequestURLError);
-        }
+        [self faultTolerantProcessWithBlock:callBack
+                           andRequestObject:requestObject
+                               andErrorCode:NSURLErrorUnsupportedURL
+                        andErrorDescription:@"requestURLString无法构建！"];
         return;
     }
     
@@ -300,15 +169,26 @@
     }
     // 如果无网络，则立即使api响应失败回调，错误信息是networkNotReachableErrorStr
     if (!isReachable) {
-        NSError *networkUnreachableError = [NSError errorWithDomain:NSURLErrorDomain
-                                                               code:NSURLErrorCannotConnectToHost
-                                                           userInfo:@{NSLocalizedDescriptionKey: config.tips.networkNotReachableErrorStr,
-                                                                      NSLocalizedFailureReasonErrorKey: [NSString stringWithFormat:@"网络异常，%@ 无法访问", host]}];
-        if (callBack) {
-            callBack(requestObject, nil, networkUnreachableError);
-        }
+        [self faultTolerantProcessWithBlock:callBack
+                           andRequestObject:requestObject
+                               andErrorCode:NSURLErrorCannotConnectToHost
+                        andErrorDescription:[NSString stringWithFormat:@"%@, %@ 无法访问", config.tips.networkNotReachableErrorStr, host]];
         return;
     }
+    
+    // 进度Block
+    void (^progressBlock)(NSProgress *progress)
+    = ^(NSProgress *progress) {
+        if (progress.totalUnitCount <= 0) return;
+        dispatch_async_main(^{
+            if (progressCallBack) {
+                progressCallBack(progress);
+            }
+            if (requestObject.progressHandler) {
+                requestObject.progressHandler(progress);
+            }
+        });
+    };
     
     /** 根据requestObject类型，发送请求 */
     // requestObject为HLAPI时
@@ -344,20 +224,6 @@
                 callBack(api, nil, error);
             }
             [self removeTaskForKey:api.hashKey];
-        };
-        
-        // 进度Block
-        void (^progressBlock)(NSProgress *progress)
-        = ^(NSProgress *progress) {
-            if (progress.totalUnitCount <= 0) return;
-            dispatch_async_main(^{
-                if (progressCallBack) {
-                    progressCallBack(progress);
-                }
-                if (api.progressHandler) {
-                    api.progressHandler(progress);
-                }
-            });
         };
         
         // 执行AFN的请求
@@ -460,26 +326,7 @@
         }
         
         /** 生成需要的Block */
-        // 进度Block
-        void (^progressBlock)(NSProgress *progress)
-        = ^(NSProgress *progress) {
-            if (progress.totalUnitCount <= 0) return;
-            if (progressCallBack) {
-                progressCallBack(progress);
-            }
-            if (task.progressHandler) {
-                task.progressHandler(progress);
-            }
-        };
-        
-        /**
-         下载地址Block
-         
-         param targetPath 目标地址
-         param response   对象
-         
-         return 保存的地址
-         */
+        // 下载地址Block
         NSURL * (^destinationBlock)(NSURL *targetPath, NSURLResponse *response)
         = ^NSURL *(NSURL *targetPath, NSURLResponse *response) {
             NSString *path = [[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:response.suggestedFilename];
@@ -487,6 +334,7 @@
         };
         
         @hl_weakify(self);
+        // 上传完成的Block
         void (^uploadCompleteBlock)(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error)
         = ^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
             @hl_strongify(self);
@@ -496,6 +344,7 @@
             [self removeTaskForKey:task.hashKey];
         };
         
+        // 下载完成的Block
         void (^donwloadCompleteBlcok)(NSURLResponse * _Nonnull response, NSURL * _Nullable filePath, NSError * _Nullable error)
         = ^(NSURLResponse * _Nonnull response, NSURL * _Nullable filePath, NSError * _Nullable error) {
             @hl_strongify(self);
@@ -507,11 +356,12 @@
         
         NSURLSessionTask *sessionTask;
         switch (task.requestTaskType) {
-            case Upload:
+            case Upload: {
                 sessionTask = [sessionManager uploadTaskWithRequest:request
                                                         fromFile:fileURL
                                                         progress:progressBlock
                                                completionHandler:uploadCompleteBlock];
+            }
                 break;
             case Download: {
                 NSData *data = [NSData dataWithContentsOfURL:[NSURL fileURLWithPath:task.resumePath]];
@@ -552,8 +402,8 @@
             }];
         } else {
             [sessionTask cancel];
+            [self.sessionTasksCache removeObjectForKey:identifier];
         }
-        [self.sessionTasksCache removeObjectForKey:identifier];
     }
 }
 
@@ -602,8 +452,162 @@
         }
     }
 }
-@end
 
-@interface NSURLSessionDownloadTask ()
+#pragma mark - private method
+// 创建BaseURLString
+- (NSString *)createBaseURLString:(HLURLRequest *)requestObject andConfig:(HLNetworkConfig *)config {
+    NSString *baseUrlStr;
+    // 如果定义了自定义的cURL, 则直接使用
+    NSURL *cURL = [NSURL URLWithString:requestObject.customURL];
+    if (cURL.host) {
+        baseUrlStr = [NSString stringWithFormat:@"%@://%@", cURL.scheme ?: @"https", cURL.host];
+    } else {
+        NSAssert(requestObject.baseURL != nil || config.request.baseURL != nil,
+                 @"api baseURL 和 self.config.baseurl 两者必须有一个有值");
+        
+        NSString *tmpStr = requestObject.baseURL ?: config.request.baseURL;
+        
+        // 在某些情况下，一些用户会直接把整个url地址写进 baseUrl
+        // 因此，还需要对baseUrl 进行一次切割
+        NSURL *tmpURL = [NSURL URLWithString:tmpStr];
+        baseUrlStr = [NSString stringWithFormat:@"%@://%@", tmpURL.scheme ?: @"https", tmpURL.host];;
+    }
+    return baseUrlStr;
+}
 
+// 创建AFSecurityPolicy
+- (AFSecurityPolicy *)createSecurityPolicy:(HLURLRequest *)requestObject andConfig:(HLNetworkConfig *)config {
+    HLSecurityPolicyConfig *requestSecurityPolicy = requestObject.securityPolicy;
+    NSUInteger pinningMode = requestSecurityPolicy.SSLPinningMode ?: config.defaultSecurityPolicy.SSLPinningMode;
+    AFSecurityPolicy *securityPolicy = [AFSecurityPolicy policyWithPinningMode:pinningMode];
+    securityPolicy.allowInvalidCertificates = requestSecurityPolicy.allowInvalidCertificates ?: config.defaultSecurityPolicy.allowInvalidCertificates;
+    securityPolicy.validatesDomainName = requestSecurityPolicy.validatesDomainName ?: config.defaultSecurityPolicy.validatesDomainName;
+    NSString *cerPath = requestSecurityPolicy.cerFilePath ?: config.defaultSecurityPolicy.cerFilePath;
+    NSData *certData = nil;
+    if (cerPath && ![cerPath isEqualToString:@""]) {
+        certData = [NSData dataWithContentsOfFile:cerPath];
+        if (certData) {
+            securityPolicy.pinnedCertificates = [NSSet setWithObject:certData];
+        }
+    }
+    return securityPolicy;
+}
+
+- (AFURLSessionManager *)createSessionManager:(HLNetworkConfig *)config
+                             andBaseURLString:(NSString *)baseUrlStr
+                            andSecurityPolicy:(AFSecurityPolicy *)securityPolicy {
+    AFURLSessionManager *sessionManager = [self.sessionManagerCache objectForKey:baseUrlStr];
+    // 如果缓存中取不到对应的sessionManager，则创建一个新的SessionManager
+    if (!sessionManager) {
+        NSURLSessionConfiguration *sessionConfig;
+        if (config) {
+            if (config.policy.isBackgroundSession) {
+                NSString *kBackgroundSessionID = [NSString stringWithFormat:@"com.wangshiyu13.backgroundSession.task.%@", baseUrlStr];
+                NSString *kSharedContainerIdentifier = config.policy.AppGroup ?: [NSString stringWithFormat:@"com.wangshiyu13.testApp"];
+                sessionConfig = [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:kBackgroundSessionID];
+                sessionConfig.sharedContainerIdentifier = kSharedContainerIdentifier;
+            } else {
+                sessionConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
+            }
+            sessionConfig.HTTPMaximumConnectionsPerHost = config.request.maxHttpConnectionPerHost;
+        } else {
+            sessionConfig.HTTPMaximumConnectionsPerHost = MAX_HTTP_CONNECTION_PER_HOST;
+        }
+        sessionManager = [[AFURLSessionManager alloc] initWithSessionConfiguration:sessionConfig];
+        [self.sessionManagerCache setObject:sessionManager forKey:baseUrlStr];
+    }
+    sessionManager.securityPolicy = securityPolicy;
+    return sessionManager;
+}
+
+// 创建Request序列化工具
+- (AFHTTPRequestSerializer *)createRequestSerializer:(HLAPIRequest *)requestObject andConfig:(HLNetworkConfig *)config {
+    AFHTTPRequestSerializer *requestSerializer;
+    switch ([requestObject requestSerializerType]) {
+        case RequestHTTP:
+            requestSerializer = [AFHTTPRequestSerializer serializer];
+            break;
+        case RequestJSON:
+            requestSerializer = [AFJSONRequestSerializer serializer];
+            break;
+        case RequestPlist:
+            requestSerializer = [AFPropertyListRequestSerializer serializer];
+            break;
+        default:
+            requestSerializer = [AFHTTPRequestSerializer serializer];
+            break;
+    }
+    requestSerializer.cachePolicy          = [requestObject cachePolicy];
+    requestSerializer.timeoutInterval      = [requestObject timeoutInterval];
+    NSDictionary *requestHeaderFieldParams = [requestObject header];
+    if (![[requestHeaderFieldParams allKeys] containsObject:@"User-Agent"] &&
+        config.request.userAgent) {
+        [requestSerializer setValue:config.request.userAgent forHTTPHeaderField:@"User-Agent"];
+    }
+    if (requestHeaderFieldParams) {
+        [requestHeaderFieldParams enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
+            [requestSerializer setValue:obj forHTTPHeaderField:key];
+        }];
+    }
+    return requestSerializer;
+}
+
+// 创建Response序列化工具
+- (AFHTTPResponseSerializer *)createResponseSerializer:(HLAPIRequest *)requestObject andConfig:(HLNetworkConfig *)config {
+    AFHTTPResponseSerializer *responseSerializer;
+    switch ([requestObject responseSerializerType]) {
+        case ResponseHTTP:
+            responseSerializer = [AFHTTPResponseSerializer serializer];
+            break;
+        case ResponseJSON:
+            responseSerializer = [AFJSONResponseSerializer serializer];
+            break;
+        case ResponsePlist:
+            responseSerializer = [AFPropertyListResponseSerializer serializer];
+            break;
+        case ResponseXML:
+            responseSerializer = [AFXMLParserResponseSerializer serializer];
+            break;
+        default:
+            break;
+    }
+    responseSerializer.acceptableContentTypes = [requestObject accpetContentTypes];
+    return responseSerializer;
+}
+
+// 创建AFHTTPSessionManager
+- (AFHTTPSessionManager *)createSessionManager:(HLAPIRequest *)requestObject
+                                     andConfig:(HLNetworkConfig *)config
+                              andBaseURLString:(NSString *)baseUrlStr
+                             andSecurityPolicy:(AFSecurityPolicy *)securityPolicy
+{
+    AFHTTPSessionManager *sessionManager = [self.sessionManagerCache objectForKey:baseUrlStr];
+    if (!sessionManager) {
+        // 根据传入的BaseURL创建新的SessionManager
+        NSURLSessionConfiguration *sessionConfig = [NSURLSessionConfiguration defaultSessionConfiguration];
+        sessionConfig.HTTPMaximumConnectionsPerHost = config.request.maxHttpConnectionPerHost;
+        sessionConfig.requestCachePolicy = [requestObject cachePolicy] ?: config.policy.cachePolicy;
+        sessionConfig.timeoutIntervalForRequest = [requestObject timeoutInterval] ?: config.request.requestTimeoutInterval;
+        sessionConfig.URLCache = config.policy.URLCache;
+        sessionManager = [[AFHTTPSessionManager alloc] initWithBaseURL:[NSURL URLWithString:baseUrlStr] sessionConfiguration:sessionConfig];
+        [self.sessionManagerCache setObject:sessionManager forKey:baseUrlStr];
+    }
+    sessionManager.requestSerializer = [self createRequestSerializer:requestObject andConfig:config];
+    sessionManager.responseSerializer = [self createResponseSerializer:requestObject andConfig:config];
+    sessionManager.securityPolicy = securityPolicy;
+    return sessionManager;
+}
+
+// 容错处理
+- (void)faultTolerantProcessWithBlock:(HLCallbackBlock)callbackBlock
+                     andRequestObject:(__kindof HLURLRequest *)requestObject
+                         andErrorCode:(NSInteger)errorCode
+                  andErrorDescription:(NSString *)errorDescription {
+    NSError *error = [NSError errorWithDomain:NSURLErrorDomain
+                                              code:NSURLErrorUnsupportedURL
+                                          userInfo:@{NSLocalizedDescriptionKey: errorDescription}];
+    if (callbackBlock) {
+        callbackBlock(requestObject, nil, error);
+    }
+}
 @end

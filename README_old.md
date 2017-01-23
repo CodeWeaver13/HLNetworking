@@ -1,16 +1,14 @@
 ![HLNetworking: Multi paradigm network request manager based on AFNetworking](https://raw.githubusercontent.com/QianKun-HanLin/HLNetworking/master/loge.png)
 #### 基于AFNetworking的高阶网络请求管理器
 [![License MIT](https://img.shields.io/badge/license-MIT-green.svg?style=flat)](https://github.com/wangshiyu13/HLQRCodeScanner/blob/master/LICENSE)
-[![CI Status](https://img.shields.io/badge/build-2.0.0.beta1-brightgreen.svg)](https://travis-ci.org/wangshiyu13/HLQRCodeScanner)
+[![CI Status](https://img.shields.io/badge/build-1.3.2-brightgreen.svg)](https://travis-ci.org/wangshiyu13/HLQRCodeScanner)
 [![CocoaPods](https://img.shields.io/badge/platform-iOS-lightgrey.svg)](http://cocoapods.org/?q= HLQRCodeScanner)
 [![Support](https://img.shields.io/badge/support-iOS%208%2B-blue.svg)](https://www.apple.com/nl/ios/)
 
 ## 简介
-![](http://p1.bqimg.com/4851/18e86cfdfaccc59c.png)
+![](http://p1.bpimg.com/4851/448c29b352237037.png)
 
 HLNetworking整体结构如图所示，是一套基于[AFNetworking 3.1.0](https://github.com/AFNetworking/AFNetworking)封装的网络库，提供了更高层次的抽象和更方便的调用方式。
-
-如果您使用的是1.x.x版本，请查看[旧版本说明](https://github.com/QianKun-HanLin/HLNetworking/blob/master/README_old.md)
 
 ## 特性
  - 离散式的请求设计，方便进行组件化
@@ -44,13 +42,13 @@ HLNetworking整体结构如图所示，是一套基于[AFNetworking 3.1.0](https
 ### 全局网络配置
 
 ```objc
-[HLNetworkManager setupConfig:^(HLNetworkConfig * _Nonnull config) {
+[HLAPIManager setupConfig:^(HLNetworkConfig * _Nonnull config) {
 	config.request.baseURL = @"https://httpbin.org/";
 	config.request.apiVersion = nil;
 }];
 ```
 
-通过调用`HLNetworkManager`的`+setupConfig:`方法，修改block中传入的`HLNetworkConfig`对象来配置全局网络请求信息，其中可修改的参数如下：
+通过调用`HLAPIManager`的`+setupConfig:`方法，修改block中传入的`HLNetworkConfig`对象来配置全局网络请求信息，其中可修改的参数如下：
 
 - **tips**：提示相关参数
 	- **generalErrorTypeStr**：出现网络请求时使用的错误提示文字，该文字在failure block中的NSError对象返回；默认为：`服务器连接错误，请稍候重试`
@@ -58,7 +56,7 @@ HLNetworking整体结构如图所示，是一套基于[AFNetworking 3.1.0](https
 	- **networkNotReachableErrorStr**：网络请求开始时，会先检测相应网络域名的Reachability，如果不可达，则直接返回该错误提示；默认为：`网络不可用，请稍后重试`
 	- **isNetworkingActivityIndicatorEnabled**：请求时是否显示网络指示器（状态栏），默认为 `YES`
 - **request**：请求相关参数
-	- **apiCallbackQueue**：自定义的请求队列，如果不设置则自动使用HLNetworkManager默认的队列，该参数默认为 `nil`
+	- **apiCallbackQueue**：自定义的请求队列，如果不设置则自动使用HLAPIManager默认的队列，该参数默认为 `nil`
 	- **defaultParams**：默认的parameters，可以在HLAPI中选择是否使用，默认开启，该参数不会被覆盖，HLAPI中使用`setParams()`后，请求的params中依然会有该参数，默认为 `nil`
 	- **defaultHeaders**：默认的header，可以在HLAPI中覆盖，默认为 `nil`
 	- **baseURL**：全局的baseURL，HLAPI的baseURL会覆盖该参数，默认为 `nil`
@@ -81,40 +79,27 @@ HLNetworking整体结构如图所示，是一套基于[AFNetworking 3.1.0](https
 - **enableReachability**：是否启用reachability，baseURL为domain，默认为 `NO`
 - **enableGlobalLog**：是否开启网络debug日志，该选项会在控制台输出所有网络回调日志，并且在Release模式下无效
 
-### Request相关
-`HLNetworking`通过Request发送请求，Request分为`HLURLRequest`、`HLAPIRequest`、`HLTaskRequest`，`HLURLRequest`为基类，`HLAPIRequest`为RestfulAPI参数类、`HLTaskRequest`为用于上传下载任务类
+### API相关
 
 #### 组装api
 
 ```objc
 // 组装请求
-HLAPIRequest *get = [HLAPIRequest request].setMethod(GET)
+HLAPI *get = [HLAPI API].setMethod(GET)
     							.setPath(@"get")
     							.setParams(@{@"user_id": @1})
     							.setDelegate(self);
 
 // 手动拼接formData上传
-HLAPIRequest *formDataRequest = [HLAPIRequest request].formData(^(id<HLMultipartFormDataProtocol> formData) {
+HLAPI *formData = [HLAPI API].formData(^(id<HLMultipartFormDataProtocol> formData) {
     [formData appendPartWithHeaders:@{@"contentType": @"html/text"} body:[NSData data]];
 });
 
 // 使用HLFormDataConfig对象拼接上传
-[HLAPIRequest request].formData([HLFormDataConfig configWithData:imageData
+[HLAPI API].formData([HLFormDataConfig configWithData:imageData
                                                  name:@"avatar"
                                              fileName:@"fileName"
                                              mimeType:@"type"]);
-```
-
-#### 组装task
-
-```objc
-HLTaskRequest *task = [[HLTaskRequest request].setDelegate(self)
-	 // 设置Task类型，Upload/Download
-	 .setTaskType(Upload)
-	 // 设置下载或者上传的本地文件路径
-    .setFilePath([[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:@"Boom2.dmg"])
-    // 设置下载或者上传的地址
-    .setCustomURL(@"https://dl.devmate.com/com.globaldelight.Boom2/Boom2.dmg") start];
 ```
 
 #### block方式接收请求
@@ -152,35 +137,35 @@ HLTaskRequest *task = [[HLTaskRequest request].setDelegate(self)
 ```objc
 // 当前类遵守HLAPIResponseDelegate协议
 // 在初始化方法中设置当前类为回调监听
-[HLNetworkManager registerResponseObserver:self];
+[HLAPIManager registerResponseObserver:self];
 
 // 在这个宏中写入需要监听的api
-HLObserverRequests(self.api1, self.api2)
+HLObserverAPIs(self.api1, self.api2)
 // 或者用-requestAPIs这个代理方法，这两个完全等效
-- (NSArray <__kindof HLURLRequest *>*)observerRequests {
+- (NSArray<HLAPI *> *)requestAPIs {
     return [NSArray arrayWithObjects:self.api1, self.api2, self.api3, self.api4, nil];
 }
 
 // 在下面三个代理方法中获取回调结果
-// 进度的回调
-- (void)requestProgress:(nullable NSProgress *)progress atRequest:(nullable HLURLRequest *)request {
-    NSLog(@"\n%@------RequestProgress--------%@\n", request.hashKey, progress);
+// 这是成功的回调
+- (void)requestSucessWithResponseObject:(id)responseObject atAPI:(HLAPI *)api {
+    NSLog(@"\n%@------RequestSuccessDelegate\n", api);
     NSLog(@"%@", [NSThread currentThread]);
 }
-// 请求成功的回调
-- (void)requestSucess:(nullable id)responseObject atRequest:(nullable HLURLRequest *)request {
-    NSLog(@"\n%@------RequestSuccessDelegate\n", request.hashKey);
+// 这是失败的回调
+- (void)requestFailureWithResponseError:(NSError *)error atAPI:(HLAPI *)api {
+    NSLog(@"\n%@------RequestFailureDelegate\n", api);
     NSLog(@"%@", [NSThread currentThread]);
 }
-// 请求失败的回调
-- (void)requestFailure:(nullable NSError *)error atRequest:(nullable HLURLRequest *)request {
-    NSLog(@"\n%@------RequestFailureDelegate------%@\n", request.hashKey, error);
+// 这是进度的回调
+- (void)requestProgress:(NSProgress *)progress atAPI:(HLAPI *)api {
+    NSLog(@"\n%@------RequestProgress\n", api);
     NSLog(@"%@", [NSThread currentThread]);
 }
 
 // 切记在dealloc中释放当前控制器
 - (void)dealloc {
-    [HLNetworkManager removeResponseObserver:self];
+    [HLAPIManager removeResponseObserver:self];
 }
 ```
 
@@ -192,33 +177,30 @@ HLObserverRequests(self.api1, self.api2)
 
 **注意4：**请求的delegate回调之所以这样设置，是为了可以跨类获取请求回调，因此使用起来稍微麻烦一些，如果只需要在当前类拿到回调，使用block方式即可。
 
-**注意5：**HLAPIRequest 同样支持其他 HTTP 方法，比如：`HEAD`, `DELETE`, `PUT`, `PATCH` 等，使用方式与上述类似，不再赘述。
+**注意5：**HLAPI 同样支持其他 HTTP 方法，比如：`HEAD`, `DELETE`, `PUT`, `PATCH` 等，使用方式与上述类似，不再赘述。
 
-**注意6：**HLTaskRequest目前支持上传下载功能，已支持断点续传，其中上传是指流上传，即使用UPLOAD方法；如果需要使用POST中的formData拼接方式上传，请参考API相关的formData设置
-
-详见 `HLNetworkConfig`、`HLSecurityPolicyConfig`、`HLAPIRequest`、`HLAPIType` 、`HLNetworkManager` 、`HLFormDataConfig`、`HLDebugMessage` 等几个文件中的代码和注释，可选参数基本可以覆盖大多数需求。
+详见 `HLNetworkConfig`、`HLSecurityPolicyConfig`、`HLAPI`、`HLAPIType` 、`HLAPIManager` 、`HLFormDataConfig`、`HLDebugMessage` 等几个文件中的代码和注释，可选参数基本可以覆盖大多数需求。
 
 #### 请求的生命周期方法
 ```objc
 // 在api组装时设置当前类为代理
-[HLAPIRequest request].setDelegate(self)
-[HLTaskRequest request].setDelegate(self)
+[HLAPI API].setDelegate(self)
 
 // 请求即将发出的代理方法
-- (void)requestWillBeSent:(HLURLRequest *)request {
-    NSLog(@"\n%@---willBeSent---", request.hashKey);
+- (void)requestWillBeSent {
+    NSLog(@"willBeSent");
 }
 
 // 请求已经发出的代理方法
-- (void)requestDidSent:(HLURLRequest *)request {
-    NSLog(@"\n%@---didSent---", request.hashKey);
+- (void)requestDidSent {
+    NSLog(@"didSent");
 }
 ```
 
 #### 自定义请求结果处理逻辑
 ```objc
 // 指定的类需要遵守HLObjReformerProtocol协议
-[HLAPIRequest request].setObjReformerDelegate(self);
+[HLAPI API].setObjReformerDelegate(self);
 
 /**
  一般用来进行JSON -> Model 数据的转换工作。返回的id，如果没有error，则为转换成功后的Model数据。如果有error， 则直接返回传参中的responseObject
@@ -228,9 +210,9 @@ HLObserverRequests(self.api1, self.api2)
  @param error 请求的错误
  @return 整理过后的请求数据
  */
-- (id)reformerObject:(id)responseObject 
-			  andError:(NSError *)error
-			 atRequest:(HLAPIRequest *)request 
+- (nullable id)objReformerWithAPI:(HLAPI *)api 
+                andResponseObject:(id)responseObject
+                         andError:(NSError * _Nullable)error
 {
 	if (responseObject) {
 		// 在这里处理获得的数据
@@ -251,8 +233,8 @@ HLObserverRequests(self.api1, self.api2)
 // 通过api取消网络请求
 [self.api1 cancel];
 
-// 通过HLNetworkManager取消网络请求
-[HLNetworkManager cancel: self.api1];
+// 通过HLAPIManager取消网络请求
+[HLAPIManager cancel: self.api1];
 
 ```
 
@@ -261,18 +243,18 @@ HLObserverRequests(self.api1, self.api2)
 ### 批量请求
 
 #### 无序请求
-HLNetworking 支持同时发一组批量请求，这组请求在业务逻辑上相关，但请求本身是互相独立的，请求时并行执行，`- requestGroupAllDidFinished` 会在所有请求都结束时才执行，每个请求的结果由API自身管理。注：`HLRequestGroup `类做了特殊处理，自身即为`HLURLRequest`及其子类的容器，因此直接`group[index]`即可获取相应的`HLURLRequest`对象，也可以直接遍历；回调中的 `group `中元素的顺序与每个无序请求 `HLURLRequest` 对象的先后顺序不保证一致。
+HLNetworking 支持同时发一组批量请求，这组请求在业务逻辑上相关，但请求本身是互相独立的，请求时并行执行，`- apiGroupAllDidFinished` 会在所有请求都结束时才执行，每个请求的结果由API自身管理。注：`HLAPIGroup `类做了特殊处理，自身即为`HLAPI`的容器，因此直接`group[index]`即可获取相应的`HLAPI`对象，也可以直接遍历；回调中的 `apiGroup `中元素的顺序与每个无序请求 `HLAPI` 对象的先后顺序不保证一致。
 
 ```obc
-HLRequestGroup *group = [HLRequestGroup groupWithMode:HLRequestGroupModeBatch];
+HLAPIGroup *group = [HLAPIGroup groupWithMode:HLAPIGroupModeBatch];
 // 添加单个api
 [group add:[HLAPI API]];
 // 添加apis集合
-[group addRequests:@[api1, api2, api3, nil]];
+[group addAPIs:@[api1, api2, api3, nil]];
 
 [group start];
 
-group.delegate = self;
+batch.delegate = self;
 
 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5), dispatch_get_main_queue(), ^{
 	// 使用cancel取消
@@ -280,20 +262,20 @@ dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5), dispatch_get_main_queue(),
 });
 
 // group全部完成之后调用 
-- (void)requestGroupAllDidFinished:(HLRequestGroup *)group {
-    NSLog(@"%@", group);
+- (void)apiGroupAllDidFinished:(HLAPIGroup *)apiGroup {
+    NSLog(@"%@", apiGroup);
 }
 ```
 
 #### 链式请求
-HLNetworking 同样支持发一组链式请求，这组请求之间互相依赖，下一请求是否发送以及请求的参数可以取决于上一个请求的结果，请求时串行执行，`- chainRequestsAllDidFinished` 会在所有请求都结束时才执行，每个请求的结果由API自身管理。注：`HLRequestGroup`类做了特殊处理，自身即为`HLURLRequest`及其子类的容器，因此直接`group[index]`即可获取相应的`HLURLRequest`对象，也可以直接遍历；回调中的 `group `中元素的顺序与每个链式请求 `HLURLRequest` 对象的先后顺序一致。
+HLNetworking 同样支持发一组链式请求，这组请求之间互相依赖，下一请求是否发送以及请求的参数可以取决于上一个请求的结果，请求时串行执行，`- chainRequestsAllDidFinished` 会在所有请求都结束时才执行，每个请求的结果由API自身管理。注：`HLAPIGroup `类做了特殊处理，自身即为`HLAPI`的容器，因此直接`group[index]`即可获取相应的`HLAPI`对象，也可以直接遍历；回调中的 `apiGroup `中元素的顺序与每个链式请求 `HLAPI` 对象的先后顺序一致。
 
 ```objc
-HLRequestGroup *group = [HLRequestGroup groupWithMode:HLRequestGroupModeChian];
+HLAPIGroup *group = [HLAPIGroup groupWithMode:HLAPIGroupModeChian];
 group.delegate = self;
 // 设置每次发送几个请求，每次发出的请求之间无依赖
 group.maxRequestCount = 1;
-[group addRequests:@[self.api1, self.api2, self.api3, self.api4, self.api5]];
+[group addAPIs:@[self.api1, self.api2, self.api3, self.api4, self.api5]];
 
 [group start];
 
@@ -301,7 +283,7 @@ for (id obj in group) {
 	NSLog(@"%@", obj);
 }
 
-HLAPIRequest *api = group[0];
+HLAPI *api = group[0];
 
 // group[0] == self.api1
 NSLog(@"%@", api);
@@ -312,15 +294,15 @@ dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5), dispatch_get_main_queue(),
 });
 
 // group全部完成之后调用 
-- (void)requestGroupAllDidFinished:(HLRequestGroup *)group {
-    NSLog(@"%@", group);
+- (void)apiGroupAllDidFinished:(HLAPIGroup *)apiGroup {
+    NSLog(@"%@", apiGroup);
 }
 ```
 
 ### 网络可连接性检查
 
 ```objc
-HLNetworkManager提供了八个方法和四个属性用于获取网络的状态，分别如下：
+HLAPIManager提供了八个方法和四个属性用于获取网络的状态，分别如下：
 
 // reachability的状态
 typedef NS_ENUM(NSUInteger, HLReachabilityStatus) {
@@ -378,14 +360,137 @@ HLSecurityPolicyConfig *securityPolicy = [HLSecurityPolicyConfig policyWithPinni
     securityPolicy.cerFilePath = [[NSBundle mainBundle] pathForResource:@"myCer" ofType:@"cer"];
 
 // 设置默认的安全策略
-[HLNetworkManager setupConfig:^(HLNetworkConfig * _Nonnull config) {
+[HLAPIManager setupConfig:^(HLNetworkConfig * _Nonnull config) {
     config.defaultSecurityPolicy = securityPolicy;
 }];
 
 // 针对特定API的安全策略
 self.api1.setSecurityPolicy(securityPolicy);
 ```
-**注意：**Request中的安全策略会在此request请求时覆盖默认安全策略，并且与request相同baseURL的安全策略都会被覆盖。
+**注意：**API中的安全策略会在此api请求时覆盖默认安全策略，并且与api相同baseURL的安全策略都会被覆盖。
+
+### Task相关
+
+HLTask目前支持上传下载功能，已支持断点续传，其中上传是指流上传，即使用UPLOAD方法；如果需要使用POST中的formData拼接方式上传，请参考API相关的formData设置
+
+#### config设置
+
+```objc
+[HLTaskManager setupConfig:^(HLNetworkConfig * _Nonnull config) {
+	config.baseURL = @"https://httpbin.org";
+	config.isBackgroundSession = NO;
+}];
+[HLTaskManager registerResponseObserver:self];
+```
+
+#### 链式调用组装Task
+
+```objc
+HLTask *task = [[HLTask task].setDelegate(self)
+	 // 设置Task类型，Upload/Download
+	 .setTaskType(Upload)
+	 // 设置下载或者上传的本地文件路径
+    .setFilePath([[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:@"Boom2.dmg"])
+    // 设置下载或者上传的地址
+    .setCustomURL(@"https://dl.devmate.com/com.globaldelight.Boom2/Boom2.dmg") start];
+```
+
+#### Task的生命周期方法
+
+```objc
+[HLTask task].setDelegate(self)
+
+#pragma mark - task request delegate
+// 请求即将发出
+- (void)requestWillBeSentWithTask:(HLTask *)task {
+    
+}
+// 请求已经发出
+- (void)requestDidSentWithTask:(HLTask *)task {
+    
+}
+```
+
+#### 请求回调代理
+
+```
+[HLTaskManager shared].responseDelegate = self;
+
+#pragma mark - task reponse protocol
+// 设置监听的task
+HLObserverTasks(self.task1)
+// 等同于HLObserverTasks(...)
+- (NSArray <HLTask *>*)requestTasks {
+    return [NSArray arrayWithObjects:self.task1, nil];
+}
+
+// 下载/上传进度回调
+- (void)requestProgress:(nullable NSProgress *)progress atTask:(nullable HLTask *)task {
+    NSLog(@"\n进度=====\n当前任务：%@\n当前进度：%@", task.customURL, progress);
+}
+
+// 任务完成回调
+- (void)requestSucessWithResponseObject:(nonnull id)responseObject atTask:(nullable HLTask *)task {
+    NSLog(@"\n完成=====\n当前任务：%@\n对象：%@", task, responseObject);
+}
+
+// 任务失败回调
+- (void)requestFailureWithResponseError:(nullable NSError *)error atTask:(nullable HLTask *)task {
+    NSLog(@"\n失败=====\n当前任务：%@\n错误：%@", task, error);
+}
+```
+### 批量上传/下载任务
+
+#### 无序任务
+HLNetworking 支持同时发一组批量上传/下载任务，这组请求在业务逻辑上相关，但请求本身是互相独立的，请求时并行执行，`- taskGroupAllDidFinished` 会在所有请求都结束时才执行，每个请求的结果由API自身管理。注：`HLTaskGroup `类做了特殊处理，自身即为`HLTask`的容器，因此直接`group[index]`即可获取相应的`HLAPI`对象，也可以直接遍历；回调中的 `taskGroup `中元素的顺序与每个无序请求 `HLAPI` 对象的先后顺序不保证一致。
+
+```obc
+HLTaskGroup *group = [HLTaskGroup groupWithMode:HLTaskGroupModeBatch];
+group.delegate = self;
+[group addTasks:self.taskArray];
+[group start];
+
+dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5), dispatch_get_main_queue(), ^{
+	// 使用cancel取消
+	[group cancel];
+});
+
+// group全部完成之后调用 
+- (void)apiGroupAllDidFinished:(HLAPIGroup *)apiGroup {
+    NSLog(@"%@", apiGroup);
+}
+```
+
+#### 链式任务
+HLNetworking 同样支持发一组链式请求，这组请求之间互相依赖，下一请求是否发送以及请求的参数可以取决于上一个请求的结果，请求时串行执行，`- chainRequestsAllDidFinished` 会在所有请求都结束时才执行，每个请求的结果由API自身管理。注：`HLAPIGroup `类做了特殊处理，自身即为`HLAPI`的容器，因此直接`group[index]`即可获取相应的`HLAPI`对象，也可以直接遍历；回调中的 `apiGroup `中元素的顺序与每个链式请求 `HLAPI` 对象的先后顺序一致。
+
+```objc
+HLTaskGroup *group = [HLTaskGroup groupWithMode: HLTaskGroup ModeChian];
+group.delegate = self;
+// 设置每次发送几个请求，每次发出的请求之间无依赖
+group.maxRequestCount = 1;
+[group addTasks:@[self.task1, self.task2, self.task3, self.task4, self.task5]];
+[group start];
+
+for (id obj in group) {
+	NSLog(@"%@", obj);
+}
+
+HLTask *task = group[0];
+
+// group[0] == self.task1
+NSLog(@"%@", api);
+
+dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5), dispatch_get_main_queue(), ^{
+	// 使用cancel取消
+	[group cancel];
+});
+
+// group全部完成之后调用 
+- (void)apiGroupAllDidFinished:(HLAPIGroup *)apiGroup {
+    NSLog(@"%@", apiGroup);
+}
+```
 
 **注意1：**Task的resume信息记录在沙盒中`Cache/com.qkhl.HLNetworking/downloadDict中`。
 
@@ -396,7 +501,7 @@ self.api1.setSecurityPolicy(securityPolicy);
 - 通过``HLAPIMacro``中定义的宏，可以快速设置模块所需的API
 
 #### 范例
-- 根据API相关中的设置，配置HLNetworkManager的相关Config
+- 根据API相关中的设置，配置HLAPIManager的相关Config
 - 根据模块创建``HLAPICenter``的category，例如``HLAPICenter+home``
 - 在HLAPICenter+home.h中使用HLStrongProperty(name)宏，name为方法名，形如：
 
@@ -414,7 +519,7 @@ HLStrongProperty(home)
 #import "HLAPICenter+home.h"
 
 @implementation HLAPICenter (home)
-HLStrongSynthesize(home, [HLAPIRequest request]
+HLStrongSynthesize(home, [HLAPI API]
                    .setMethod(GET)
                    // 根据需要设置Path、BaseURL、CustomURL
                    .setPath(@"index.php?r=home")
@@ -577,17 +682,19 @@ HLNetworking 可以在[CocoaPods](http://cocoapods.org)中获取，将以下内�
 pod "HLNetworking"
 ```
 
-如果你只需要用到网络相关，可以这样：
+如果你只需要用到API相关，可以这样：
 ```ruby
-pod "HLNetworking/Core"
+pod "HLNetworking/API"
 ```
 
-目前有两个模块可供选择：
+目前有四个模块可供选择：
 
      - HLNetworking/Core
+     - HLNetworking/API
+     - HLNetworking/Task
      - HLNetworking/Center
 
-其中`Core`包含网络请求相关的所有代码，`Center`依赖于`Core`
+其中`Core`包含`API`和`Task`的所有代码，`API`和`Task`相互独立，`Center`则依赖于`API`
 
 
 ## 作者

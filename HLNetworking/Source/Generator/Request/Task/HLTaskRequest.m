@@ -54,30 +54,6 @@
     };
 }
 
-#pragma mark - handler block function
-
-#pragma mark - process
-// 开启API 请求
-- (HLTaskRequest *)start {
-    [HLNetworkManager send:self];
-    return self;
-}
-// 取消API 请求
-- (HLTaskRequest *)cancel {
-    [HLNetworkManager cancel:self];
-    return self;
-}
-// 继续Task
-- (HLTaskRequest *)resume {
-    [HLNetworkManager resume:self];
-    return self;
-}
-// 暂停Task
-- (HLTaskRequest *)pause {
-    [HLNetworkManager pause:self];
-    return self;
-}
-
 #pragma mark - helper
 - (NSUInteger)hash {
     NSString *hashStr;

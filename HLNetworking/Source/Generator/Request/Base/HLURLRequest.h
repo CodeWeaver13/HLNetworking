@@ -18,9 +18,9 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol HLURLRequestDelegate <NSObject>
 @optional
 // 请求将要发出
-- (void)requestWillBeSent:(nullable HLURLRequest *)request;
+- (void)requestWillBeSent:(nullable __kindof HLURLRequest *)request;
 // 请求已经发出
-- (void)requestDidSent:(nullable HLURLRequest *)request;
+- (void)requestDidSent:(nullable __kindof HLURLRequest *)request;
 @end
 
 @interface HLURLRequest : NSObject<NSCopying>
