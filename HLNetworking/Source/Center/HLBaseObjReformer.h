@@ -7,8 +7,8 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "HLAPI.h"
+#import "HLAPIRequest.h"
 
-@interface HLBaseObjReformer : NSObject<HLObjReformerProtocol>
+@interface HLBaseObjReformer : NSObject<HLReformerDelegate>
 
 @end

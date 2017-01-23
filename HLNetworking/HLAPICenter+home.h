@@ -9,5 +9,5 @@
 #import "HLAPICenter.h"
 
 @interface HLAPICenter (home)
-HLStrongProperty(home)
+//HLStrongProperty(home)
 @end

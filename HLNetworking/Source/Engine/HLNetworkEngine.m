@@ -13,10 +13,9 @@
 #import "HLNetworkMacro.h"
 #import "HLNetworkConst.h"
 #import "HLNetworkConfig.h"
-#import "HLAPI.h"
-#import "HLAPI_InternalParams.h"
-#import "HLTask.h"
-#import "HLTask_InternalParams.h"
+#import "HLURLRequest_InternalParams.h"
+#import "HLAPIRequest_InternalParams.h"
+#import "HLTaskRequest_InternalParams.h"
 
 @interface HLNetworkEngine ()
 @property (nonatomic, strong) NSMutableDictionary *sessionManagerCache;
@@ -90,7 +89,7 @@
     }
     
     /** 如果requestObject为HLTask */
-    if ([requestObject isKindOfClass:[HLTask class]]) {
+    if ([requestObject isKindOfClass:[HLTaskRequest class]]) {
         // AFURLSessionManager
         AFURLSessionManager *sessionManager;
         sessionManager = [self.sessionManagerCache objectForKey:baseUrlStr];
@@ -117,7 +116,7 @@
         return sessionManager;
     
     /** 如果requestObject为HLAPI */
-    } else if ([requestObject isKindOfClass:[HLAPI class]]) {
+    } else if ([requestObject isKindOfClass:[HLAPIRequest class]]) {
         // Request 序列化
         AFHTTPRequestSerializer *requestSerializer;
         switch ([requestObject requestSerializerType]) {
@@ -209,7 +208,7 @@
            callBack:(HLCallbackBlock)callBack
 {
     /** 容错 */
-    if (![requestObject isKindOfClass:[HLAPI class]] && ![requestObject isKindOfClass:[HLTask class]]){
+    if (![requestObject isKindOfClass:[HLAPIRequest class]] && ![requestObject isKindOfClass:[HLTaskRequest class]]){
         NSError *noAPIError = [NSError errorWithDomain:NSURLErrorDomain
                                                   code:NSURLErrorUnsupportedURL
                                               userInfo:@{NSLocalizedDescriptionKey: @"请求对象类型不正确！"}];
@@ -269,7 +268,7 @@
         host = [NSString stringWithFormat:@"%@://%@", tmpBaseURL.scheme, tmpBaseURL.host];
         // 使用BaseUrl + apiversion(可选) + path 组成 UrlString
         // 如果有apiVersion且类型不是HLTask时，则在requestUrlStr中插入该参数
-        if (IsEmptyValue(config.request.apiVersion) || [requestObject isKindOfClass:[HLTask class]]) {
+        if (IsEmptyValue(config.request.apiVersion) || [requestObject isKindOfClass:[HLTaskRequest class]]) {
             requestURLString = tmpBaseURL.absoluteString;
         } else {
             requestURLString = [NSString stringWithFormat:@"%@/%@", tmpBaseURL.absoluteString, config.request.apiVersion];
@@ -313,8 +312,8 @@
     
     /** 根据requestObject类型，发送请求 */
     // requestObject为HLAPI时
-    if ([requestObject isKindOfClass:[HLAPI class]]) {
-        HLAPI *api = requestObject;
+    if ([requestObject isKindOfClass:[HLAPIRequest class]]) {
+        HLAPIRequest *api = requestObject;
         AFHTTPSessionManager *session = (AFHTTPSessionManager *)sessionManager;
         /** 生成请求参数 */
         NSMutableDictionary<NSString *, id> *requestParams;
@@ -355,8 +354,8 @@
                 if (progressCallBack) {
                     progressCallBack(progress);
                 }
-                if (api.apiProgressHandler) {
-                    api.apiProgressHandler(progress);
+                if (api.progressHandler) {
+                    api.progressHandler(progress);
                 }
             });
         };
@@ -412,7 +411,7 @@
             }
                 break;
             case POST: {
-                if (![api apiRequestConstructingBodyBlock]) {
+                if (![api requestConstructingBodyBlock]) {
                     dataTask =
                     [session POST:requestURLString
                        parameters:requestParams
@@ -422,7 +421,7 @@
                 } else {
                     void (^formDataBlock)(id <AFMultipartFormData> formData)
                     = ^(id <AFMultipartFormData> formData) {
-                        api.apiRequestConstructingBodyBlock((id<HLMultipartFormDataProtocol>)formData);
+                        api.requestConstructingBodyBlock((id<HLMultipartFormDataProtocol>)formData);
                     };
                     dataTask = [session POST:requestURLString
                                   parameters:requestParams
@@ -451,9 +450,9 @@
         
         
     // requestObject为HLTask时
-    } else if ([requestObject isKindOfClass:[HLTask class]]) {
+    } else if ([requestObject isKindOfClass:[HLTaskRequest class]]) {
         /** 准备请求参数 */
-        HLTask *task = requestObject;
+        HLTaskRequest *task = requestObject;
         NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:requestURLString]];
         __block NSURL *fileURL = task.filePath ? [NSURL fileURLWithPath:task.filePath] : nil;
         if (!fileURL) {
@@ -468,8 +467,8 @@
             if (progressCallBack) {
                 progressCallBack(progress);
             }
-            if (task.taskProgressHandler) {
-                task.taskProgressHandler(progress);
+            if (task.progressHandler) {
+                task.progressHandler(progress);
             }
         };
         

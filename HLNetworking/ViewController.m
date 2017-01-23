@@ -7,9 +7,6 @@
 //
 #import "ViewController.h"
 #import "HLNetworking.h"
-#import "AFNetworking.h"
-#import "HLAPICenter+home.h"
-#import "HLNetworkLogger.h"
 
 static dispatch_queue_t my_api_queue() {
     static dispatch_queue_t my_api_queue;
@@ -20,16 +17,16 @@ static dispatch_queue_t my_api_queue() {
     return my_api_queue;
 }
 
-@interface ViewController ()<HLAPIGroupProtocol, HLAPIResponseDelegate, HLAPIRequestDelegate, HLObjReformerProtocol, HLTaskGroupProtocol, HLTaskRequestDelegate, HLTaskResponseProtocol, HLNetworkCustomLoggerDelegate>
-@property(nonatomic, strong)HLAPI *api1;
-@property(nonatomic, strong)HLAPI *api2;
-@property(nonatomic, strong)HLAPI *api3;
-@property(nonatomic, strong)HLAPI *api4;
-@property(nonatomic, strong)HLAPI *api5;
-@property(nonatomic, strong)HLAPI *api6;
-@property(nonatomic, strong)HLAPI *api7;
+@interface ViewController ()<HLNetworkResponseDelegate, HLURLRequestDelegate, HLRequestGroupDelegate, HLReformerDelegate, HLNetworkCustomLoggerDelegate>
+@property(nonatomic, strong)HLAPIRequest *api1;
+@property(nonatomic, strong)HLAPIRequest *api2;
+@property(nonatomic, strong)HLAPIRequest *api3;
+@property(nonatomic, strong)HLAPIRequest *api4;
+@property(nonatomic, strong)HLAPIRequest *api5;
+@property(nonatomic, strong)HLAPIRequest *api6;
+@property(nonatomic, strong)HLAPIRequest *api7;
 
-@property(nonatomic, strong)HLTask *task1;
+@property(nonatomic, strong)HLTaskRequest *task1;
 
 @property(nonatomic, strong) NSMutableArray *taskArray;
 
@@ -40,9 +37,9 @@ static dispatch_queue_t my_api_queue() {
 
 @implementation ViewController
 
-- (HLTask *)task1 {
+- (HLTaskRequest *)task1 {
     if (!_task1) {
-        _task1 = [HLTask task]
+        _task1 = [HLTaskRequest request]
         .setDelegate(self)
         .setFilePath([[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:@"minion_01.mp4"])
         .setCustomURL(@"http://120.25.226.186:32812/resources/videos/minion_01.mp4")
@@ -61,20 +58,7 @@ static dispatch_queue_t my_api_queue() {
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [self setupLogger];
-    
-    
-    [self setupTaskNetworkConfig];
-//    [self testTask];
-    
-//    [self setupAPINetworkConfig];
-//    [self testAPI];
-    
-    [self testButton];
-//    [self testHome];
-}
-
-- (void)setupLogger {
+    // setupLogger
     [HLNetworkLogger setupConfig:^(HLNetworkLoggerConfig * _Nonnull config) {
         config.enableLocalLog = YES;
         config.logAutoSaveCount = 5;
@@ -82,35 +66,30 @@ static dispatch_queue_t my_api_queue() {
     }];
     [HLNetworkLogger setDelegate:self];
     [HLNetworkLogger startLogging];
-}
-
-- (NSDictionary *)customInfoWithMessage:(HLDebugMessage *)message {
-    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
-    dict[@"Time"] = message.timeString;
-    dict[@"RequestObject"] = [message.requestObject toDictionary];
-    dict[@"Response"] = [message.response toDictionary];
-    return [dict copy];
-}
-
-- (NSDictionary *)customHeaderWithMessage:(HLNetworkLoggerConfig *)config {
-    return @{@"AppInfo": @{@"OSVersion": [UIDevice currentDevice].systemVersion,
-                           @"DeviceType": [UIDevice currentDevice].hl_machineType,
-                           @"UDID": [UIDevice currentDevice].hl_udid,
-                           @"UUID": [UIDevice currentDevice].hl_uuid,
-                           @"MacAddressMD5": [UIDevice currentDevice].hl_macaddressMD5,
-                           @"ChannelID": config.channelID,
-                           @"AppKey": config.appKey,
-                           @"AppName": config.appName,
-                           @"AppVersion": config.appVersion,
-                           @"ServiceType": config.serviceType}};
+    
+    // setupNetwork
+    [HLNetworkManager setupConfig:^(HLNetworkConfig * _Nonnull config) {
+        config.request.baseURL = @"https://httpbin.org";
+        config.policy.isBackgroundSession = NO;
+        config.request.apiVersion = nil;
+        config.request.retryCount = 4;
+    }];
+    [HLNetworkManager registerResponseObserver:self];
+    
+    
+    [self testTask];
+//    [self testAPI];
+    
+//    [self testButton];
+//    [self testHome];
 }
 
 - (void)testHome {
-    [HLAPICenter.home.success(^(id responce) {
-        self.model = responce;
-    }).failure(^(NSError *obj){
-        NSLog(@"----%@", obj);
-    }) start];
+//    [HLAPICenter.home.success(^(id responce) {
+//        self.model = responce;
+//    }).failure(^(NSError *obj){
+//        NSLog(@"----%@", obj);
+//    }) start];
 }
 
 - (void)testButton {
@@ -135,76 +114,27 @@ static dispatch_queue_t my_api_queue() {
     self.taskArray = [NSMutableArray array];
     for (int i = 1; i<=5; i++) {
         NSString *url = [NSString stringWithFormat:@"http://120.25.226.186:32812/resources/videos/minion_%02d.mp4", i];
-        HLTask *task = [HLTask task]
+        HLTaskRequest *task = [HLTaskRequest request]
         .setDelegate(self)
         .setFilePath([[NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:[NSString stringWithFormat:@"minion_%02d.mp4", i]])
         .setCustomURL(url);
         [self.taskArray addObject:task];
     }
     
-    HLTaskGroup *group = [HLTaskGroup groupWithMode:HLTaskGroupModeChian];
+    HLRequestGroup *group = [HLRequestGroup groupWithMode:HLRequestGroupModeChian];
     group.delegate = self;
-    [group addTasks:self.taskArray];
+    [group addRequests:self.taskArray];
     [group start];
-}
-
-- (void)setupTaskNetworkConfig {
-    [HLTaskManager setupConfig:^(HLNetworkConfig * _Nonnull config) {
-        config.request.baseURL = @"https://httpbin.org";
-        config.policy.isBackgroundSession = NO;
-    }];
-    [HLTaskManager registerResponseObserver:self];
-}
-
-#pragma mark - task reponse protocol
-
-- (NSArray<HLTask *> *)requestTasks {
-    return self.taskArray;
-}
-
-- (void)requestProgress:(nullable NSProgress *)progress atTask:(nullable HLTask *)task {
-    NSLog(@"\n进度=====\n当前任务：%@\n当前进度：%@", task.customURL, progress);
-}
-
-- (void)requestSucessWithResponseObject:(nullable id)responseObject atTask:(nullable HLTask *)task {
-    NSLog(@"\n完成=====\n当前任务：%@\n对象：%@", task, responseObject);
-}
-
-- (void)requestFailureWithResponseError:(nullable NSError *)error atTask:(nullable HLTask *)task {
-    NSLog(@"\n失败=====\n当前任务：%@\n错误：%@", task, error);
-}
-
-#pragma mark - task request delegate
-- (void)requestWillBeSentWithTask:(HLTask *)task {
-    NSLog(@"task即将发出");
-}
-// 请求已经发出
-- (void)requestDidSentWithTask:(HLTask *)task {
-    NSLog(@"task已经发出");
-}
-
-- (void)taskGroupAllDidFinished:(HLTaskGroup *)taskGroup {
-    NSLog(@"全部已完成====%@", taskGroup);
-}
-#pragma mark - api request
-- (void)setupAPINetworkConfig {
-    [HLAPIManager setupConfig:^(HLNetworkConfig * _Nonnull config) {
-        config.request.baseURL = @"https://httpbin.org/";
-        config.request.apiVersion = nil;
-        config.request.retryCount = 4;
-//        config.request.apiCallbackQueue = my_api_queue();
-//        config.enableGlobalLog = YES;
-    }];
-    [HLAPIManager registerResponseObserver:self];
 }
 
 - (void)testAPI {
     __block int i = 0;
-    HLAPIGroup *group = [HLAPIGroup groupWithMode:HLAPIGroupModeChian];
+    HLRequestGroup *group = [HLRequestGroup groupWithMode:HLRequestGroupModeChian];
     group.delegate = self;
     group.maxRequestCount = 1;
     
-    self.api1 = [HLAPI API].setMethod(GET)
+    self.api1 = [HLAPIRequest request]
+    .setMethod(GET)
     .setPath(@"user-agent")
     .setDelegate(self)
     .setObjReformerDelegate(self)
@@ -214,7 +144,8 @@ static dispatch_queue_t my_api_queue() {
         self.api4.setParams(@{@"show_env": @(i)});
     });
     
-    self.api2 = [HLAPI API].setMethod(HEAD)
+    self.api2 = [HLAPIRequest request]
+    .setMethod(HEAD)
     .setPath(@"headers")
     .setDelegate(self)
     .success(^(id obj) {
@@ -222,7 +153,8 @@ static dispatch_queue_t my_api_queue() {
         NSLog(@"%d", i++);
     });
     
-    self.api3 = [HLAPI API].setMethod(GET)
+    self.api3 = [HLAPIRequest request]
+    .setMethod(GET)
     .setPath(@"get")
     .setParams(@{@"a": @(i)})
     .setDelegate(self)
@@ -231,7 +163,8 @@ static dispatch_queue_t my_api_queue() {
         NSLog(@"%d", i++);
     });
     
-    self.api4 = [HLAPI API].setMethod(POST)
+    self.api4 = [HLAPIRequest request]
+    .setMethod(POST)
     .setPath(@"post")
     .setDelegate(self)
     .success(^(id  obj) {
@@ -239,7 +172,8 @@ static dispatch_queue_t my_api_queue() {
         NSLog(@"%d", i++);
     });
     
-    self.api5 = [HLAPI API].setMethod(PATCH)
+    self.api5 = [HLAPIRequest request]
+    .setMethod(PATCH)
     .setPath(@"patch")
     .setDelegate(self)
     .success(^(id obj) {
@@ -247,7 +181,8 @@ static dispatch_queue_t my_api_queue() {
         NSLog(@"%d", i++);
     });
     
-    self.api6 = [HLAPI API].setMethod(PUT)
+    self.api6 = [HLAPIRequest request]
+    .setMethod(PUT)
     .setPath(@"put")
     .setDelegate(self)
     .success(^(id obj) {
@@ -255,7 +190,8 @@ static dispatch_queue_t my_api_queue() {
         NSLog(@"%d", i++);
     });
     
-    self.api7 = [HLAPI API].setMethod(DELETE)
+    self.api7 = [HLAPIRequest request]
+    .setMethod(DELETE)
     .setPath(@"delete")
     .setDelegate(self)
     .success(^(id obj) {
@@ -270,14 +206,14 @@ static dispatch_queue_t my_api_queue() {
 //    [self.api5 start];
 //    [self.api6 start];
 //    [self.api7 start];
-    [group addAPIs:@[self.api1, self.api2, self.api3, self.api4, self.api5, self.api6, self.api7]];
+    [group addRequests:@[self.api1, self.api2, self.api3, self.api4, self.api5, self.api6, self.api7]];
     [group start];
     
 //    [asyncBatch addAPIs:[NSSet setWithObjects:self.api1, self.api2, self.api3, self.api4, self.api5, self.api6, self.api7, nil]];
 //    [asyncBatch start];
 }
 
-- (void)apiGroupAllDidFinished:(HLAPIGroup *)apiGroup {
+- (void)requestGroupAllDidFinished:(__kindof HLRequestGroup *)apiGroup {
     NSLog(@"apiGroupAllDidFinished");
     for (NSString *path in [HLNetworkLogger logFilePaths]) {
         NSLog(@"%@", path);
@@ -285,39 +221,62 @@ static dispatch_queue_t my_api_queue() {
 }
 
 #pragma mark - HLObjReformerProtocol
-- (id)objReformerWithAPI:(HLAPI *)api andResponseObject:(id)responseObject andError:(NSError *)error {
+- (id)reformerObject:(id)responseObject andError:(NSError *)error atRequest:(HLAPIRequest *)request {
     return [NSString stringWithFormat:@"我被转换了"];
 }
 
 #pragma mark - HLRequestDelegate
-- (void)requestWillBeSentWithAPI:(HLAPI *)api {
-    NSLog(@"\n%@---willBeSent---", [self getAPIName:api]);
+- (void)requestWillBeSent:(HLURLRequest *)request {
+    NSLog(@"\n%@---willBeSent---", [self getAPIName:request]);
 }
 
-- (void)requestDidSentWithAPI:(HLAPI *)api {
-    NSLog(@"\n%@---didSent---", [self getAPIName:api]);
+- (void)requestDidSent:(HLURLRequest *)request {
+    NSLog(@"\n%@---didSent---", [self getAPIName:request]);
 }
 
 #pragma mark - HLResponseDelegate
 
-HLObserverAPIs(self.api1, self.api2, self.api3, self.api4, self.api5, self.api6, self.api7)
+- (NSArray<HLURLRequest *> *)observerRequests {
+    return self.taskArray;
+}
 
-- (void)requestSucessWithResponseObject:(id)responseObject atAPI:(HLAPI *)api {
-    NSLog(@"\n%@------RequestSuccessDelegate\n", [self getAPIName:api]);
+- (void)requestProgress:(nullable NSProgress *)progress atRequest:(nullable HLURLRequest *)request {
+        NSLog(@"\n%@------RequestProgress--------%@\n", [self getAPIName:request], progress);
+        NSLog(@"%@", [NSThread currentThread]);
+}
+// 请求成功的回调
+- (void)requestSucess:(nullable id)responseObject atRequest:(nullable HLURLRequest *)request {
+    NSLog(@"\n%@------RequestSuccessDelegate\n", [self getAPIName:request]);
+    NSLog(@"%@", [NSThread currentThread]);
+}
+// 请求失败的回调
+- (void)requestFailure:(nullable NSError *)error atRequest:(nullable HLURLRequest *)request {
+    NSLog(@"\n%@------RequestFailureDelegate------%@\n", [self getAPIName:request], error);
     NSLog(@"%@", [NSThread currentThread]);
 }
 
-- (void)requestFailureWithResponseError:(NSError *)error atAPI:(HLAPI *)api {
-    NSLog(@"\n%@------RequestFailureDelegate------%@\n", [self getAPIName:api], error);
-    NSLog(@"%@", [NSThread currentThread]);
+- (NSDictionary *)customInfoWithMessage:(HLDebugMessage *)message {
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    dict[@"Time"] = message.timeString;
+    dict[@"RequestObject"] = [message.requestObject toDictionary];
+    dict[@"Response"] = [message.response toDictionary];
+    return [dict copy];
 }
 
-- (void)requestProgress:(NSProgress *)progress atAPI:(HLAPI *)api {
-//    NSLog(@"\n%@------RequestProgress--------%@\n", [self getAPIName:api], progress);
-//    NSLog(@"%@", [NSThread currentThread]);
+- (NSDictionary *)customHeaderWithMessage:(HLNetworkLoggerConfig *)config {
+    return @{@"AppInfo": @{@"OSVersion": [UIDevice currentDevice].systemVersion,
+                           @"DeviceType": [UIDevice currentDevice].hl_machineType,
+                           @"UDID": [UIDevice currentDevice].hl_udid,
+                           @"UUID": [UIDevice currentDevice].hl_uuid,
+                           @"MacAddressMD5": [UIDevice currentDevice].hl_macaddressMD5,
+                           @"ChannelID": config.channelID,
+                           @"AppKey": config.appKey,
+                           @"AppName": config.appName,
+                           @"AppVersion": config.appVersion,
+                           @"ServiceType": config.serviceType}};
 }
 
-- (NSString *)getAPIName:(HLAPI *)api {
+- (NSString *)getAPIName:(HLURLRequest *)api {
     NSString *apiName;
     if ([api isEqual:self.api1]) {
         apiName = @"api1";
@@ -338,7 +297,6 @@ HLObserverAPIs(self.api1, self.api2, self.api3, self.api4, self.api5, self.api6,
 }
 
 - (void)dealloc {
-    [HLAPIManager removeResponseObserver:self];
-    [HLTaskManager removeResponseObserver:self];
+    [HLNetworkManager removeResponseObserver:self];
 }
 @end

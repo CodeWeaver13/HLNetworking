@@ -17,6 +17,11 @@ static inline BOOL IsEmptyValue(id thing) {
         && [(NSArray *)thing count] == 0)
     ||  ([thing isKindOfClass:[NSNull class]]);
 }
+#if DEBUG
+#define HLNetLog(...) NSLog(__VA_ARGS__)
+#else
+#define HLNetLog(...) {}
+#endif
 
 #define HL_SAFE_BLOCK(BlockName, ...) ({ !BlockName ? nil : BlockName(__VA_ARGS__); })
 #define HLLock() dispatch_semaphore_wait(self->_lock, DISPATCH_TIME_FOREVER)

@@ -14,11 +14,14 @@
 #import "HLNetworkConst.h"
 #import "HLNetworkConfig.h"
 #import "HLSecurityPolicyConfig.h"
-// Task
-#import "HLNetworkingTask.h"
-// API
-#import "HLNetworkingAPI.h"
-// Logger
+// manager
+#import "HLNetworkManager.h"
+// request
+#import "HLURLRequest.h"
+#import "HLRequestGroup.h"
+#import "HLAPIRequest.h"
+#import "HLTaskRequest.h"
+// logger
 #import "HLNetworkLogger.h"
 
 #endif /* HLNetworking_h */

@@ -16,23 +16,23 @@ metamacro_concat_(A, B)
 #define metamacro_concat_(A, B) A ## B
 
 #define HLStrongProperty(name) \
-@property (nonatomic, strong, setter=set__nonuse__##name:, getter=__nonuse__##name) HLAPI *name; \
-+ (HLAPI *)name;
+@property (nonatomic, strong, setter=set__nonuse__##name:, getter=__nonuse__##name) HLAPIRequest *name; \
++ (HLAPIRequest *)name;
 
 #define HLStrongSynthesize(name, api) \
 static void *name##AssociatedKey = #name "associated"; \
-- (void)set__nonuse__##name:(HLAPI *)name { \
+- (void)set__nonuse__##name:(HLAPIRequest *)name { \
 objc_setAssociatedObject(self, name##AssociatedKey, name, OBJC_ASSOCIATION_RETAIN_NONATOMIC); \
 } \
 \
-- (HLAPI *)__nonuse__##name { \
+- (HLAPIRequest *)__nonuse__##name { \
 id _##name = objc_getAssociatedObject(self, name##AssociatedKey); \
 if (!_##name) { \
 _##name = api; \
 } \
 return _##name; \
 } \
-+ (HLAPI *)name { \
++ (HLAPIRequest *)name { \
 return [[self defaultCenter] __nonuse__##name];\
 }
 

@@ -1,85 +1,98 @@
 //
-//  HLAPI.m
+//  HLAPIRequest.m
 //  HLNetworking
 //
-//  Created by wangshiyu13 on 2016/9/22.
-//  Copyright © 2016年 wangshiyu13. All rights reserved.
+//  Created by wangshiyu13 on 2017/1/23.
+//  Copyright © 2017年 wangshiyu13. All rights reserved.
 //
 
-#import "HLAPI.h"
-#import "HLAPI_InternalParams.h"
+#import "HLURLRequest_InternalParams.h"
+#import "HLAPIRequest_InternalParams.h"
+#import "HLNetworkManager.h"
 #import "HLNetworkConfig.h"
-#import "HLAPIManager.h"
 #import "HLSecurityPolicyConfig.h"
 
-
-@implementation HLAPI
-
-#pragma mark - Init
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wincomplete-implementation"
+@implementation HLAPIRequest
+#pragma mark - initialize method
 - (instancetype)init {
     self = [super init];
     if (self) {
         _useDefaultParams = YES;
         _objClz = [NSObject class];
-        _cURL = nil;
-        _baseURL = [HLAPIManager sharedManager].config.request.baseURL;
         _accpetContentTypes = [NSSet setWithObjects:
                                @"text/json",
                                @"text/html",
                                @"application/json",
                                @"text/javascript",
                                @"text/plain", nil];
-        _header = [HLAPIManager sharedManager].config.request.defaultHeaders;
+        _header = [HLNetworkManager config].request.defaultHeaders;
         _parameters = nil;
-        _timeoutInterval = HL_API_REQUEST_TIME_OUT;
-        _retryCount = [HLAPIManager sharedManager].config.request.retryCount;
-        _cachePolicy = NSURLRequestUseProtocolCachePolicy;
         _requestMethodType = GET;
         _requestSerializerType = RequestHTTP;
         _responseSerializerType = ResponseJSON;
-        _securityPolicy = [HLAPIManager sharedManager].config.defaultSecurityPolicy;
     }
     return self;
 }
 
-+ (instancetype)API {
-    return [[self alloc] init];
-}
-
 - (id)copyWithZone:(NSZone *)zone {
-    HLAPI *api = [[[self class] alloc] init];
-    if (api) {
-        api.useDefaultParams = _useDefaultParams;
-        api.objClz = _objClz;
-        api.cURL = [_cURL copyWithZone:zone];
-        api.accpetContentTypes = [_accpetContentTypes copyWithZone:zone];
-        api.header = [_header copyWithZone:zone];
-        api.parameters = [_parameters copyWithZone:zone];
-        api.timeoutInterval = _timeoutInterval;
-        api.cachePolicy = _cachePolicy;
-        api.requestMethodType = _requestMethodType;
-        api.requestSerializerType = _requestSerializerType;
-        api.responseSerializerType = _responseSerializerType;
-        api.retryCount = _retryCount;
-        api.securityPolicy = [_securityPolicy copyWithZone:zone];
-        api.delegate = _delegate;
-        api.objReformerDelegate = _objReformerDelegate;
-        api.baseURL = [_baseURL copyWithZone:zone];
-        api.path = [_path copyWithZone:zone];
+    HLAPIRequest *request = [super copyWithZone:zone];
+    if (request) {
+        request.useDefaultParams = _useDefaultParams;
+        request.objClz = _objClz;
+        request.accpetContentTypes = [_accpetContentTypes copyWithZone:zone];
+        request.header = [_header copyWithZone:zone];
+        request.parameters = [_parameters copyWithZone:zone];
+        request.requestMethodType = _requestMethodType;
+        request.requestSerializerType = _requestSerializerType;
+        request.responseSerializerType = _responseSerializerType;
+        request.objReformerDelegate = _objReformerDelegate;
     }
-    return api;
+    return request;
 }
 
-#pragma mark - 参数拼接方法
-- (HLAPI *(^)(BOOL enable))enableDefaultParams {
-    return ^HLAPI* (BOOL enable) {
+#pragma mark - parameters append method
+/**
+ 进行JSON -> Model 数据的转换工作的Delegate
+ 如果设置了ReformerDelegate，则使用ReformerDelegate的obj解析，否则直接返回
+ 提供该Delegate主要用于Reformer的不相关代码的解耦工作
+ 
+ param responseObject 请求回调对象
+ param error          错误信息
+ 
+ @return 请求结果数据
+ */
+- (HLAPIRequest *(^)(id<HLReformerDelegate> delegate))setObjReformerDelegate {
+    return ^HLAPIRequest* (id<HLReformerDelegate> delegate) {
+        self.objReformerDelegate = delegate;
+        return self;
+    };
+}
+/**
+ HTTP 请求的返回可接受的内容类型
+ 默认为：[NSSet setWithObjects:
+ @"text/json",
+ @"text/html",
+ @"application/json",
+ @"text/javascript", nil];
+ */
+- (HLAPIRequest *(^)(NSSet *contentTypes))setAccpetContentTypes {
+    return ^HLAPIRequest* (NSSet *contentTypes) {
+        self.accpetContentTypes = contentTypes;
+        return self;
+    };
+}
+// 是否使用APIManager.config的默认参数
+- (HLAPIRequest *(^)(BOOL enable))enableDefaultParams {
+    return ^HLAPIRequest* (BOOL enable) {
         self.useDefaultParams = enable;
         return self;
     };
 }
-
-- (HLAPI *(^)(NSString *clzName))setResponseClass {
-    return ^HLAPI* (NSString *clzName) {
+// 设置HLAPI对应的返回值模型类型
+- (HLAPIRequest *(^)(NSString *clzName))setResponseClass {
+    return ^HLAPIRequest* (NSString *clzName) {
         Class clz = NSClassFromString(clzName);
         if (clz) {
             self.objClz = clz;
@@ -89,166 +102,72 @@
         return self;
     };
 }
-
-- (HLAPI *(^)(id<HLAPIRequestDelegate> delegate))setDelegate {
-    return ^HLAPI* (id<HLAPIRequestDelegate> delegate) {
-        self.delegate = delegate;
-        return self;
-    };
-}
-
-- (HLAPI *(^)(id<HLObjReformerProtocol> delegate))setObjReformerDelegate {
-    return ^HLAPI* (id<HLObjReformerProtocol> delegate) {
-        self.objReformerDelegate = delegate;
-        return self;
-    };
-}
-
-- (HLAPI* (^)(NSString *baseURL))setBaseURL {
-    return ^HLAPI* (NSString *baseURL) {
-        self.baseURL = baseURL;
-        return self;
-    };
-}
-
-- (HLAPI *(^)(NSString *path))setPath {
-    return ^HLAPI* (NSString *path) {
-        self.path = path;
-        return self;
-    };
-}
-
-- (HLAPI* (^)(HLSecurityPolicyConfig *apiSecurityPolicy))setSecurityPolicy {
-    return ^HLAPI* (HLSecurityPolicyConfig *apiSecurityPolicy) {
-        self.securityPolicy = apiSecurityPolicy;
-        return self;
-    };
-}
-
-- (HLAPI* (^)(HLRequestMethodType requestMethodType))setMethod {
-    return ^HLAPI* (HLRequestMethodType requestMethodType) {
+// 请求方法 GET POST等
+- (HLAPIRequest *(^)(HLRequestMethodType requestMethodType))setMethod {
+    return ^HLAPIRequest* (HLRequestMethodType requestMethodType) {
         self.requestMethodType = requestMethodType;
         return self;
     };
 }
-
-- (HLAPI* (^)(HLRequestSerializerType requestSerializerType))setRequestType {
-    return ^HLAPI* (HLRequestSerializerType requestSerializerType) {
+// Request 序列化类型：JSON, HTTP, 见HLRequestSerializerType
+- (HLAPIRequest *(^)(HLRequestSerializerType requestSerializerType))setRequestType {
+    return ^HLAPIRequest* (HLRequestSerializerType requestSerializerType) {
         self.requestSerializerType = requestSerializerType;
         return self;
     };
 }
-
-- (HLAPI* (^)(HLResponseSerializerType apiResponseSerializerType))setResponseType {
-    return ^HLAPI* (HLResponseSerializerType responseSerializerType) {
+// Response 序列化类型： JSON, HTTP
+- (HLAPIRequest *(^)(HLResponseSerializerType responseSerializerType))setResponseType {
+    return ^HLAPIRequest* (HLResponseSerializerType responseSerializerType) {
         self.responseSerializerType = responseSerializerType;
         return self;
     };
 }
-
-- (HLAPI* (^)(NSURLRequestCachePolicy apiRequestCachePolicy))setCachePolicy {
-    return ^HLAPI* (NSURLRequestCachePolicy apiRequestCachePolicy) {
-        self.cachePolicy = apiRequestCachePolicy;
-        return self;
-    };
-}
-
-- (HLAPI* (^)(NSTimeInterval apiRequestTimeoutInterval))setTimeout {
-    return ^HLAPI* (NSTimeInterval apiRequestTimeoutInterval) {
-        self.timeoutInterval = apiRequestTimeoutInterval;
-        return self;
-    };
-}
-
-- (HLAPI* (^)(NSDictionary<NSString *, id> *parameters))setParams {
-    return ^HLAPI* (NSDictionary<NSString *, id> *parameters) {
+// 请求中的参数，每次设置都会覆盖之前的内容
+- (HLAPIRequest *(^)(NSDictionary<NSString *, id> *parameters))setParams {
+    return ^HLAPIRequest* (NSDictionary<NSString *, id> *parameters) {
         self.parameters = parameters;
         return self;
     };
 }
-
-- (HLAPI* (^)(NSDictionary<NSString *, id> *parameters))addParams {
-    return ^HLAPI* (NSDictionary<NSString *, id> *parameters) {
+// 请求中的参数，每次设置都是添加新参数，不会覆盖之前的内容
+- (HLAPIRequest *(^)(NSDictionary<NSString *, id> *parameters))addParams {
+    return ^HLAPIRequest* (NSDictionary<NSString *, id> *parameters) {
         NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:self.parameters];
         [dict addEntriesFromDictionary:parameters];
         self.parameters = [dict copy];
         return self;
     };
 }
-
-- (HLAPI* (^)(NSDictionary<NSString *, NSString *> *header))setHeader {
-    return ^HLAPI* (NSDictionary<NSString *, NSString *> *header) {
+// HTTP 请求的头部区域自定义，默认为nil
+- (HLAPIRequest *(^)(NSDictionary<NSString *, NSString *> *header))setHeader {
+    return ^HLAPIRequest* (NSDictionary<NSString *, NSString *> *header) {
         self.header = header;
         return self;
     };
 }
 
-- (HLAPI* (^)(NSSet *contentTypes))setAccpetContentTypes {
-    return ^HLAPI* (NSSet *contentTypes) {
-        self.accpetContentTypes = contentTypes;
+#pragma mark - handler block function
+- (HLAPIRequest *(^)(HLRequestConstructingBodyBlock))formData {
+    return ^HLAPIRequest* (HLRequestConstructingBodyBlock bodyBlock) {
+        [self setRequestConstructingBodyBlock:bodyBlock];
         return self;
     };
 }
 
-- (HLAPI* (^)(NSString *customURL))setCustomURL {
-    return ^HLAPI* (NSString *customURL) {
-        self.cURL = customURL;
-        NSURL *tmpURL = [NSURL URLWithString:customURL];
-        if (tmpURL.host) {
-            self.baseURL = [NSString stringWithFormat:@"%@://%@", tmpURL.scheme ?: @"https", tmpURL.host];
-            self.path = [NSString stringWithFormat:@"%@", tmpURL.query];
-        }
-        return self;
-    };
+#pragma mark - process
+// 开启API 请求
+- (HLAPIRequest *)start {
+    [HLNetworkManager send:self];
+    return self;
 }
-
-- (HLAPI *(^)(HLSuccessBlock))success {
-    return ^HLAPI* (HLSuccessBlock objBlock) {
-        [self setApiSuccessHandler:objBlock];
-        return self;
-    };
-}
-
-- (HLAPI *(^)(HLFailureBlock))failure {
-    return ^HLAPI* (HLFailureBlock errorBlock) {
-        [self setApiFailureHandler:errorBlock];
-        return self;
-    };
-}
-
-- (HLAPI *(^)(HLProgressBlock))progress {
-    return ^HLAPI* (HLProgressBlock progressBlock) {
-        [self setApiProgressHandler:progressBlock];
-        return self;
-    };
-}
-
-- (HLAPI *(^)(HLRequestConstructingBodyBlock))formData {
-    return ^HLAPI* (HLRequestConstructingBodyBlock bodyBlock) {
-        [self setApiRequestConstructingBodyBlock:bodyBlock];
-        return self;
-    };
-}
-
-- (HLAPI *(^)(HLDebugBlock))debug {
-    return ^HLAPI* (HLDebugBlock debugBlock) {
-        [self setApiDebugHandler:debugBlock];
-        return self;
-    };
-}
-
-#pragma mark - Process
-- (HLAPI *)start {
-    [HLAPIManager send:self];
+// 取消API 请求
+- (HLAPIRequest *)cancel {
+    [HLNetworkManager cancel:self];
     return self;
 }
 
-- (HLAPI *)cancel {
-    [HLAPIManager cancel:self];
-    return self;
-}
-
-#pragma mark - NSObject method
+#pragma mark - helper
 - (NSUInteger)hash {
     NSString *hashStr = nil;
     if (self.customURL) {
@@ -267,28 +186,14 @@
     }
     return [hashStr hash];
 }
-
-- (BOOL)isEqualToAPI:(HLAPI *)api {
-    return [self hash] == [api hash];
-}
-
-- (BOOL)isEqual:(id)object {
-    if (self == object) return YES;
-    if (![object isKindOfClass:[HLAPI class]]) return NO;
-    return [self isEqualToAPI:(HLAPI *) object];
-}
-
-- (NSString *)hashKey {
-    return [NSString stringWithFormat:@"%lu", (unsigned long)[self hash]];
-}
-
+// 拼接打印信息
 - (NSString *)description {
     NSMutableString *desc = [NSMutableString string];
 #if DEBUG
     [desc appendString:@"\n===============HLAPI Start===============\n"];
-    [desc appendFormat:@"APIVersion: %@\n", [HLAPIManager sharedManager].config.request.apiVersion ?: @"未设置"];
+    [desc appendFormat:@"APIVersion: %@\n", [HLNetworkManager config].request.apiVersion ?: @"未设置"];
     [desc appendFormat:@"Class: %@\n", self.objClz];
-    [desc appendFormat:@"BaseURL: %@\n", self.baseURL ?: [HLAPIManager sharedManager].config.request.baseURL];
+    [desc appendFormat:@"BaseURL: %@\n", self.baseURL ?: [HLNetworkManager config].request.baseURL];
     [desc appendFormat:@"Path: %@\n", self.path ?: @"未设置"];
     [desc appendFormat:@"CustomURL: %@\n", self.customURL ?: @"未设置"];
     [desc appendFormat:@"Parameters: %@\n", self.parameters ?: @"未设置"];
@@ -306,11 +211,9 @@
 #endif
     return desc;
 }
-
 - (NSString *)debugDescription {
     return self.description;
 }
-
 - (NSString *)getCachePolicy:(NSURLRequestCachePolicy)policy {
     switch (policy) {
         case NSURLRequestUseProtocolCachePolicy:
@@ -336,7 +239,6 @@
             break;
     }
 }
-
 - (NSString *)getRequestMethodString:(HLRequestMethodType)method {
     switch (method) {
         case GET:
@@ -362,7 +264,6 @@
             break;
     }
 }
-
 - (NSString *)getRequestSerializerTypeString:(HLRequestSerializerType)type {
     switch (type) {
         case RequestJSON:
@@ -379,7 +280,6 @@
             break;
     }
 }
-
 - (NSString *)getResponseSerializerTypeString:(HLResponseSerializerType)type {
     switch (type) {
         case ResponseXML:
@@ -399,12 +299,11 @@
             break;
     }
 }
-
 - (NSDictionary *)toDictionary {
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
-    dict[@"APIVersion"] = [HLAPIManager sharedManager].config.request.apiVersion ?: @"未设置";
+    dict[@"APIVersion"] = [HLNetworkManager config].request.apiVersion ?: @"未设置";
     dict[@"Class"] = [NSString stringWithFormat:@"%@", self.objClz];
-    dict[@"BaseURL"] = self.baseURL ?: [HLAPIManager sharedManager].config.request.baseURL;
+    dict[@"BaseURL"] = self.baseURL ?: [HLNetworkManager config].request.baseURL;
     dict[@"Path"] = self.path ?: @"未设置";
     dict[@"CustomURL"] = self.customURL ?: @"未设置";
     dict[@"Parameters"] = self.parameters ?: @"未设置";
@@ -418,5 +317,5 @@
     dict[@"CachePolicy"] = [self getCachePolicy:self.cachePolicy];
     return dict;
 }
-
 @end
+#pragma clang diagnostic pop

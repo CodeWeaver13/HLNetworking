@@ -1,29 +1,30 @@
 //
-//  HLAPIGroup.h
+//  HLRequestGroup.h
 //  HLNetworking
 //
-//  Created by wangshiyu13 on 2017/1/7.
+//  Created by wangshiyu13 on 2017/1/23.
 //  Copyright © 2017年 wangshiyu13. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
-@class HLAPI;
-@class HLAPIGroup;
-NS_ASSUME_NONNULL_BEGIN
-@protocol HLAPIGroupProtocol <NSObject>
-// Requests 全部调用完成之后调用
-- (void)apiGroupAllDidFinished:(nonnull HLAPIGroup *)apiGroup;
-@end
 
-typedef NS_ENUM(NSUInteger, HLAPIGroupMode) {
-    HLAPIGroupModeBatch,
-    HLAPIGroupModeChian
+@class HLURLRequest;
+@class HLRequestGroup;
+
+typedef NS_ENUM(NSUInteger, HLRequestGroupMode) {
+    HLRequestGroupModeBatch,
+    HLRequestGroupModeChian
 };
 
-@interface HLAPIGroup : NSObject
+NS_ASSUME_NONNULL_BEGIN
+@protocol HLRequestGroupDelegate <NSObject>
+// Requests 全部调用完成之后调用
+- (void)requestGroupAllDidFinished:(nonnull __kindof HLRequestGroup *)apiGroup;
+@end
 
+@interface HLRequestGroup : NSObject
 // 请求组类型
-@property (nonatomic, assign, readonly) HLAPIGroupMode groupMode;
+@property (nonatomic, assign, readonly) HLRequestGroupMode groupMode;
 
 @property (nonatomic, assign) NSUInteger maxRequestCount;
 
@@ -31,20 +32,20 @@ typedef NS_ENUM(NSUInteger, HLAPIGroupMode) {
 @property (nonatomic, strong, readonly) dispatch_queue_t customQueue;
 
 // Group 内 api 执行完成之后调用的delegate
-@property (nonatomic, weak, nullable) id<HLAPIGroupProtocol> delegate;
+@property (nonatomic, weak, nullable) id<HLRequestGroupDelegate> delegate;
 
 // 请使用manager或sharedManager
 - (instancetype)init NS_UNAVAILABLE;
 + (instancetype)new NS_UNAVAILABLE;
 
 // 返回一个新的manager对象
-+ (instancetype)groupWithMode:(HLAPIGroupMode)mode;
++ (instancetype)groupWithMode:(HLRequestGroupMode)mode;
 
 // 加入到group集合中
-- (void)add:(nonnull HLAPI *)api;
+- (void)add:(nonnull __kindof HLURLRequest *)request;
 
 // 将带有API集合的Array 赋值
-- (void)addAPIs:(nonnull NSArray<HLAPI *> *)apis;
+- (void)addRequests:(nonnull NSArray<__kindof HLURLRequest *> *)requests;
 
 // 开启队列请求
 - (void)start;
@@ -59,7 +60,7 @@ typedef NS_ENUM(NSUInteger, HLAPIGroupMode) {
 
 @property (readonly) NSUInteger count;
 
-- (void)enumerateObjectsUsingBlock:(void (^)(HLAPI *api, NSUInteger idx, BOOL * stop))block;
+- (void)enumerateObjectsUsingBlock:(void (^)(__kindof HLURLRequest *request, NSUInteger idx, BOOL * stop))block;
 
 - (nonnull NSEnumerator*)objectEnumerator;
 

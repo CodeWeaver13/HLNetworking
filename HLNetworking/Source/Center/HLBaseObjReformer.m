@@ -10,7 +10,7 @@
 #import <YYModel/YYModel.h>
 
 @implementation HLBaseObjReformer
-- (id)objReformerWithAPI:(HLAPI *)api andResponseObject:(id)responseObject andError:(NSError *)error {
+- (id)reformerObject:(id)responseObject andError:(NSError *)error atRequest:(HLAPIRequest *)api {
     if (api.objClz && ![NSStringFromClass(api.objClz) isEqualToString:@"NSObject"]) {
         if (responseObject) {
             return [api.objClz yy_modelWithJSON:responseObject];

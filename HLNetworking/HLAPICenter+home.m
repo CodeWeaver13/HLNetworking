@@ -9,9 +9,9 @@
 #import "HLAPICenter+home.h"
 
 @implementation HLAPICenter (home)
-HLStrongSynthesize(home, [HLAPI API]
-                   .setMethod(GET)
-                   .setCustomURL(@"get")
-                   .setObjReformerDelegate(self.defaultReformer))
+//HLStrongSynthesize(home, [HLAPIRequest request]
+//                   .setMethod(GET)
+//                   .setCustomURL(@"get")
+//                   .setObjReformerDelegate(self.defaultReformer))
 
 @end

@@ -7,7 +7,6 @@
 //
 
 #import "HLFormDataConfig.h"
-#import "HLMultipartFormDataProtocol.h"
 
 @implementation HLFormDataConfig
 + (void (^)(id<HLMultipartFormDataProtocol>))configWithData:(NSData *)data

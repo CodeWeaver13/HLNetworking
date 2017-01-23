@@ -7,7 +7,6 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "HLNetworkingAPI.h"
 #import "HLBaseObjReformer.h"
 #import "HLAPIMacro.h"
 
