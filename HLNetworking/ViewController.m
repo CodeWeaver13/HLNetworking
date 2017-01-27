@@ -75,13 +75,13 @@ static dispatch_queue_t my_api_queue() {
         config.request.apiVersion = nil;
 //        config.request.retryCount = 4;
     }];
-    [HLNetworkManager registerResponseObserver:self];
+//    [HLNetworkManager registerResponseObserver:self];
     
     
 //    [self testTask];
     [self testAPI];
     
-    [self testButton];
+//    [self testButton];
 //    [self testHome];
 }
 
@@ -216,9 +216,9 @@ static dispatch_queue_t my_api_queue() {
 
 - (void)requestGroupAllDidFinished:(__kindof HLRequestGroup *)apiGroup {
     NSLog(@"apiGroupAllDidFinished");
-    for (NSString *path in [HLNetworkLogger logFilePaths]) {
-        NSLog(@"%@", path);
-    }
+//    for (NSString *path in [HLNetworkLogger logFilePaths]) {
+//        NSLog(@"%@", path);
+//    }
 }
 
 #pragma mark - HLObjReformerProtocol
@@ -228,6 +228,12 @@ static dispatch_queue_t my_api_queue() {
 
 #pragma mark - HLRequestDelegate
 - (void)requestWillBeSent:(HLURLRequest *)request {
+    NSString *newToken = @"获取了新token";
+    ((HLAPIRequest *)request)
+    .addParams(@{@"token": newToken})
+    .success(^(id obj) {
+        NSLog(@"\napi x --- 已回调 %@ \n----", obj);
+    });
     NSLog(@"\n%@---willBeSent---", request.hashKey);
 }
 

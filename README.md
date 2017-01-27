@@ -1,7 +1,7 @@
 ![HLNetworking: Multi paradigm network request manager based on AFNetworking](https://raw.githubusercontent.com/QianKun-HanLin/HLNetworking/master/loge.png)
 #### 基于AFNetworking的高阶网络请求管理器
 [![License MIT](https://img.shields.io/badge/license-MIT-green.svg?style=flat)](https://github.com/wangshiyu13/HLQRCodeScanner/blob/master/LICENSE)
-[![CI Status](https://img.shields.io/badge/build-2.0.0.beta1-brightgreen.svg)](https://travis-ci.org/wangshiyu13/HLQRCodeScanner)
+[![CI Status](https://img.shields.io/badge/build-2.0.0-brightgreen.svg)](https://travis-ci.org/wangshiyu13/HLQRCodeScanner)
 [![CocoaPods](https://img.shields.io/badge/platform-iOS-lightgrey.svg)](http://cocoapods.org/?q= HLQRCodeScanner)
 [![Support](https://img.shields.io/badge/support-iOS%208%2B-blue.svg)](https://www.apple.com/nl/ios/)
 
