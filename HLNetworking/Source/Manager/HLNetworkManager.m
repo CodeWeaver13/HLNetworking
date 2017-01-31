@@ -15,7 +15,7 @@
 #import "HLURLRequest_InternalParams.h"
 #import "HLRequestGroup.h"
 #import "HLTaskRequest.h"
-#import "HLAPIRequest.h"
+#import "HLAPIRequest_InternalParams.h"
 
 inline BOOL HLJudgeVersion(void) { return [[NSUserDefaults standardUserDefaults] boolForKey:@"isR"]; }
 
@@ -389,6 +389,13 @@ static dispatch_queue_t qkhl_network_task_queue() {
             netError = [NSError errorWithDomain:error.domain
                                            code:error.code
                                        userInfo:userInfo];
+        }
+    }
+    
+    if ([request isKindOfClass:[HLAPIRequest class]]) {
+        HLAPIRequest *tmpRequest = (HLAPIRequest *)request;
+        if (tmpRequest.objReformerDelegate) {
+            resultObject = [tmpRequest.objReformerDelegate reformerObject:resultObject andError:netError atRequest:tmpRequest];
         }
     }
     
