@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
   spec.name             = 'HLNetworking'
-  spec.version          = '2.0.0'
+  spec.version          = '2.0.1'
   spec.license          = { :type => "MIT", :file => 'LICENSE' }
   spec.homepage         = 'https://github.com/QianKun-HanLin/HLNetworking'
   spec.authors          = {"wangshiyu13" => "wangshiyu13@163.com"}
