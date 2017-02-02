@@ -43,6 +43,8 @@ static dispatch_queue_t qkhl_network_task_queue() {
     return qkhl_network_task_queue;
 }
 
+static NSLock* managerLock = nil;
+
 @interface HLNetworkManager ()
 @property (nonatomic, strong, readwrite) HLNetworkConfig *config;
 @property (nonatomic, strong) NSHashTable<id <HLNetworkResponseDelegate>> *responseObservers;
@@ -74,6 +76,11 @@ static dispatch_queue_t qkhl_network_task_queue() {
 - (instancetype)init {
     self = [super init];
     if (self) {
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            managerLock = [[NSLock alloc] init];
+            managerLock.name = @"com.qkhl.wangshiyu13.networking.manager.lock";
+        });
         _config = [HLNetworkConfig config];
         _currentRequestQueue = _config.request.apiCallbackQueue ?: qkhl_network_creation_queue();
         _currentTaskQueue = qkhl_network_task_queue();
@@ -188,7 +195,7 @@ static dispatch_queue_t qkhl_network_task_queue() {
     dispatch_async(request.queue, ^{
         @hl_strongify(self);
         NSURLSessionTask *sessionTask = [[HLNetworkEngine sharedEngine] requestByIdentifier:request.hashKey];
-        if (![sessionTask isKindOfClass:[NSNull class]]) {
+        if (sessionTask) {
             [sessionTask resume];
         } else {
             [self send:request];
@@ -209,7 +216,7 @@ static dispatch_queue_t qkhl_network_task_queue() {
     }
     dispatch_async(request.queue, ^{
         NSURLSessionTask *sessionTask = [[HLNetworkEngine sharedEngine] requestByIdentifier:request.hashKey];
-        if (![sessionTask isKindOfClass:[NSNull class]]) {
+        if (sessionTask) {
             [sessionTask suspend];
         }
     });
@@ -219,16 +226,20 @@ static dispatch_queue_t qkhl_network_task_queue() {
 }
 // 注册网络请求监听者
 - (void)registerResponseObserver:(id<HLNetworkResponseDelegate>)observer {
+    [managerLock lock];
     [self.responseObservers addObject:observer];
+    [managerLock unlock];
 }
 + (void)registerResponseObserver:(id<HLNetworkResponseDelegate>)observer {
     [[self sharedManager] registerResponseObserver:observer];
 }
 // 删除网络请求监听者
 - (void)removeResponseObserver:(id<HLNetworkResponseDelegate>)observer {
+    [managerLock lock];
     if ([self.responseObservers containsObject:observer]) {
         [self.responseObservers removeObject:observer];
     }
+    [managerLock unlock];
 }
 + (void)removeResponseObserver:(id<HLNetworkResponseDelegate>)observer {
     [[self sharedManager] removeResponseObserver:observer];
@@ -408,10 +419,14 @@ static dispatch_queue_t qkhl_network_task_queue() {
     if (self.config.enableGlobalLog) {
         [HLNetworkLogger logInfoWithDebugMessage:msg];
     }
+    if (request.debugHandler) {
+        request.debugHandler(msg);
+        request.debugHandler = nil;
+    }
 #endif
     if ([HLNetworkLogger isEnable]) {
         NSDictionary *msgDictionary;
-        if ([[HLNetworkLogger currentDelegate] respondsToSelector:@selector(customInfoWithMessage:)]) {
+        if ([HLNetworkLogger currentDelegate]) {
             msgDictionary = [[HLNetworkLogger currentDelegate] customInfoWithMessage:msg];
         } else {
             msgDictionary = [msg toDictionary];
@@ -435,6 +450,10 @@ static dispatch_queue_t qkhl_network_task_queue() {
         }
     }
     
+    if (request.progressHandler) {
+        request.progressHandler = nil;
+    }
+    
     // 处理回调的delegate
     for (id<HLNetworkResponseDelegate> observer in self.responseObservers) {
         if ([[observer observerRequests] containsObject:request]) {
@@ -453,6 +472,7 @@ static dispatch_queue_t qkhl_network_task_queue() {
             }
         }
     }
+    
     // 完成后离组
     if (group) {
         dispatch_group_leave(group);

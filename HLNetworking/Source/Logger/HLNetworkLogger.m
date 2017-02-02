@@ -82,7 +82,9 @@ static dispatch_queue_t qkhl_log_queue() {
             if (self.debugInfoArray.count > self.config.logAutoSaveCount) {
                 [self writeToFile];
             }
-            [self.debugInfoArray addObject:dictionary];
+            if (dictionary.count > 0) {
+                [self.debugInfoArray addObject:dictionary];
+            }
         }
     });
 }

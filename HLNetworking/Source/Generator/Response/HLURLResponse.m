@@ -33,8 +33,6 @@
 }
 
 #pragma mark - private methods
-
-
 - (NSString *)description {
     NSMutableString *desc = [NSMutableString string];
     [desc appendString:@"\n++++++++HLURLResponse Start++++++++\n"];

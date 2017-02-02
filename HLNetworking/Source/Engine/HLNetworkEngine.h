@@ -13,27 +13,27 @@
 
 @interface HLNetworkEngine : NSObject
 // 请使用sharedEngine
-- (instancetype)init NS_UNAVAILABLE;
-+ (instancetype)new NS_UNAVAILABLE;
+- (_Nonnull instancetype)init NS_UNAVAILABLE;
++ (_Nonnull instancetype)new NS_UNAVAILABLE;
 // 单例
-+ (instancetype)sharedEngine;
++ (_Nonnull instancetype)sharedEngine;
 
 // 发送请求
 // requestObject为HLAPI或者HLTask对象
-- (void)sendRequest:(__kindof HLURLRequest *)requestObject
-          andConfig:(HLNetworkConfig *)config
-       progressBack:(HLProgressBlock)progressCallBack
-           callBack:(HLCallbackBlock)callBack;
+- (void)sendRequest:(__kindof HLURLRequest * _Nonnull)requestObject
+          andConfig:(HLNetworkConfig * _Nonnull)config
+       progressBack:(HLProgressBlock _Nullable)progressCallBack
+           callBack:(HLCallbackBlock _Nullable)callBack;
 
 // 取消请求
-- (void)cancelRequestByIdentifier:(NSString *)identifier;
+- (void)cancelRequestByIdentifier:(NSString * _Nonnull)identifier;
 
 // 如果task不存在则返回NSNull对象
-- (NSURLSessionTask *)requestByIdentifier:(NSString *)identifier;
+- (__kindof NSURLSessionTask * _Nullable)requestByIdentifier:(NSString * _Nonnull)identifier;
 
 #pragma mark - reachability相关
 // 开始监听，domain为需要监听的域名
-- (void)listeningWithDomain:(NSString *)domain listeningBlock:(HLReachabilityBlock)listener;
+- (void)listeningWithDomain:(NSString * _Nonnull)domain listeningBlock:(HLReachabilityBlock _Nonnull)listener;
 // 停止监听，domain为需要停止的域名
-- (void)stopListeningWithDomain:(NSString *)domain;
+- (void)stopListeningWithDomain:(NSString * _Nonnull)domain;
 @end

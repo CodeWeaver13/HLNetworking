@@ -42,14 +42,18 @@
 // 设置下载或者上传的本地文件路径
 - (HLTaskRequest *(^)(NSString *filePath))setFilePath {
     return ^HLTaskRequest* (NSString *filePath) {
+        [self.lock lock];
         self.filePath = filePath;
+        [self.lock unlock];
         return self;
     };
 }
 // 设置task的类型（上传/下载）
 - (HLTaskRequest *(^)(HLRequestTaskType requestTaskType))setTaskType {
     return ^HLTaskRequest* (HLRequestTaskType requestTaskType) {
+        [self.lock lock];
         self.requestTaskType = requestTaskType;
+        [self.lock unlock];
         return self;
     };
 }

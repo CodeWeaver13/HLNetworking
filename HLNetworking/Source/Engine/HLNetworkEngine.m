@@ -17,10 +17,12 @@
 #import "HLAPIRequest_InternalParams.h"
 #import "HLTaskRequest_InternalParams.h"
 
+static NSLock* engineLock = nil;
+
 @interface HLNetworkEngine ()
-@property (nonatomic, strong) NSMutableDictionary *sessionManagerCache;
-@property (nonatomic, strong) NSMutableDictionary *sessionTasksCache;
-@property (nonatomic, strong) NSMutableDictionary *resumePathCache;
+@property (nonatomic, strong) NSMutableDictionary <NSString *, __kindof AFURLSessionManager *>*sessionManagerCache;
+@property (nonatomic, strong) NSMutableDictionary <NSString *, __kindof NSURLSessionTask *>*sessionTasksCache;
+@property (nonatomic, strong) NSMutableDictionary <NSNumber *, NSString *>*resumePathCache;
 @property (nonatomic, strong) NSMutableDictionary <NSString *, AFNetworkReachabilityManager *> *reachabilities;
 @end
 
@@ -28,6 +30,12 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            engineLock = [[NSLock alloc] init];
+            engineLock.name = @"com.qkhl.wangshiyu13.networking.engine.lock";
+            
+        });
         _reachabilities = [NSMutableDictionary dictionary];
         _sessionManagerCache = [NSMutableDictionary dictionary];
         _sessionTasksCache = [NSMutableDictionary dictionary];
@@ -82,9 +90,11 @@
 
 #pragma mark - 移除sessionTask
 - (void)removeTaskForKey:(NSString *)hashKey {
+    [engineLock lock];
     if ([self.sessionTasksCache objectForKey:hashKey]) {
         [self.sessionTasksCache removeObjectForKey:hashKey];
     }
+    [engineLock unlock];
 }
 
 # pragma mark - 发送请求
@@ -311,7 +321,9 @@
         
         // 缓存dataTask
         if (dataTask) {
+            [engineLock lock];
             self.sessionTasksCache[api.hashKey] = dataTask;
+            [engineLock unlock];
         }
         
         
@@ -376,7 +388,9 @@
                                                            destination:destinationBlock
                                                      completionHandler:donwloadCompleteBlcok];
                 }
+                [engineLock lock];
                 self.resumePathCache[@(sessionTask.hash)] = task.resumePath;
+                [engineLock unlock];
             }
                 break;
             default: break;
@@ -385,7 +399,9 @@
         // 缓存dataTask
         if (sessionTask) {
             [sessionTask resume];
+            [engineLock lock];
             self.sessionTasksCache[task.hashKey] = sessionTask;
+            [engineLock unlock];
         }
     } else {
         return;
@@ -395,6 +411,7 @@
 - (void)cancelRequestByIdentifier:(NSString *)identifier {
     NSURLSessionTask *sessionTask = [self.sessionTasksCache objectForKey:identifier];
     if (sessionTask) {
+        [engineLock lock];
         if ([sessionTask isKindOfClass:[NSURLSessionDownloadTask class]]) {
             NSURLSessionDownloadTask * downloadTask = (NSURLSessionDownloadTask *)sessionTask;
             [downloadTask cancelByProducingResumeData:^(NSData * _Nullable resumeData) {
@@ -404,11 +421,12 @@
             [sessionTask cancel];
             [self.sessionTasksCache removeObjectForKey:identifier];
         }
+        [engineLock unlock];
     }
 }
 
-- (NSURLSessionTask *)requestByIdentifier:(NSString *)identifier {
-    return [self.sessionTasksCache objectForKey:identifier] ?: [NSNull null];
+- (__kindof NSURLSessionTask *)requestByIdentifier:(NSString *)identifier {
+    return [self.sessionTasksCache objectForKey:identifier] ?: nil;
 }
 
 - (void)listeningWithDomain:(NSString *)domain listeningBlock:(HLReachabilityBlock)listener {
@@ -569,6 +587,7 @@
             responseSerializer = [AFXMLParserResponseSerializer serializer];
             break;
         default:
+            responseSerializer = [AFHTTPResponseSerializer serializer];
             break;
     }
     responseSerializer.acceptableContentTypes = [requestObject accpetContentTypes];

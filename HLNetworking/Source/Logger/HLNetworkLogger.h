@@ -12,9 +12,10 @@
 #import "UIDevice+deviceInfo.h"
 NS_ASSUME_NONNULL_BEGIN
 @protocol HLNetworkCustomLoggerDelegate <NSObject>
-@optional
+@required
 // 根据传入的message拼接存储的日志结构
 - (NSDictionary *)customInfoWithMessage:(HLDebugMessage *)message;
+@optional
 // 根据传入的设置拼接日志头部信息
 - (NSDictionary *)customHeaderWithMessage:(HLNetworkLoggerConfig *)config;
 @end

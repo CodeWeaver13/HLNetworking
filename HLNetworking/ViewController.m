@@ -9,14 +9,14 @@
 #import "HLNetworking.h"
 #import "HLAPICenter+home.h"
 
-static dispatch_queue_t my_api_queue() {
-    static dispatch_queue_t my_api_queue;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        my_api_queue = dispatch_queue_create("com.qkhl.queue", DISPATCH_QUEUE_SERIAL);
-    });
-    return my_api_queue;
-}
+//static dispatch_queue_t my_api_queue() {
+//    static dispatch_queue_t my_api_queue;
+//    static dispatch_once_t onceToken;
+//    dispatch_once(&onceToken, ^{
+//        my_api_queue = dispatch_queue_create("com.qkhl.queue", DISPATCH_QUEUE_SERIAL);
+//    });
+//    return my_api_queue;
+//}
 
 @interface ViewController ()<HLNetworkResponseDelegate, HLURLRequestDelegate, HLRequestGroupDelegate, HLReformerDelegate, HLNetworkCustomLoggerDelegate>
 @property(nonatomic, strong)HLAPIRequest *api1;
