@@ -519,50 +519,14 @@ HLStrongSynthesize(home, [HLAPIRequest request]
 
 ### 更新日志
 
-**1.3.2**
+
+**2.0.2**
 
 ```
 新增：
-1. 将AFNetworking相关抽取为HLAPIEngine类，提供基础的网络功能
-2. HLTask加入成功、失败、进度的Block
+1. Request组装在线程安全状态
 修复：
-1. 精简HLAPIManager和HLTaskManager内部代码结构
-```
-
-**1.3.1**
-
-```
-修复：
-1. 修复了HLNetworkLogger setDelegate方法调用错误的bug
-2. 修复了HLTask缺少toDictionary方法的错误
-```
-
-**1.3.0**
-
-```
-新增：
-1. HLNetworkLogger类，用于记录日志，控制台打印全局日志，本地日志记录，默认为50条请求保存一次，可自定义info和header代理
-2. 网络链接不好的情况下自动重试的功能
-3. HLAPIGroup类，统一chain和batch，通过构造方法的HLAPIGroupMode区分类型(chain, batch)，提供maxRequestCount属性，可以控制chainRequest每次的并行请求数，默认为1
-4. HLTaskGroup，用法与HLAPIGroup一样，用于管理一组task请求
-移除
-1. chain和batch类
-修复：
-1. 修复了链式请求 请求重复时的线程调度问题
-2. 修复了某些情况下并发请求会导致线程死锁的问题
-3. 优化内部调用结构
-
-```
-
-**1.2.2**
-
-```
-新增：
-1. 拆分了HLNetworkConfig内的参数，现分为tips、request、policy、defaultSecurityPolicy、enableReachability这五个大选项
-修复：
-1. 修复了HLObserverAPIs(...)和HLObserverTasks(...)内传入nil引起的崩溃错误
-2. 修复了HLAPI中setResponseClass方法传入无效类名引起的崩溃错误，当该类名无效时，HLBaseObjReformer将不会做任何操作，直接返回nil
-3. 修复了HLAPI中setCustomURL方法传入无效urlString引起的崩溃错误
+1. 修复了请求结束时progressBlock没有释放的问题
 ```
 
 ## 环境要求
