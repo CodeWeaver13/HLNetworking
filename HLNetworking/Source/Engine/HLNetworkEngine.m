@@ -17,9 +17,9 @@
 #import "HLAPIRequest_InternalParams.h"
 #import "HLTaskRequest_InternalParams.h"
 
-static NSLock* engineLock = nil;
-
-@interface HLNetworkEngine ()
+@interface HLNetworkEngine (){
+    dispatch_semaphore_t _lock;
+}
 @property (nonatomic, strong) NSMutableDictionary <NSString *, __kindof AFURLSessionManager *>*sessionManagerCache;
 @property (nonatomic, strong) NSMutableDictionary <NSString *, __kindof NSURLSessionTask *>*sessionTasksCache;
 @property (nonatomic, strong) NSMutableDictionary <NSNumber *, NSString *>*resumePathCache;
@@ -30,12 +30,7 @@ static NSLock* engineLock = nil;
 - (instancetype)init {
     self = [super init];
     if (self) {
-        static dispatch_once_t onceToken;
-        dispatch_once(&onceToken, ^{
-            engineLock = [[NSLock alloc] init];
-            engineLock.name = @"com.qkhl.wangshiyu13.networking.engine.lock";
-            
-        });
+        _lock = dispatch_semaphore_create(1);
         _reachabilities = [NSMutableDictionary dictionary];
         _sessionManagerCache = [NSMutableDictionary dictionary];
         _sessionTasksCache = [NSMutableDictionary dictionary];
@@ -90,11 +85,11 @@ static NSLock* engineLock = nil;
 
 #pragma mark - 移除sessionTask
 - (void)removeTaskForKey:(NSString *)hashKey {
-    [engineLock lock];
+    HLLock();
     if ([self.sessionTasksCache objectForKey:hashKey]) {
         [self.sessionTasksCache removeObjectForKey:hashKey];
     }
-    [engineLock unlock];
+    HLUnlock();
 }
 
 # pragma mark - 发送请求
@@ -190,7 +185,7 @@ static NSLock* engineLock = nil;
     void (^progressBlock)(NSProgress *progress)
     = ^(NSProgress *progress) {
         if (progress.totalUnitCount <= 0) return;
-        dispatch_async_main(^{
+        dispatch_async_main(config.request.callbackQueue, ^{
             if (progressCallBack) {
                 progressCallBack(progress);
             }
@@ -278,7 +273,7 @@ static NSLock* engineLock = nil;
                    parameters:requestParams
                       success:^(NSURLSessionDataTask * _Nonnull task) {
                           if (successBlock) {
-                              dispatch_async_main(^{
+                              dispatch_async_main(config.request.callbackQueue, ^{
                                   successBlock(task, nil);
                               });
                           }
@@ -321,9 +316,9 @@ static NSLock* engineLock = nil;
         
         // 缓存dataTask
         if (dataTask) {
-            [engineLock lock];
+            HLLock();
             self.sessionTasksCache[api.hashKey] = dataTask;
-            [engineLock unlock];
+            HLUnlock();
         }
         
         
@@ -331,8 +326,8 @@ static NSLock* engineLock = nil;
     } else if ([requestObject isKindOfClass:[HLTaskRequest class]]) {
         /** 准备请求参数 */
         HLTaskRequest *task = requestObject;
-        NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:requestURLString]];
-        __block NSURL *fileURL = task.filePath ? [NSURL fileURLWithPath:task.filePath] : nil;
+        NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:requestURLString]];
+        NSURL *fileURL = task.filePath ? [NSURL fileURLWithPath:task.filePath] : nil;
         if (!fileURL) {
             return;
         }
@@ -369,28 +364,29 @@ static NSLock* engineLock = nil;
         NSURLSessionTask *sessionTask;
         switch (task.requestTaskType) {
             case Upload: {
+                [request setHTTPMethod:@"POST"];
                 sessionTask = [sessionManager uploadTaskWithRequest:request
-                                                        fromFile:fileURL
-                                                        progress:progressBlock
-                                               completionHandler:uploadCompleteBlock];
+                                                           fromFile:fileURL
+                                                           progress:progressBlock
+                                                  completionHandler:uploadCompleteBlock];
             }
                 break;
             case Download: {
                 NSData *data = [NSData dataWithContentsOfURL:[NSURL fileURLWithPath:task.resumePath]];
                 if (data) {
                     sessionTask = [sessionManager downloadTaskWithResumeData:data
+                                                                    progress:progressBlock
+                                                                 destination:destinationBlock
+                                                           completionHandler:donwloadCompleteBlcok];
+                } else {
+                    sessionTask = [sessionManager downloadTaskWithRequest:request
                                                                  progress:progressBlock
                                                               destination:destinationBlock
                                                         completionHandler:donwloadCompleteBlcok];
-                } else {
-                    sessionTask = [sessionManager downloadTaskWithRequest:request
-                                                              progress:progressBlock
-                                                           destination:destinationBlock
-                                                     completionHandler:donwloadCompleteBlcok];
                 }
-                [engineLock lock];
+                HLLock();
                 self.resumePathCache[@(sessionTask.hash)] = task.resumePath;
-                [engineLock unlock];
+                HLUnlock();
             }
                 break;
             default: break;
@@ -399,9 +395,9 @@ static NSLock* engineLock = nil;
         // 缓存dataTask
         if (sessionTask) {
             [sessionTask resume];
-            [engineLock lock];
+            HLLock();
             self.sessionTasksCache[task.hashKey] = sessionTask;
-            [engineLock unlock];
+            HLUnlock();
         }
     } else {
         return;
@@ -411,7 +407,7 @@ static NSLock* engineLock = nil;
 - (void)cancelRequestByIdentifier:(NSString *)identifier {
     NSURLSessionTask *sessionTask = [self.sessionTasksCache objectForKey:identifier];
     if (sessionTask) {
-        [engineLock lock];
+        HLLock();
         if ([sessionTask isKindOfClass:[NSURLSessionDownloadTask class]]) {
             NSURLSessionDownloadTask * downloadTask = (NSURLSessionDownloadTask *)sessionTask;
             [downloadTask cancelByProducingResumeData:^(NSData * _Nullable resumeData) {
@@ -421,7 +417,7 @@ static NSLock* engineLock = nil;
             [sessionTask cancel];
             [self.sessionTasksCache removeObjectForKey:identifier];
         }
-        [engineLock unlock];
+        HLUnlock();
     }
 }
 
@@ -539,7 +535,8 @@ static NSLock* engineLock = nil;
 }
 
 // 创建Request序列化工具
-- (AFHTTPRequestSerializer *)createRequestSerializer:(HLAPIRequest *)requestObject andConfig:(HLNetworkConfig *)config {
+- (AFHTTPRequestSerializer *)createRequestSerializer:(HLAPIRequest *)requestObject
+                                           andConfig:(HLNetworkConfig *)config {
     AFHTTPRequestSerializer *requestSerializer;
     switch ([requestObject requestSerializerType]) {
         case RequestHTTP:
@@ -590,7 +587,11 @@ static NSLock* engineLock = nil;
             responseSerializer = [AFHTTPResponseSerializer serializer];
             break;
     }
-    responseSerializer.acceptableContentTypes = [requestObject accpetContentTypes];
+    if (requestObject.accpetContentTypes) {        
+        NSMutableSet *tmpSet = [NSMutableSet setWithSet:requestObject.accpetContentTypes];
+        [tmpSet unionSet:responseSerializer.acceptableContentTypes];
+        responseSerializer.acceptableContentTypes = [tmpSet copy];
+    }
     return responseSerializer;
 }
 

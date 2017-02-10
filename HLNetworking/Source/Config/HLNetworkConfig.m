@@ -8,13 +8,15 @@
 
 #import "HLNetworkConfig.h"
 
-inline void dispatch_async_main(dispatch_block_t block) {
-    if ([NSThread isMainThread]) {
-        block();
+inline void dispatch_async_main(dispatch_queue_t queue, dispatch_block_t block) {
+    if (queue) {
+        dispatch_async(queue, block);
     } else {
-        dispatch_async(dispatch_get_main_queue(), ^{
+        if (![NSThread isMainThread]) {
+            dispatch_async(dispatch_get_main_queue(), block);
+        } else {
             block();
-        });
+        }
     }
 }
 

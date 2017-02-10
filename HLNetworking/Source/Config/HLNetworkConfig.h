@@ -13,7 +13,7 @@
 #import "HLNetworkPolicyConfig.h"
 NS_ASSUME_NONNULL_BEGIN
 
-DISPATCH_EXPORT void dispatch_async_main(dispatch_block_t block);
+DISPATCH_EXPORT void dispatch_async_main(dispatch_queue_t queue, dispatch_block_t block);
 
 @interface HLNetworkConfig : NSObject<NSCopying>
 

@@ -17,7 +17,7 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _apiCallbackQueue = nil;
+        _callbackQueue = nil;
         _maxHttpConnectionPerHost = MAX_HTTP_CONNECTION_PER_HOST;
         _requestTimeoutInterval = HL_API_REQUEST_TIME_OUT;
         _retryCount = 0;

@@ -60,26 +60,26 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     // setupLogger
-    [HLNetworkLogger setupConfig:^(HLNetworkLoggerConfig * _Nonnull config) {
-        config.enableLocalLog = YES;
-        config.logAutoSaveCount = 5;
-        config.loggerType = HLNetworkLoggerTypePlist;
-    }];
-    [HLNetworkLogger setDelegate:self];
-    [HLNetworkLogger startLogging];
-    
-    // setupNetwork
-    [HLNetworkManager setupConfig:^(HLNetworkConfig * _Nonnull config) {
-        config.request.baseURL = @"https://httpbin.org";
-        config.policy.isBackgroundSession = NO;
-        config.request.apiVersion = nil;
-//        config.request.retryCount = 4;
-    }];
+//    [HLNetworkLogger setupConfig:^(HLNetworkLoggerConfig * _Nonnull config) {
+//        config.enableLocalLog = YES;
+//        config.logAutoSaveCount = 5;
+//        config.loggerType = HLNetworkLoggerTypePlist;
+//    }];
+//    [HLNetworkLogger setDelegate:self];
+//    [HLNetworkLogger startLogging];
+//    
+//    // setupNetwork
+//    [HLNetworkManager setupConfig:^(HLNetworkConfig * _Nonnull config) {
+//        config.request.baseURL = @"https://httpbin.org";
+//        config.policy.isBackgroundSession = NO;
+//        config.request.apiVersion = nil;
+////        config.request.retryCount = 4;
+//    }];
 //    [HLNetworkManager registerResponseObserver:self];
     
     
 //    [self testTask];
-    [self testAPI];
+//    [self testAPI];
     
 //    [self testButton];
 //    [self testHome];
@@ -122,7 +122,7 @@
         [self.taskArray addObject:task];
     }
     
-    HLRequestGroup *group = [HLRequestGroup groupWithMode:HLRequestGroupModeChian];
+    HLRequestGroup *group = [HLRequestGroup groupWithMode:HLRequestGroupModeChain];
     group.delegate = self;
     [group addRequests:self.taskArray];
     [group start];
@@ -130,7 +130,7 @@
 
 - (void)testAPI {
     __block int i = 0;
-    HLRequestGroup *group = [HLRequestGroup groupWithMode:HLRequestGroupModeChian];
+    HLRequestGroup *group = [HLRequestGroup groupWithMode:HLRequestGroupModeChain];
     group.delegate = self;
     group.maxRequestCount = 1;
     

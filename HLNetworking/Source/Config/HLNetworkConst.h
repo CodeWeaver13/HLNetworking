@@ -70,7 +70,7 @@ typedef void(^HLRequestConstructingBodyBlock)(id<HLMultipartFormDataProtocol> __
 typedef void(^HLDebugBlock)(HLDebugMessage * __nonnull debugMessage);
 // reachability回调
 typedef void(^HLReachabilityBlock)(HLReachabilityStatus status);
-// 空回调
+// 桥接回调
 typedef void(^HLCallbackBlock)(id __nonnull request, id __nullable responseObject, NSError * __nullable error);
 
 #endif /* HLNetworkConst_h */

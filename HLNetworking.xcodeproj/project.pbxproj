@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		893A7ED491D21C76134244FC /* libPods-HLNetworking.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B5A78D7A6A24AB5E8E2123F3 /* libPods-HLNetworking.a */; };
+		CA11CB6F72D47813F2CFB2E5 /* libPods-HLNetworking.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B5A78D7A6A24AB5E8E2123F3 /* libPods-HLNetworking.a */; };
 		CF36274F1D9368BD00C26AAF /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = CF36274E1D9368BD00C26AAF /* main.m */; };
 		CF3627521D9368BD00C26AAF /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = CF3627511D9368BD00C26AAF /* AppDelegate.m */; };
 		CF3627551D9368BD00C26AAF /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = CF3627541D9368BD00C26AAF /* ViewController.m */; };
@@ -28,6 +28,13 @@
 		CF7005A11E1CA12200DF8E80 /* HLNetworkLogger.m in Sources */ = {isa = PBXBuildFile; fileRef = CF7005A01E1CA12200DF8E80 /* HLNetworkLogger.m */; };
 		CF7005A41E1CDADD00DF8E80 /* HLNetworkLoggerConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = CF7005A31E1CDADD00DF8E80 /* HLNetworkLoggerConfig.m */; };
 		CF7005A71E1CE30100DF8E80 /* HLDebugMessage.m in Sources */ = {isa = PBXBuildFile; fileRef = CF7005A61E1CE30100DF8E80 /* HLDebugMessage.m */; };
+		CF8B9AE61E4B7CCA00DC7AF6 /* HLTestCase.m in Sources */ = {isa = PBXBuildFile; fileRef = CF8B9AE51E4B7CCA00DC7AF6 /* HLTestCase.m */; };
+		CF8B9AE81E4B7D9B00DC7AF6 /* HLAPIRequestTest.m in Sources */ = {isa = PBXBuildFile; fileRef = CF8B9AE71E4B7D9B00DC7AF6 /* HLAPIRequestTest.m */; };
+		CF8B9B211E4BA35400DC7AF6 /* testImage.jpg in Resources */ = {isa = PBXBuildFile; fileRef = CF8B9B201E4BA35400DC7AF6 /* testImage.jpg */; };
+		CF8B9B241E4BA49300DC7AF6 /* HLTaskRequestTest.m in Sources */ = {isa = PBXBuildFile; fileRef = CF8B9B231E4BA49300DC7AF6 /* HLTaskRequestTest.m */; };
+		CF8B9B291E4BBD7600DC7AF6 /* HLRequestGroupTests.m in Sources */ = {isa = PBXBuildFile; fileRef = CF8B9B281E4BBD7600DC7AF6 /* HLRequestGroupTests.m */; };
+		CF8B9B2B1E4BC33800DC7AF6 /* HLManagerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = CF8B9B2A1E4BC33800DC7AF6 /* HLManagerTests.m */; };
+		CF8B9B2C1E4BC7D900DC7AF6 /* httpbin.org.cer in Resources */ = {isa = PBXBuildFile; fileRef = CF8B9B221E4BA35900DC7AF6 /* httpbin.org.cer */; };
 		CFD3864B1E1999DC001CF086 /* HLAPICenter+home.m in Sources */ = {isa = PBXBuildFile; fileRef = CFD3864A1E1999DC001CF086 /* HLAPICenter+home.m */; };
 		CFDCF7411D9C261B00DE1C8E /* HLNetworkConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDCF72E1D9C261B00DE1C8E /* HLNetworkConfig.m */; };
 		CFDCF7421D9C261B00DE1C8E /* HLSecurityPolicyConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = CFDCF7301D9C261B00DE1C8E /* HLSecurityPolicyConfig.m */; };
@@ -39,7 +46,18 @@
 		CFF1A88E1E22256F00767B35 /* HLURLResult.m in Sources */ = {isa = PBXBuildFile; fileRef = CFF1A88C1E22256F00767B35 /* HLURLResult.m */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		CF8B9ADC1E4B69B500DC7AF6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CF3627421D9368BD00C26AAF /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CF3627491D9368BD00C26AAF;
+			remoteInfo = HLNetworking;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		0E4E388C48FBF73DFFCF16AD /* libPods-HLNetworkingTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-HLNetworkingTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3D14D0F53EFCAA4AF53EEE33 /* Pods-HLNetworking.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-HLNetworking.release.xcconfig"; path = "Pods/Target Support Files/Pods-HLNetworking/Pods-HLNetworking.release.xcconfig"; sourceTree = "<group>"; };
 		7181179E3FED125878C5BA34 /* Pods-HLNetworking.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-HLNetworking.debug.xcconfig"; path = "Pods/Target Support Files/Pods-HLNetworking/Pods-HLNetworking.debug.xcconfig"; sourceTree = "<group>"; };
 		B5A78D7A6A24AB5E8E2123F3 /* libPods-HLNetworking.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-HLNetworking.a"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -86,6 +104,16 @@
 		CF7005A51E1CE30100DF8E80 /* HLDebugMessage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLDebugMessage.h; sourceTree = "<group>"; };
 		CF7005A61E1CE30100DF8E80 /* HLDebugMessage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLDebugMessage.m; sourceTree = "<group>"; };
 		CF7326AD1DE729D100EDA1CE /* HLNetworkMacro.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLNetworkMacro.h; sourceTree = "<group>"; };
+		CF8B9AD71E4B69B500DC7AF6 /* HLNetworkingTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HLNetworkingTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		CF8B9ADB1E4B69B500DC7AF6 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		CF8B9AE41E4B7CCA00DC7AF6 /* HLTestCase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLTestCase.h; sourceTree = "<group>"; };
+		CF8B9AE51E4B7CCA00DC7AF6 /* HLTestCase.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLTestCase.m; sourceTree = "<group>"; };
+		CF8B9AE71E4B7D9B00DC7AF6 /* HLAPIRequestTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLAPIRequestTest.m; sourceTree = "<group>"; };
+		CF8B9B201E4BA35400DC7AF6 /* testImage.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = testImage.jpg; sourceTree = "<group>"; };
+		CF8B9B221E4BA35900DC7AF6 /* httpbin.org.cer */ = {isa = PBXFileReference; lastKnownFileType = file; path = httpbin.org.cer; sourceTree = "<group>"; };
+		CF8B9B231E4BA49300DC7AF6 /* HLTaskRequestTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLTaskRequestTest.m; sourceTree = "<group>"; };
+		CF8B9B281E4BBD7600DC7AF6 /* HLRequestGroupTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLRequestGroupTests.m; sourceTree = "<group>"; };
+		CF8B9B2A1E4BC33800DC7AF6 /* HLManagerTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HLManagerTests.m; sourceTree = "<group>"; };
 		CFD386491E1999DC001CF086 /* HLAPICenter+home.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "HLAPICenter+home.h"; sourceTree = "<group>"; };
 		CFD3864A1E1999DC001CF086 /* HLAPICenter+home.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "HLAPICenter+home.m"; sourceTree = "<group>"; };
 		CFDCF72D1D9C261B00DE1C8E /* HLNetworkConfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HLNetworkConfig.h; sourceTree = "<group>"; };
@@ -115,7 +143,14 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				893A7ED491D21C76134244FC /* libPods-HLNetworking.a in Frameworks */,
+				CA11CB6F72D47813F2CFB2E5 /* libPods-HLNetworking.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CF8B9AD41E4B69B500DC7AF6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -126,6 +161,7 @@
 			isa = PBXGroup;
 			children = (
 				B5A78D7A6A24AB5E8E2123F3 /* libPods-HLNetworking.a */,
+				0E4E388C48FBF73DFFCF16AD /* libPods-HLNetworkingTests.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -134,6 +170,7 @@
 			isa = PBXGroup;
 			children = (
 				CF36274C1D9368BD00C26AAF /* HLNetworking */,
+				CF8B9AD81E4B69B500DC7AF6 /* HLNetworkingTests */,
 				CF36274B1D9368BD00C26AAF /* Products */,
 				F112EDD6A5BC41CD0E259D05 /* Pods */,
 				8A8E0E7C6E12EA9397609AAC /* Frameworks */,
@@ -144,6 +181,7 @@
 			isa = PBXGroup;
 			children = (
 				CF36274A1D9368BD00C26AAF /* HLNetworking.app */,
+				CF8B9AD71E4B69B500DC7AF6 /* HLNetworkingTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -151,7 +189,6 @@
 		CF36274C1D9368BD00C26AAF /* HLNetworking */ = {
 			isa = PBXGroup;
 			children = (
-				CFD386451E198D7F001CF086 /* Test */,
 				CF54B9BA1DEC429700CEEE8D /* Podspec */,
 				CF3627641D9368CD00C26AAF /* Source */,
 				CF3627501D9368BD00C26AAF /* AppDelegate.h */,
@@ -287,11 +324,20 @@
 			path = Logger;
 			sourceTree = "<group>";
 		};
-		CFD386451E198D7F001CF086 /* Test */ = {
+		CF8B9AD81E4B69B500DC7AF6 /* HLNetworkingTests */ = {
 			isa = PBXGroup;
 			children = (
+				CF8B9B221E4BA35900DC7AF6 /* httpbin.org.cer */,
+				CF8B9B201E4BA35400DC7AF6 /* testImage.jpg */,
+				CF8B9AE41E4B7CCA00DC7AF6 /* HLTestCase.h */,
+				CF8B9AE51E4B7CCA00DC7AF6 /* HLTestCase.m */,
+				CF8B9AE71E4B7D9B00DC7AF6 /* HLAPIRequestTest.m */,
+				CF8B9B231E4BA49300DC7AF6 /* HLTaskRequestTest.m */,
+				CF8B9B281E4BBD7600DC7AF6 /* HLRequestGroupTests.m */,
+				CF8B9B2A1E4BC33800DC7AF6 /* HLManagerTests.m */,
+				CF8B9ADB1E4B69B500DC7AF6 /* Info.plist */,
 			);
-			path = Test;
+			path = HLNetworkingTests;
 			sourceTree = "<group>";
 		};
 		CFDCF72A1D9C261B00DE1C8E /* Config */ = {
@@ -371,12 +417,12 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = CF3627611D9368BD00C26AAF /* Build configuration list for PBXNativeTarget "HLNetworking" */;
 			buildPhases = (
-				0B8CA0D069449C80209B2A45 /* [CP] Check Pods Manifest.lock */,
+				EFE9F6F619AF648AA951BFC1 /* [CP] Check Pods Manifest.lock */,
 				CF3627461D9368BD00C26AAF /* Sources */,
 				CF3627471D9368BD00C26AAF /* Frameworks */,
 				CF3627481D9368BD00C26AAF /* Resources */,
-				E302CE3A16B9AB8158FFD985 /* [CP] Embed Pods Frameworks */,
-				ECF6337C4FE35B105EA329C3 /* [CP] Copy Pods Resources */,
+				A10C11870C746AAFCB3CECBA /* [CP] Embed Pods Frameworks */,
+				E3E05E733EC1F1F58A931032 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -386,6 +432,24 @@
 			productName = HLNetworking;
 			productReference = CF36274A1D9368BD00C26AAF /* HLNetworking.app */;
 			productType = "com.apple.product-type.application";
+		};
+		CF8B9AD61E4B69B500DC7AF6 /* HLNetworkingTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CF8B9AE01E4B69B500DC7AF6 /* Build configuration list for PBXNativeTarget "HLNetworkingTests" */;
+			buildPhases = (
+				CF8B9AD31E4B69B500DC7AF6 /* Sources */,
+				CF8B9AD41E4B69B500DC7AF6 /* Frameworks */,
+				CF8B9AD51E4B69B500DC7AF6 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				CF8B9ADD1E4B69B500DC7AF6 /* PBXTargetDependency */,
+			);
+			name = HLNetworkingTests;
+			productName = HLNetworkingTests;
+			productReference = CF8B9AD71E4B69B500DC7AF6 /* HLNetworkingTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
@@ -400,6 +464,11 @@
 						CreatedOnToolsVersion = 8.0;
 						DevelopmentTeam = 5TJBR4D2AC;
 						ProvisioningStyle = Automatic;
+					};
+					CF8B9AD61E4B69B500DC7AF6 = {
+						CreatedOnToolsVersion = 8.2.1;
+						ProvisioningStyle = Automatic;
+						TestTargetID = CF3627491D9368BD00C26AAF;
 					};
 				};
 			};
@@ -417,6 +486,7 @@
 			projectRoot = "";
 			targets = (
 				CF3627491D9368BD00C26AAF /* HLNetworking */,
+				CF8B9AD61E4B69B500DC7AF6 /* HLNetworkingTests */,
 			);
 		};
 /* End PBXProject section */
@@ -433,25 +503,19 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CF8B9AD51E4B69B500DC7AF6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CF8B9B2C1E4BC7D900DC7AF6 /* httpbin.org.cer in Resources */,
+				CF8B9B211E4BA35400DC7AF6 /* testImage.jpg in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		0B8CA0D069449C80209B2A45 /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
-			showEnvVarsInLog = 0;
-		};
-		E302CE3A16B9AB8158FFD985 /* [CP] Embed Pods Frameworks */ = {
+		A10C11870C746AAFCB3CECBA /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -466,7 +530,7 @@
 			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-HLNetworking/Pods-HLNetworking-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		ECF6337C4FE35B105EA329C3 /* [CP] Copy Pods Resources */ = {
+		E3E05E733EC1F1F58A931032 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -479,6 +543,21 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-HLNetworking/Pods-HLNetworking-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		EFE9F6F619AF648AA951BFC1 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -516,7 +595,27 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CF8B9AD31E4B69B500DC7AF6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CF8B9B2B1E4BC33800DC7AF6 /* HLManagerTests.m in Sources */,
+				CF8B9AE81E4B7D9B00DC7AF6 /* HLAPIRequestTest.m in Sources */,
+				CF8B9B291E4BBD7600DC7AF6 /* HLRequestGroupTests.m in Sources */,
+				CF8B9B241E4BA49300DC7AF6 /* HLTaskRequestTest.m in Sources */,
+				CF8B9AE61E4B7CCA00DC7AF6 /* HLTestCase.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		CF8B9ADD1E4B69B500DC7AF6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CF3627491D9368BD00C26AAF /* HLNetworking */;
+			targetProxy = CF8B9ADC1E4B69B500DC7AF6 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		CF3627561D9368BD00C26AAF /* Main.storyboard */ = {
@@ -636,8 +735,26 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				DEVELOPMENT_TEAM = 5TJBR4D2AC;
+				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = HLNetworking/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				OTHER_CFLAGS = "$(inherited)";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-framework",
+					"\"CoreFoundation\"",
+					"-framework",
+					"\"CoreGraphics\"",
+					"-framework",
+					"\"Foundation\"",
+					"-framework",
+					"\"MobileCoreServices\"",
+					"-framework",
+					"\"Security\"",
+					"-framework",
+					"\"SystemConfiguration\"",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.qkhl.HLNetworking;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -649,10 +766,54 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				DEVELOPMENT_TEAM = 5TJBR4D2AC;
+				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = HLNetworking/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				OTHER_CFLAGS = "$(inherited)";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-framework",
+					"\"CoreFoundation\"",
+					"-framework",
+					"\"CoreGraphics\"",
+					"-framework",
+					"\"Foundation\"",
+					"-framework",
+					"\"MobileCoreServices\"",
+					"-framework",
+					"\"Security\"",
+					"-framework",
+					"\"SystemConfiguration\"",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.qkhl.HLNetworking;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		CF8B9ADE1E4B69B500DC7AF6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				INFOPLIST_FILE = HLNetworkingTests/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.2;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.-wangshiyu13.HLNetworkingTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/HLNetworking.app/HLNetworking";
+			};
+			name = Debug;
+		};
+		CF8B9ADF1E4B69B500DC7AF6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				INFOPLIST_FILE = HLNetworkingTests/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.2;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.-wangshiyu13.HLNetworkingTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/HLNetworking.app/HLNetworking";
 			};
 			name = Release;
 		};
@@ -673,6 +834,15 @@
 			buildConfigurations = (
 				CF3627621D9368BD00C26AAF /* Debug */,
 				CF3627631D9368BD00C26AAF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CF8B9AE01E4B69B500DC7AF6 /* Build configuration list for PBXNativeTarget "HLNetworkingTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CF8B9ADE1E4B69B500DC7AF6 /* Debug */,
+				CF8B9ADF1E4B69B500DC7AF6 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

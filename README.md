@@ -194,7 +194,7 @@ HLObserverRequests(self.api1, self.api2)
 
 **注意5：**HLAPIRequest 同样支持其他 HTTP 方法，比如：`HEAD`, `DELETE`, `PUT`, `PATCH` 等，使用方式与上述类似，不再赘述。
 
-**注意6：**HLTaskRequest目前支持上传下载功能，已支持断点续传，其中上传是指流上传，即使用UPLOAD方法；如果需要使用POST中的formData拼接方式上传，请参考API相关的formData设置
+**注意6：**HLTaskRequest目前支持上传下载功能，下载已支持断点续传，其中上传是指使用AFNetworking的`uploadTaskWithRequest:fromFile:progress:completionHandler`的方法；如果需要使用POST中的formData拼接方式上传，请参考API相关的formData设置
 
 详见 `HLNetworkConfig`、`HLSecurityPolicyConfig`、`HLAPIRequest`、`HLAPIType` 、`HLNetworkManager` 、`HLFormDataConfig`、`HLDebugMessage` 等几个文件中的代码和注释，可选参数基本可以覆盖大多数需求。
 

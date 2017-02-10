@@ -21,12 +21,7 @@
     if (self) {
         _useDefaultParams = YES;
         _objClz = [NSObject class];
-        _accpetContentTypes = [NSSet setWithObjects:
-                               @"text/json",
-                               @"text/html",
-                               @"application/json",
-                               @"text/javascript",
-                               @"text/plain", nil];
+        _accpetContentTypes = nil;
         _header = [HLNetworkManager config].request.defaultHeaders;
         _parameters = nil;
         _requestMethodType = GET;
@@ -65,9 +60,7 @@
  */
 - (HLAPIRequest *(^)(id<HLReformerDelegate> delegate))setObjReformerDelegate {
     return ^HLAPIRequest* (id<HLReformerDelegate> delegate) {
-        [self.lock lock];
         self.objReformerDelegate = delegate;
-        [self.lock unlock];
         return self;
     };
 }
@@ -81,88 +74,70 @@
  */
 - (HLAPIRequest *(^)(NSSet *contentTypes))setAccpetContentTypes {
     return ^HLAPIRequest* (NSSet *contentTypes) {
-        [self.lock lock];
         self.accpetContentTypes = contentTypes;
-        [self.lock unlock];
         return self;
     };
 }
 // 是否使用APIManager.config的默认参数
 - (HLAPIRequest *(^)(BOOL enable))enableDefaultParams {
     return ^HLAPIRequest* (BOOL enable) {
-        [self.lock lock];
         self.useDefaultParams = enable;
-        [self.lock unlock];
         return self;
     };
 }
 // 设置HLAPI对应的返回值模型类型
 - (HLAPIRequest *(^)(NSString *clzName))setResponseClass {
     return ^HLAPIRequest* (NSString *clzName) {
-        [self.lock lock];
         Class clz = NSClassFromString(clzName);
         if (clz) {
             self.objClz = clz;
         } else {
             self.objClz = nil;
         }
-        [self.lock unlock];
         return self;
     };
 }
 // 请求方法 GET POST等
 - (HLAPIRequest *(^)(HLRequestMethodType requestMethodType))setMethod {
     return ^HLAPIRequest* (HLRequestMethodType requestMethodType) {
-        [self.lock lock];
         self.requestMethodType = requestMethodType;
-        [self.lock unlock];
         return self;
     };
 }
 // Request 序列化类型：JSON, HTTP, 见HLRequestSerializerType
 - (HLAPIRequest *(^)(HLRequestSerializerType requestSerializerType))setRequestType {
     return ^HLAPIRequest* (HLRequestSerializerType requestSerializerType) {
-        [self.lock lock];
         self.requestSerializerType = requestSerializerType;
-        [self.lock unlock];
         return self;
     };
 }
 // Response 序列化类型： JSON, HTTP
 - (HLAPIRequest *(^)(HLResponseSerializerType responseSerializerType))setResponseType {
     return ^HLAPIRequest* (HLResponseSerializerType responseSerializerType) {
-        [self.lock lock];
         self.responseSerializerType = responseSerializerType;
-        [self.lock unlock];
         return self;
     };
 }
 // 请求中的参数，每次设置都会覆盖之前的内容
 - (HLAPIRequest *(^)(NSDictionary<NSString *, id> *parameters))setParams {
     return ^HLAPIRequest* (NSDictionary<NSString *, id> *parameters) {
-        [self.lock lock];
         self.parameters = parameters;
-        [self.lock unlock];
         return self;
     };
 }
 // 请求中的参数，每次设置都是添加新参数，不会覆盖之前的内容
 - (HLAPIRequest *(^)(NSDictionary<NSString *, id> *parameters))addParams {
     return ^HLAPIRequest* (NSDictionary<NSString *, id> *parameters) {
-        [self.lock lock];
         NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:self.parameters];
         [dict addEntriesFromDictionary:parameters];
         self.parameters = [dict copy];
-        [self.lock unlock];
         return self;
     };
 }
 // HTTP 请求的头部区域自定义，默认为nil
 - (HLAPIRequest *(^)(NSDictionary<NSString *, NSString *> *header))setHeader {
     return ^HLAPIRequest* (NSDictionary<NSString *, NSString *> *header) {
-        [self.lock lock];
         self.header = header;
-        [self.lock unlock];
         return self;
     };
 }
@@ -170,9 +145,7 @@
 #pragma mark - handler block function
 - (HLAPIRequest *(^)(HLRequestConstructingBodyBlock))formData {
     return ^HLAPIRequest* (HLRequestConstructingBodyBlock bodyBlock) {
-        [self.lock lock];
         self.requestConstructingBodyBlock = bodyBlock;
-        [self.lock unlock];
         return self;
     };
 }

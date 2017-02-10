@@ -7,6 +7,7 @@
 //
 
 #import "HLURLRequest.h"
+#import "HLFormDataConfig.h"
 
 @class HLAPIRequest;
 NS_ASSUME_NONNULL_BEGIN
@@ -44,17 +45,10 @@ NS_ASSUME_NONNULL_BEGIN
  
  @return 请求结果数据
  */
-- (HLAPIRequest *(^)(id<HLReformerDelegate> delegate))setObjReformerDelegate;
-/**
- HTTP 请求的返回可接受的内容类型
- 默认为：[NSSet setWithObjects:
- @"text/json",
- @"text/html",
- @"application/json",
- @"text/javascript", nil];
- */
-- (HLAPIRequest *(^)(NSSet *contentTypes))setAccpetContentTypes;
-// 是否使用APIManager.config的默认参数
+- (HLAPIRequest *(^)(id<HLReformerDelegate> _Nullable delegate))setObjReformerDelegate;
+// HTTP 请求的返回可接受的内容类型，默认为nil，该参数会覆盖HLResponseSerializerType
+- (HLAPIRequest *(^)(NSSet * _Nullable contentTypes))setAccpetContentTypes;
+// 是否使用APIManager.config的默认参数，默认为YES
 - (HLAPIRequest *(^)(BOOL enable))enableDefaultParams;
 // 设置HLAPI对应的返回值模型类型
 - (HLAPIRequest *(^)(NSString *clzName))setResponseClass;
@@ -65,11 +59,11 @@ NS_ASSUME_NONNULL_BEGIN
 // Response 序列化类型： JSON, HTTP
 - (HLAPIRequest *(^)(HLResponseSerializerType responseSerializerType))setResponseType;
 // 请求中的参数，每次设置都会覆盖之前的内容
-- (HLAPIRequest *(^)(NSDictionary<NSString *, id> *parameters))setParams;
+- (HLAPIRequest *(^)(NSDictionary<NSString *, id> * _Nullable parameters))setParams;
 // 请求中的参数，每次设置都是添加新参数，不会覆盖之前的内容
-- (HLAPIRequest *(^)(NSDictionary<NSString *, id> *parameters))addParams;
+- (HLAPIRequest *(^)(NSDictionary<NSString *, id> * _Nullable parameters))addParams;
 // HTTP 请求的头部区域自定义，默认为nil
-- (HLAPIRequest *(^)(NSDictionary<NSString *, NSString *> *header))setHeader;
+- (HLAPIRequest *(^)(NSDictionary<NSString *, NSString *> * _Nullable header))setHeader;
 
 #pragma mark - process
 // 开启API 请求
@@ -89,7 +83,7 @@ NS_ASSUME_NONNULL_BEGIN
 // 设置API的baseURL，该参数会覆盖config中的baseURL
 - (HLAPIRequest *(^)(NSString *baseURL))setBaseURL;
 // urlQuery，baseURL后的地址
-- (HLAPIRequest *(^)(NSString *path))setPath;
+- (HLAPIRequest *(^)(NSString * _Nullable path))setPath;
 // 自定义的RequestUrl，该参数会无视任何baseURL的设置，优先级最高
 - (HLAPIRequest *(^)(NSString *customURL))setCustomURL;
 // HTTPS 请求的Security策略

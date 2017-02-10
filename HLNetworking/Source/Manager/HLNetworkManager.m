@@ -22,14 +22,14 @@ inline BOOL HLJudgeVersion(void) { return [[NSUserDefaults standardUserDefaults]
 inline void HLJudgeVersionSwitch(BOOL isR) { [[NSUserDefaults standardUserDefaults] setBool:isR forKey:@"isR"]; }
 
 // 创建任务队列
-static dispatch_queue_t qkhl_network_creation_queue() {
-    static dispatch_queue_t qkhl_network_creation_queue;
+static dispatch_queue_t qkhl_network_request_queue() {
+    static dispatch_queue_t qkhl_network_request_queue;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        qkhl_network_creation_queue =
+        qkhl_network_request_queue =
         dispatch_queue_create("com.qkhl.wangshiyu13.networking.callback.queue", DISPATCH_QUEUE_PRIORITY_DEFAULT);
     });
-    return qkhl_network_creation_queue;
+    return qkhl_network_request_queue;
 }
 
 // 创建上传下载任务队列
@@ -43,9 +43,9 @@ static dispatch_queue_t qkhl_network_task_queue() {
     return qkhl_network_task_queue;
 }
 
-static NSLock* managerLock = nil;
-
-@interface HLNetworkManager ()
+@interface HLNetworkManager () {
+    dispatch_semaphore_t _lock;
+}
 @property (nonatomic, strong, readwrite) HLNetworkConfig *config;
 @property (nonatomic, strong) NSHashTable<id <HLNetworkResponseDelegate>> *responseObservers;
 
@@ -53,8 +53,6 @@ static NSLock* managerLock = nil;
 @property (nonatomic, assign, readwrite, getter = isReachable) BOOL reachable;
 @property (nonatomic, assign, readwrite, getter = isReachableViaWWAN) BOOL reachableViaWWAN;
 @property (nonatomic, assign, readwrite, getter = isReachableViaWiFi) BOOL reachableViaWiFi;
-@property (nonatomic, strong) dispatch_queue_t currentRequestQueue;
-@property (nonatomic, strong) dispatch_queue_t currentTaskQueue;
 @end
 
 @implementation HLNetworkManager
@@ -76,14 +74,8 @@ static NSLock* managerLock = nil;
 - (instancetype)init {
     self = [super init];
     if (self) {
-        static dispatch_once_t onceToken;
-        dispatch_once(&onceToken, ^{
-            managerLock = [[NSLock alloc] init];
-            managerLock.name = @"com.qkhl.wangshiyu13.networking.manager.lock";
-        });
+        _lock = dispatch_semaphore_create(1);
         _config = [HLNetworkConfig config];
-        _currentRequestQueue = _config.request.apiCallbackQueue ?: qkhl_network_creation_queue();
-        _currentTaskQueue = qkhl_network_task_queue();
         _reachabilityStatus = HLReachabilityStatusUnknown;
         _responseObservers = [NSHashTable hashTableWithOptions:NSHashTableWeakMemory];
     }
@@ -91,7 +83,6 @@ static NSLock* managerLock = nil;
 }
 - (void)setupConfig:(void (^)(HLNetworkConfig * _Nonnull config))configBlock {
     HL_SAFE_BLOCK(configBlock, self.config);
-    self.currentRequestQueue = self.config.request.apiCallbackQueue ?: qkhl_network_creation_queue();
 }
 + (void)setupConfig:(void (^)(HLNetworkConfig * _Nonnull config))configBlock {
     [[self sharedManager] setupConfig:configBlock];
@@ -103,9 +94,9 @@ static NSLock* managerLock = nil;
     @hl_weakify(self);
     if (!request.queue) {
         if ([request isKindOfClass:[HLTaskRequest class]]) {
-            request.queue = self.currentTaskQueue;
+            request.queue = qkhl_network_task_queue();
         } else {
-            request.queue = self.currentRequestQueue;
+            request.queue = qkhl_network_request_queue();
         }
     }
     dispatch_async(request.queue, ^{
@@ -124,14 +115,14 @@ static NSLock* managerLock = nil;
         queue = group.customQueue;
     } else {
         if ([group[0] isKindOfClass:[HLTaskRequest class]]) {
-            queue = self.currentTaskQueue;
+            queue = qkhl_network_task_queue();
         } else {
-            queue = self.currentRequestQueue;
+            queue = qkhl_network_request_queue();
         }
     }
     // 根据groupMode 配置信号量
     dispatch_semaphore_t semaphore = nil;
-    if (group.groupMode == HLRequestGroupModeChian) {
+    if (group.groupMode == HLRequestGroupModeChain) {
         semaphore = dispatch_semaphore_create(group.maxRequestCount);
     }
     dispatch_group_t api_group = dispatch_group_create();
@@ -140,7 +131,7 @@ static NSLock* managerLock = nil;
         [group enumerateObjectsUsingBlock:^(HLURLRequest * _Nonnull request, NSUInteger idx, BOOL * _Nonnull stop) {
             @hl_strongify(self);
             request.queue = queue;
-            if (group.groupMode == HLRequestGroupModeChian) {
+            if (group.groupMode == HLRequestGroupModeChain) {
                 dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
             }
             dispatch_group_enter(api_group);
@@ -160,9 +151,9 @@ static NSLock* managerLock = nil;
 - (void)cancel:(__kindof HLURLRequest *)request {
     if (!request.queue) {
         if ([request isKindOfClass:[HLTaskRequest class]]) {
-            request.queue = self.currentTaskQueue;
+            request.queue = qkhl_network_task_queue();
         } else {
-            request.queue = self.currentRequestQueue;
+            request.queue = qkhl_network_request_queue();
         }
     }
     dispatch_async(request.queue, ^{
@@ -187,9 +178,9 @@ static NSLock* managerLock = nil;
     @hl_weakify(self);
     if (!request.queue) {
         if ([request isKindOfClass:[HLTaskRequest class]]) {
-            request.queue = self.currentTaskQueue;
+            request.queue = qkhl_network_task_queue();
         } else {
-            request.queue = self.currentRequestQueue;
+            request.queue = qkhl_network_request_queue();
         }
     }
     dispatch_async(request.queue, ^{
@@ -209,9 +200,9 @@ static NSLock* managerLock = nil;
 - (void)pause:(__kindof HLURLRequest *)request {
     if (!request.queue) {
         if ([request isKindOfClass:[HLTaskRequest class]]) {
-            request.queue = self.currentTaskQueue;
+            request.queue = qkhl_network_task_queue();
         } else {
-            request.queue = self.currentRequestQueue;
+            request.queue = qkhl_network_request_queue();
         }
     }
     dispatch_async(request.queue, ^{
@@ -226,20 +217,20 @@ static NSLock* managerLock = nil;
 }
 // 注册网络请求监听者
 - (void)registerResponseObserver:(id<HLNetworkResponseDelegate>)observer {
-    [managerLock lock];
+    HLLock();
     [self.responseObservers addObject:observer];
-    [managerLock unlock];
+    HLUnlock();
 }
 + (void)registerResponseObserver:(id<HLNetworkResponseDelegate>)observer {
     [[self sharedManager] registerResponseObserver:observer];
 }
 // 删除网络请求监听者
 - (void)removeResponseObserver:(id<HLNetworkResponseDelegate>)observer {
-    [managerLock lock];
+    HLLock();
     if ([self.responseObservers containsObject:observer]) {
         [self.responseObservers removeObject:observer];
     }
-    [managerLock unlock];
+    HLUnlock();
 }
 + (void)removeResponseObserver:(id<HLNetworkResponseDelegate>)observer {
     [[self sharedManager] removeResponseObserver:observer];
@@ -303,7 +294,7 @@ static NSLock* managerLock = nil;
      atGroup:(dispatch_group_t)group {
     // 对api.delegate 发送即将请求api的消息
     if ([request.delegate respondsToSelector:@selector(requestWillBeSent:)]) {
-        dispatch_async_main(^{
+        dispatch_async_main(self.config.request.callbackQueue, ^{
             [request.delegate requestWillBeSent:request];
         });
     }
@@ -316,7 +307,7 @@ static NSLock* managerLock = nil;
     @hl_weakify(self)
     void (^progressBlock)(NSProgress *proc) = ^(NSProgress *proc) {
         if (proc.totalUnitCount <= 0) return;
-        dispatch_async_main(^{
+        dispatch_async_main(self.config.request.callbackQueue, ^{
             for (id<HLNetworkResponseDelegate> obj in self.responseObservers) {
                 if ([[obj observerRequests] containsObject:request]) {
                     if ([obj respondsToSelector:@selector(requestProgress:atRequest:)]) {
@@ -347,7 +338,7 @@ static NSLock* managerLock = nil;
     
     // 对api.delegate 发送已经请求api的消息
     if ([request.delegate respondsToSelector:@selector(requestDidSent:)]) {
-        dispatch_async_main(^{
+        dispatch_async_main(self.config.request.callbackQueue, ^{
             [request.delegate requestDidSent:request];
         });
     }
@@ -414,7 +405,7 @@ static NSLock* managerLock = nil;
     HLDebugMessage *msg = [[HLDebugMessage alloc] initWithRequest:request
                                                         andResult:resultObject
                                                          andError:netError
-                                                     andQueueName:[NSString stringWithFormat:@"%@", [request isKindOfClass:[HLTaskRequest class]] ? self.currentTaskQueue : self.currentRequestQueue]];
+                                                     andQueueName:[NSString stringWithFormat:@"%@", [request isKindOfClass:[HLTaskRequest class]] ? qkhl_network_task_queue() : qkhl_network_request_queue()]];
 #if DEBUG
     if (self.config.enableGlobalLog) {
         [HLNetworkLogger logInfoWithDebugMessage:msg];
@@ -436,14 +427,14 @@ static NSLock* managerLock = nil;
     
     if (netError) {
         if ([request failureHandler]) {
-            dispatch_async_main(^{
+            dispatch_async_main(self.config.request.callbackQueue, ^{
                 request.failureHandler(netError);
                 request.failureHandler = nil;
             });
         }
     } else {
         if ([request successHandler]) {
-            dispatch_async_main(^{
+            dispatch_async_main(self.config.request.callbackQueue, ^{
                 request.successHandler(resultObject);
                 request.successHandler = nil;
             });
@@ -459,13 +450,13 @@ static NSLock* managerLock = nil;
         if ([[observer observerRequests] containsObject:request]) {
             if (netError) {
                 if ([observer respondsToSelector:@selector(requestFailure:atRequest:)]) {
-                    dispatch_async_main(^{
+                    dispatch_async_main(self.config.request.callbackQueue, ^{
                         [observer requestFailure:netError atRequest:request];
                     });
                 }
             } else {
                 if ([observer respondsToSelector:@selector(requestSucess:atRequest:)]) {
-                    dispatch_async_main(^{
+                    dispatch_async_main(self.config.request.callbackQueue, ^{
                         [observer requestSucess:resultObject atRequest:request];
                     });
                 }

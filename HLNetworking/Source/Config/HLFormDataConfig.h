@@ -37,8 +37,26 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface HLFormDataConfig : NSObject
 // 用于二进制数据的formData拼接
-+ (void (^)(id<HLMultipartFormDataProtocol>))configWithData:(NSData *)data name:(NSString *)name fileName:(NSString *)fileName mimeType:(NSString *)mimeType;
++ (void (^)(id<HLMultipartFormDataProtocol>))configWithData:(NSData *)data
+                                                       name:(NSString *)name
+                                                   fileName:(NSString *)fileName
+                                                   mimeType:(NSString *)mimeType;
 // 用于图片数据的formData拼接
-+ (void (^)(id<HLMultipartFormDataProtocol>))configWithImage:(UIImage *)image name:(NSString *)name fileName:(NSString *)fileName scale:(CGFloat)scale;
++ (void (^)(id<HLMultipartFormDataProtocol>))configWithImage:(UIImage *)image
+                                                        name:(NSString *)name
+                                                    fileName:(NSString *)fileName
+                                                     quality:(CGFloat)quality;
+// 用于url所在数据的formData拼接
++ (void (^)(id<HLMultipartFormDataProtocol>))configWithFileURL:(NSURL *)fileURL
+                                                          name:(NSString *)name
+                                                      fileName:(NSString *)fileName
+                                                       mimeType:(NSString *)mimeType
+                                                         error:(NSError * __nullable __autoreleasing *)error;
+// 用于NSInputStream获取数据的formData拼接
++ (void (^)(id<HLMultipartFormDataProtocol>))configWithInputStream:(nullable NSInputStream *)inputStream
+                                                              name:(NSString *)name
+                                                          fileName:(NSString *)fileName
+                                                            length:(int64_t)length
+                                                          mimeType:(NSString *)mimeType;
 @end
 NS_ASSUME_NONNULL_END

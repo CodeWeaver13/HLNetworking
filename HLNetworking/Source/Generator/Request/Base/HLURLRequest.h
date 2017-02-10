@@ -39,11 +39,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - parameters append method
 // 设置HLAPI的requestDelegate
-- (__kindof HLURLRequest *(^)(id<HLURLRequestDelegate> delegate))setDelegate;
+- (__kindof HLURLRequest *(^)(id<HLURLRequestDelegate> _Nullable delegate))setDelegate;
 // 设置API的baseURL，该参数会覆盖config中的baseURL
 - (__kindof HLURLRequest *(^)(NSString *baseURL))setBaseURL;
 // urlQuery，baseURL后的地址
-- (__kindof HLURLRequest *(^)(NSString *path))setPath;
+- (__kindof HLURLRequest *(^)(NSString * _Nullable path))setPath;
 // 自定义的RequestUrl，该参数会无视任何baseURL的设置，优先级最高
 - (__kindof HLURLRequest *(^)(NSString *customURL))setCustomURL;
 // HTTPS 请求的Security策略

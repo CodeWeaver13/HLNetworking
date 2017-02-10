@@ -19,8 +19,6 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _lock = [[NSLock alloc] init];
-        _lock.name = @"com.qkhl.wangshiyu13.networking.urlrequest.lock";
         _cURL = nil;
         _path = nil;
         _baseURL = [HLNetworkManager config].request.baseURL;
@@ -55,68 +53,54 @@
 // 设置HLAPI的requestDelegate
 - (__kindof HLURLRequest *(^)(id<HLURLRequestDelegate> delegate))setDelegate {
     return ^HLURLRequest* (id<HLURLRequestDelegate> delegate) {
-        [self.lock lock];
         self.delegate = delegate;
-        [self.lock unlock];
         return self;
     };
 }
 // 设置API的baseURL，该参数会覆盖config中的baseURL
 - (__kindof HLURLRequest *(^)(NSString *baseURL))setBaseURL {
     return ^HLURLRequest* (NSString *baseURL) {
-        [self.lock lock];
         self.baseURL = baseURL;
-        [self.lock unlock];
         return self;
     };
 }
 // urlQuery，baseURL后的地址
 - (__kindof HLURLRequest *(^)(NSString *path))setPath {
     return ^HLURLRequest* (NSString *path) {
-        [self.lock lock];
         self.path = path;
-        [self.lock unlock];
         return self;
     };
 }
 // 自定义的RequestUrl，该参数会无视任何baseURL的设置，优先级最高
 - (__kindof HLURLRequest *(^)(NSString *customURL))setCustomURL {
     return ^HLURLRequest* (NSString *customURL) {
-        [self.lock unlock];
         self.cURL = customURL;
         NSURL *tmpURL = [NSURL URLWithString:customURL];
         if (tmpURL.host) {
             self.baseURL = [NSString stringWithFormat:@"%@://%@", tmpURL.scheme ?: @"https", tmpURL.host];
             self.path = [NSString stringWithFormat:@"%@", tmpURL.query];
         }
-        [self.lock unlock];
         return self;
     };
 }
 // HTTPS 请求的Security策略
 - (__kindof HLURLRequest *(^)(HLSecurityPolicyConfig *securityPolicy))setSecurityPolicy {
     return ^HLURLRequest* (HLSecurityPolicyConfig *securityPolicy) {
-        [self.lock lock];
         self.securityPolicy = securityPolicy;
-        [self.lock unlock];
         return self;
     };
 }
 // HTTP 请求的Cache策略
 - (__kindof HLURLRequest *(^)(NSURLRequestCachePolicy requestCachePolicy))setCachePolicy {
     return ^HLURLRequest* (NSURLRequestCachePolicy requestCachePolicy) {
-        [self.lock lock];
         self.cachePolicy = requestCachePolicy;
-        [self.lock unlock];
         return self;
     };
 }
 // HTTP 请求超时的时间，默认为15秒
 - (__kindof HLURLRequest *(^)(NSTimeInterval requestTimeoutInterval))setTimeout {
     return ^HLURLRequest* (NSTimeInterval requestTimeoutInterval) {
-        [self.lock lock];
         self.timeoutInterval = requestTimeoutInterval;
-        [self.lock unlock];
         return self;
     };
 }
@@ -131,9 +115,7 @@
  */
 - (__kindof HLURLRequest *(^)(HLSuccessBlock))success {
     return ^HLURLRequest* (HLSuccessBlock objBlock) {
-        [self.lock lock];
         self.successHandler = objBlock;
-        [self.lock unlock];
         return self;
     };
 }
@@ -146,9 +128,7 @@
  */
 - (__kindof HLURLRequest *(^)(HLFailureBlock))failure {
     return ^HLURLRequest* (HLFailureBlock errorBlock) {
-        [self.lock lock];
         self.failureHandler = errorBlock;
-        [self.lock unlock];
         return self;
     };
 }
@@ -161,9 +141,7 @@
  */
 - (__kindof HLURLRequest *(^)(HLProgressBlock))progress {
     return ^HLURLRequest* (HLProgressBlock progressBlock) {
-        [self.lock lock];
         self.progressHandler = progressBlock;
-        [self.lock unlock];
         return self;
     };
 }
@@ -173,9 +151,7 @@
  */
 - (__kindof HLURLRequest *(^)(HLDebugBlock))debug {
     return ^HLURLRequest* (HLDebugBlock debugBlock) {
-        [self.lock lock];
         self.debugHandler = debugBlock;
-        [self.lock unlock];
         return self;
     };
 }

@@ -13,13 +13,13 @@
 
 typedef NS_ENUM(NSUInteger, HLRequestGroupMode) {
     HLRequestGroupModeBatch,
-    HLRequestGroupModeChian
+    HLRequestGroupModeChain
 };
 
 NS_ASSUME_NONNULL_BEGIN
 @protocol HLRequestGroupDelegate <NSObject>
 // Requests 全部调用完成之后调用
-- (void)requestGroupAllDidFinished:(nonnull __kindof HLRequestGroup *)apiGroup;
+- (void)requestGroupAllDidFinished:(nonnull HLRequestGroup *)apiGroup;
 @end
 
 @interface HLRequestGroup : NSObject

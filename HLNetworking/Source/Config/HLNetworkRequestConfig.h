@@ -15,10 +15,7 @@
 
 @interface HLNetworkRequestConfig : NSObject<NSCopying>
 // API请求的自定义队列
-@property (nonatomic, strong, nullable) dispatch_queue_t apiCallbackQueue;
-
-// Task的自定义队列
-@property (nonatomic, strong, nullable) dispatch_queue_t taskCallbackQueue;
+@property (nonatomic, strong, nullable) dispatch_queue_t callbackQueue;
 
 // 默认的parameters，可以在HLAPI中选择是否使用，默认开启
 @property (nonatomic, strong, nullable) NSDictionary<NSString *, NSObject *> *defaultParams;
